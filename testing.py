@@ -71,7 +71,8 @@ for i, query in enumerate(queries, 1):
                 query_result["distances"][0]
             )
         ],
-        "lowest_distance": float(min(query_result["distances"][0]))
+        "lowest_distance": float(min(query_result["distances"][0])),
+        "average_distance": float(sum(query_result["distances"][0]) / len(query_result["distances"][0]))
     }
 
 # === Save updated results ===
