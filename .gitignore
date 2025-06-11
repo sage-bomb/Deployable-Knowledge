@@ -1,0 +1,56 @@
+# --- Python standard ignores ---
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.manifest
+*.spec
+
+# --- Environment + dependencies ---
+.venv/
+env/
+venv/
+ENV/
+*.env
+*.env.*
+
+# --- Jupyter and notebook checkpoints ---
+.ipynb_checkpoints/
+
+# --- Log files and temp files ---
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- VSCode project files ---
+.vscode/
+
+# --- ChromaDB persistent vector store ---
+chroma_db/
+
+# --- Extracted or parsed PDF text content ---
+parsed_texts/
+*.txt
+
+# --- Query result data ---
+*.json
+
+# --- Model cache or sentence-transformers ---
+cache/
+sentence-transformers/
+huggingface_cache/
+*.bin
+*.pkl
+
+# --- PDF files ---
+*.pdf
+pdfs/
+
+# --- Miscellaneous ---
+test_queries.txt
+*.md.bak
