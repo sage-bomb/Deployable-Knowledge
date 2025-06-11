@@ -10,7 +10,7 @@ CHROMA_COLLECTION_NAME = "testing_collection"  # Must match what's saved
 TOP_K = 5  # Number of top results to retrieve
 BGE_PREFIX = "Represent this question for retrieval: "  # Format for BGE model
 MASTER_RESULTS_JSON = "query_results.json"  # Optional, for saving results in JSON format
-EMBEDDING_STRATEGY = "Static Chunking"
+EMBEDDING_STRATEGY = "Sentences"
 
 # === Load SentenceTransformer Model ===
 print("Loading embedding model...")
