@@ -63,35 +63,74 @@ def chunk_by_semantic_similarity(text, model_name="all-MiniLM-L6-v2", threshold=
         }))
     return chunks
 
+def split_text_by_length(text, max_chars=100000):
+    """
+    Split text into chunks <= max_chars characters, preferably at paragraph breaks.
+    """
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = start + max_chars
+        if end < len(text):
+            newline_idx = text.rfind("\n\n", start, end)
+            if newline_idx != -1 and newline_idx > start:
+                end = newline_idx + 2
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+        start = end
+    return chunks
+
 def chunk_by_graph_rank(text, max_sentences=4):
     nlp = spacy.load("en_core_web_sm")
-    nlp.add_pipe("textrank")  # PyTextRank modifies the doc with sentence ranking
+    nlp.add_pipe("textrank", last=True)  # Ensure PyTextRank is applied
+    nlp.max_length = 2_000_000  # Optional: Increase limit if you're confident in memory
 
-    doc = nlp(text)
-    chunks, current, chunk_idx = [], [], 0
-    char_offset = 0
+    text_chunks = split_text_by_length(text, max_chars=500_000)  # Safe size
+    all_chunks = []
+    chunk_idx = 0
+    global_offset = 0  # Tracks position within the full text
 
-    for sent in doc.sents:
-        current.append(sent.text)
-        if len(current) >= max_sentences:
+    for subtext in text_chunks:
+        doc = nlp(subtext)
+        current, char_offset = [], 0
+
+        for sent in doc.sents:
+            current.append(sent.text)
+            if len(current) >= max_sentences:
+                chunk_text = " ".join(current)
+                start_in_full_text = text.find(chunk_text, global_offset)
+
+                all_chunks.append((
+                    chunk_text.strip(),
+                    {
+                        "chunk_idx": chunk_idx,
+                        "start_char": start_in_full_text,
+                        "num_sentences": len(current)
+                    }
+                ))
+
+                global_offset = start_in_full_text + len(chunk_text)
+                chunk_idx += 1
+                current = []
+
+        if current:
             chunk_text = " ".join(current)
-            chunks.append((chunk_text.strip(), {
-                "chunk_idx": chunk_idx,
-                "start_char": text.find(chunk_text, char_offset),
-                "num_sentences": len(current)
-            }))
-            char_offset += len(chunk_text)
-            chunk_idx += 1
-            current = []
+            start_in_full_text = text.find(chunk_text, global_offset)
 
-    if current:
-        chunk_text = " ".join(current)
-        chunks.append((chunk_text.strip(), {
-            "chunk_idx": chunk_idx,
-            "start_char": text.find(chunk_text, char_offset),
-            "num_sentences": len(current)
-        }))
-    return chunks
+            all_chunks.append((
+                chunk_text.strip(),
+                {
+                    "chunk_idx": chunk_idx,
+                    "start_char": start_in_full_text,
+                    "num_sentences": len(current)
+                }
+            ))
+
+            chunk_idx += 1
+            global_offset = start_in_full_text + len(chunk_text)
+
+    return all_chunks
 
 def chunk_by_paragraphs(text, model_name="all-MiniLM-L6-v2", threshold=0.7):
     model = SentenceTransformer(model_name)
