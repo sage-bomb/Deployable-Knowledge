@@ -3,6 +3,10 @@ from pathlib import Path
 from sentence_transformers import SentenceTransformer
 import chromadb
 from uuid import uuid4
+from typing import List, Tuple, Dict
+
+# Load in chunking method type from chunker
+from chunker import chunk_by_sentences, chunk_by_semantic_similarity, chunk_by_graph_rank, chunk_by_paragraphs
 
 # === Configuration ===
 DATA_DIR = "documents"  # Directory with .txt files (newline-preserved from PDFs)
@@ -12,6 +16,7 @@ CHUNK_SIZE = 500        # Characters per chunk
 CHUNK_OVERLAP = 50      # Overlap between chunks
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 BGE_PREFIX = "Represent this passage for retrieval: "  # Required for BGE model
+CHUNKING_METHOD = "sentences" # Options: sentences, semantics, graph, paragraphs
 
 # === Initialize model and client ===
 print("Loading embedding model...")
@@ -29,7 +34,7 @@ collection = client.create_collection(CHROMA_COLLECTION_NAME)
 print(f"Collection '{CHROMA_COLLECTION_NAME}' created.\n")
 
 # === Static chunking function ===
-def chunk_text_with_lines(text, chunk_size, overlap):
+def static_chunking(text, chunk_size, overlap):
     """Chunks text while tracking line numbers for metadata."""
     lines = text.splitlines()
     full_text = "\n".join(lines)
@@ -54,25 +59,30 @@ for file_path in Path(DATA_DIR).glob("*.txt"):
     with open(file_path, "r", encoding="utf-8") as f:
         text = f.read()
 
-    chunks, line_info = chunk_text_with_lines(text, CHUNK_SIZE, CHUNK_OVERLAP)
-    formatted_chunks = [BGE_PREFIX + chunk for chunk in chunks]
-    embeddings = model.encode(formatted_chunks)
+    #chunks, line_info = static_chunking(text, CHUNK_SIZE, CHUNK_OVERLAP)
 
-    ids = [str(uuid4()) for _ in chunks]
-    metadatas = [
-        {
-            "source": file_path.name,
-            "chunk_idx": i,
-            "start_line": line_info[i]
-        }
-        for i in range(len(chunks))
-    ]
+    def chunk_text(text: str) -> List[Tuple[str, Dict]]:
+        if CHUNKING_METHOD == "sentences":
+            return chunk_by_sentences(text, max_chars=500)
+        elif CHUNKING_METHOD == "semantics":
+            return chunk_by_semantic_similarity(text, model_name=EMBEDDING_MODEL, threshold=0.6)
+        elif CHUNKING_METHOD == "graph":
+            return chunk_by_graph_rank(text, max_sentences=4)
+        elif CHUNKING_METHOD == "paragraphs":
+            return chunk_by_paragraphs(text, model_name=EMBEDDING_MODEL, threshold=0.7)
+        else:
+            raise ValueError("Unknown chunking method")
 
-    collection.add(
-        documents=chunks,
-        embeddings=embeddings,
-        metadatas=metadatas,
-        ids=ids
-    )
+    chunks = chunk_text(text)
+
+    # === Embed and Store ===
+    for i, (chunk, metadata) in enumerate(chunks):
+        embedding = model.encode(chunk)
+        collection.add(
+            documents=[chunk],
+            embeddings=[embedding.tolist()],
+            metadatas=[metadata],
+            ids=[f"{CHUNKING_METHOD}_chunk_{i}"]
+        )
 
 print("\n✅ All documents processed and stored in ChromaDB.")
