@@ -81,7 +81,9 @@ def group_words_by_line(words_with_key, is_landscape, line_tol=5):
 # Replace input_pdf and output_txt with desired file paths
 if __name__ == "__main__":
     input_pdf = "cisco_test.pdf"
-    output_txt = "parsed.txt"
+    output_dir = Path("documents")
+    output_dir.mkdir(exist_ok=True)
+    output_txt = output_dir / "parsed.txt"
 
     # Typically margins are 1-inch, which is 72 points for PDF
     cleaned_text = parse_pdf(
@@ -95,6 +97,3 @@ if __name__ == "__main__":
     with open(output_txt, "w", encoding="utf-8") as f:
         f.write(cleaned_text)
     print(f"Extracted text saved to {output_txt}")
-
-# cisco_test.pdf header and footer notes
-# footer for portrait view: top: 676.3 bottom: 685.3
