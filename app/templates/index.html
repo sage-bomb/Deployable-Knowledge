@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Document Search</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+  <h1>Ask a Question</h1>
+  <form id="query-form">
+    <input type="text" name="q" id="query-input" placeholder="Enter a question..." required>
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="results">
+    <h2>Results</h2>
+    <ul id="results-list"></ul>
+  </div>
+
+  <script>
+    $('#query-form').on('submit', function(e) {
+      e.preventDefault();
+      const formData = $(this).serialize();
+      const $list = $('#results-list');
+      $list.html('<li>Searching...</li>');
+
+      $.post("/query", formData, function(data) {
+        $list.empty();
+        if (!data.results || !data.results.length) {
+          $list.append("<li>No results found.</li>");
+        } else {
+          data.results.forEach(item => {
+            $list.append(`<li>
+              <strong>${item.source}</strong><br>
+              <small>Distance: ${item.distance.toFixed(4)}</small><br><br>
+              <div>${item.preview}</div>
+            </li>`);
+          });
+        }
+      }).fail(function() {
+        $list.html('<li style="color: #f87171;">Error retrieving results.</li>');
+      });
+    });
+  </script>
+</body>
+</html>
