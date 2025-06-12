@@ -21,6 +21,9 @@ CHUNKING_METHOD = "graph" # Options: sentences, semantics, graph, paragraphs
 # Use DBManager to handle ChromaDB operations
 db = DBManager(persist_dir=CHROMA_PERSIST_DIR, collection_name=CHROMA_COLLECTION_NAME)
 
+#optional
+db.clear_collection()
+
 # Type of chunking method applied
 def chunk_text(text: str) -> List[Tuple[str, Dict]]:
     if CHUNKING_METHOD == "sentences":
@@ -54,7 +57,7 @@ for file_path in Path(DATA_DIR).glob("*.txt"):
         segments=segments,
         strategy_name=CHUNKING_METHOD,
         source=file_path.name,
-        tags=None,  # Add default/global tags here if needed
+        tags=["testing","Cisco Router and Security Device Manager User's Guide"],  # Add default/global tags here if needed
         positions=None
     )
 
