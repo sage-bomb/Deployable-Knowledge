@@ -111,39 +111,44 @@ class ChunkingTestSuite:
 
         return results
     
-    def evaluate_fuzzy_best_match(self) -> dict:
+    def evaluate_semantic_chunks_fuzzy_comparison(self) -> dict:
         results = {}
 
         for method_name, chunk_fn in self.chunking_methods:
             best_scores = []
-            print(f"\n=== Evaluating chunking method: {method_name} (best fuzzy match per query) ===")
+            print(f"\n=== Evaluating chunking method: {method_name} ===")
 
-            # Chunk all documents and combine
+            # Step 1: Chunk all documents using the chunking method
             all_chunks = []
-            for doc_idx, text in enumerate(self.texts):
-                chunks = chunk_fn(text)
+            for text in self.texts:
+                chunks = chunk_fn(text)  # these methods use embeddings inside
                 all_chunks.extend(chunks)
 
-            # For each query, compute fuzzy similarity with all chunks
+            # Step 2: Embed all chunks (for semantic search later, optional)
+            chunk_embeddings = self.embed_texts(all_chunks)
+
+            # Step 3: For each query, perform semantic search, then fuzzy match against ideal
             for query_idx, (query, ideal_answer) in enumerate(self.queries_with_answers):
-                ideal_answer_lower = ideal_answer.lower()
-                scores = [fuzz.partial_ratio(ideal_answer_lower, chunk.lower()) for chunk in all_chunks]
+                query_embedding = self.embed_texts([query])[0]
 
-                # Find best score and index
-                best_score = max(scores) if scores else 0
-                best_idx = scores.index(best_score) if scores else -1
-                best_scores.append(best_score / 100)  # Normalize to 0-1 range
+                # Find most semantically similar chunk (cosine)
+                similarities = cosine_similarity([query_embedding], chunk_embeddings)[0]
+                best_idx = similarities.argmax()
+                best_chunk = all_chunks[best_idx]
 
-                # Print query and best match info
+                # Step 4: Fuzzy compare the best chunk text to the ideal answer
+                fuzzy_score = fuzz.partial_ratio(ideal_answer.lower(), best_chunk.lower())
+                best_scores.append(fuzzy_score / 100)  # normalize to 0-1
+
+                # Step 5: Print results
                 print(f"\nQuery #{query_idx + 1}: '{query}'")
-                print(f"Ideal answer snippet: '{ideal_answer[:80]}{'...' if len(ideal_answer) > 80 else ''}'")
-                if best_idx >= 0:
-                    snippet = all_chunks[best_idx].replace("\n", " ")[:150]
-                    print(f"Best fuzzy match score: {best_score} (chunk snippet: {snippet}{'...' if len(all_chunks[best_idx]) > 150 else ''})")
-                else:
-                    print("No chunks found.")
+                print(f"Ideal answer:\n{ideal_answer}\n")
+                print(f"Best chunk (via cosine):\n{best_chunk}\n")
+                print(f"Fuzzy score (ideal vs chunk): {fuzzy_score}")
+                print("-" * 80)
 
-            avg_best_score = sum(best_scores) / len(best_scores) if best_scores else 0
-            results[method_name] = avg_best_score
-
+            avg_score = sum(best_scores) / len(best_scores) if best_scores else 0
+            results[method_name] = avg_score
+        
         return results
+        
