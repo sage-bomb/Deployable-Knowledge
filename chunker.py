@@ -1,13 +1,18 @@
-import nltk
 from nltk.tokenize import sent_tokenize
 from sentence_transformers import SentenceTransformer, util
 import spacy
 import pytextrank
 
-nltk.download('punkt')
+
+import re
+
+# NLTK hates human life and demands you all suffer at the hands of bad pickles.. all for the sake of a sentance spliter.
+def safe_sent_tokenize(text):
+    return re.split(r'(?<=[.!?]) +', text.strip())
 
 def chunk_by_sentences(text, max_chars=500):
-    sentences = sent_tokenize(text)
+    sentences = safe_sent_tokenize(text)  # <- no nltk here
+
     chunks = []
     current, start_char, chunk_idx = "", 0, 0
 
@@ -15,22 +20,25 @@ def chunk_by_sentences(text, max_chars=500):
         if len(current) + len(sent) < max_chars:
             current += " " + sent
         else:
-            chunks.append((current.strip(), {
+            chunk_text = current.strip()
+            chunks.append((chunk_text, {
                 "chunk_idx": chunk_idx,
                 "start_char": start_char,
-                "num_sentences": current.count('.') + current.count('!') + current.count('?')
+                "num_sentences": chunk_text.count('.') + chunk_text.count('!') + chunk_text.count('?')
             }))
             chunk_idx += 1
-            start_char += len(current)
+            start_char += len(chunk_text)
             current = sent
 
     if current:
-        chunks.append((current.strip(), {
+        chunk_text = current.strip()
+        chunks.append((chunk_text, {
             "chunk_idx": chunk_idx,
             "start_char": start_char,
-            "num_sentences": current.count('.') + current.count('!') + current.count('?')
+            "num_sentences": chunk_text.count('.') + chunk_text.count('!') + chunk_text.count('?')
         }))
     return chunks
+
 
 def chunk_by_semantic_similarity(text, model_name="all-MiniLM-L6-v2", threshold=0.6):
     model = SentenceTransformer(model_name)
@@ -131,6 +139,8 @@ def chunk_by_graph_rank(text, max_sentences=4):
             global_offset = start_in_full_text + len(chunk_text)
 
     return all_chunks
+
+
 
 def chunk_by_paragraphs(text, model_name="all-MiniLM-L6-v2", threshold=0.7):
     model = SentenceTransformer(model_name)

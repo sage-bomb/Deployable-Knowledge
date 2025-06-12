@@ -33,12 +33,14 @@
           $list.append("<li>No results found.</li>");
         } else {
           data.results.forEach(item => {
-            $list.append(`<li>
-              <strong>${item.source}</strong><br>
-              <small>Distance: ${item.distance.toFixed(4)}</small><br><br>
-              <div>${item.preview}</div>
-            </li>`);
-          });
+  const tags = item.tags?.length ? `<em>Tags:</em> ${item.tags.join(', ')}` : '';
+  $list.append(`<li>
+    <strong>${item.source}</strong><br>
+    <small>Distance: ${item.distance.toFixed(4)}</small><br><br>
+    <div>${item.preview}</div>
+    <div style="color: #94a3b8; font-size: 0.9em; margin-top: 0.25rem;">${tags}</div>
+  </li>`);
+});
         }
       }).fail(function() {
         $list.html('<li style="color: #f87171;">Error retrieving results.</li>');
