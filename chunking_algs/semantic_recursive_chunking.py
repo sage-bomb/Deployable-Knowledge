@@ -4,6 +4,10 @@ import nltk
 nltk.download("punkt")
 from nltk.tokenize import sent_tokenize
 import numpy as np
+import re
+
+def safe_sent_tokenize(text):
+    return re.split(r'(?<=[.!?]) +', text.strip())
 
 def embed_sentences(sentences, model):
     return model.encode(sentences)
@@ -58,7 +62,7 @@ def semantic_recursive_chunking(text, model_name="all-mpnet-base-v2",
                                recursive_similarity_threshold=0.7,
                                max_tokens=200):
     model = SentenceTransformer(model_name)
-    sentences = sent_tokenize(text)
+    sentences = safe_sent_tokenize(text)
     embeddings = embed_sentences(sentences, model)
 
     # Step 1: Initial semantic chunking by sentence similarity

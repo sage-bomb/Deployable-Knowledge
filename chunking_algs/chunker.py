@@ -42,7 +42,7 @@ def chunk_by_sentences(text, max_chars=500):
 
 def chunk_by_semantic_similarity(text, model_name="all-MiniLM-L6-v2", threshold=0.6):
     model = SentenceTransformer(model_name)
-    sentences = sent_tokenize(text)
+    sentences = safe_sent_tokenize(text)
     embeddings = model.encode(sentences, convert_to_tensor=True)
 
     chunks = []

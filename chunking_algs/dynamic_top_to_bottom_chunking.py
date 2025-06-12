@@ -4,6 +4,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import nltk
+import re
 
 nltk.download('punkt')
 from nltk.tokenize import sent_tokenize
@@ -21,6 +22,9 @@ def pre_split_lines_as_paragraphs(text, max_lines=6):
 def embed(text):
     return model.encode([text])[0]
 
+def safe_sent_tokenize(text):
+    return re.split(r'(?<=[.!?]) +', text.strip())
+
 def cosine_sim(a, b):
     return cosine_similarity([a], [b])[0][0]
 
@@ -28,7 +32,7 @@ def recursive_split(chunk, min_similarity, max_depth=5, depth=0):
     if depth >= max_depth:
         return [chunk]
     
-    sentences = sent_tokenize(chunk)
+    sentences = safe_sent_tokenize(chunk)
     if len(sentences) <= 1:
         return [chunk]
     

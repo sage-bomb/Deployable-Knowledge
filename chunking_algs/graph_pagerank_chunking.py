@@ -3,10 +3,14 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 from nltk.tokenize import sent_tokenize
 import numpy as np
+import re
+
+def safe_sent_tokenize(text):
+    return re.split(r'(?<=[.!?]) +', text.strip())
 
 def pagerank_chunk_text(text, model_name="all-mpnet-base-v2", sim_threshold=0.5, top_k=5, expansion_threshold=0.5):
     # ---- STEP 1: Preprocessing ----
-    sentences = sent_tokenize(text)
+    sentences = safe_sent_tokenize(text)
     model = SentenceTransformer(model_name)
     embeddings = model.encode(sentences, convert_to_tensor=False)
 
