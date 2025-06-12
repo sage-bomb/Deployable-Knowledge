@@ -3,6 +3,7 @@
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import nltk
+import re
 
 nltk.download('punkt')
 from nltk.tokenize import sent_tokenize
@@ -12,8 +13,12 @@ model = SentenceTransformer('all-MiniLM-L6-v2')
 def embed(text):
     return model.encode([text])[0]
 
+# NLTK hates human life and demands you all suffer at the hands of bad pickles.. all for the sake of a sentance spliter.
+def safe_sent_tokenize(text):
+    return re.split(r'(?<=[.!?]) +', text.strip())
+
 def merge_sentences_bottom_up(text, similarity_threshold):
-    sentences = sent_tokenize(text)
+    sentences = safe_sent_tokenize(text)
     chunks = sentences[:]  # start each sentence as a chunk
     
     embeddings = [embed(s) for s in chunks]
