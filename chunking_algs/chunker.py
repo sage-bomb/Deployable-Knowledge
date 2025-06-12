@@ -113,7 +113,7 @@ def chunk_by_graph_rank(text, max_sentences=4):
                     chunk_text.strip(),
                     {
                         "chunk_idx": chunk_idx,
-                        "start_char": start_in_full_text,
+                        "char_range": (start_in_full_text, start_in_full_text + len(chunk_text)),
                         "num_sentences": len(current)
                     }
                 ))
@@ -130,7 +130,7 @@ def chunk_by_graph_rank(text, max_sentences=4):
                 chunk_text.strip(),
                 {
                     "chunk_idx": chunk_idx,
-                    "start_char": start_in_full_text,
+                    "char_range": (start_in_full_text, start_in_full_text + len(chunk_text)),
                     "num_sentences": len(current)
                 }
             ))
