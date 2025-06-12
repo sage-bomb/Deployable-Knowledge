@@ -10,11 +10,11 @@ CHROMA_COLLECTION_NAME = "testing_collection"  # Must match what's saved
 TOP_K = 5  # Number of top results to retrieve
 BGE_PREFIX = "Represent this question for retrieval: "  # Format for BGE model
 MASTER_RESULTS_JSON = "query_results.json"  # Optional, for saving results in JSON format
-EMBEDDING_STRATEGY = "Sentences"
+EMBEDDING_STRATEGY = "GraphRank"
 
 # === Load SentenceTransformer Model ===
 print("Loading embedding model...")
-model = SentenceTransformer("BAAI/bge-small-en-v1.5")  # Or your specific BGE variant
+model = SentenceTransformer("all-MiniLM-L6-v2")  # Model type can be changed
 
 # === Connect to ChromaDB ===
 print("Connecting to ChromaDB...")
@@ -49,8 +49,8 @@ for i, query in enumerate(queries, 1):
         continue
 
     print(f"Embedding and querying: '{query}'")
-    formatted_query = BGE_PREFIX + query
-    embedding = model.encode([formatted_query])
+    #formatted_query = BGE_PREFIX + query
+    embedding = model.encode([query])
 
     query_result = collection.query(
         query_embeddings=embedding,
