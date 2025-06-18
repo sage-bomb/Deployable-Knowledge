@@ -58,7 +58,7 @@ for file_path in Path(DATA_DIR).glob("*.txt"):
         strategy_name=CHUNKING_METHOD,
         source=file_path.name,
         tags=["testing","Cisco Router and Security Device Manager User's Guide"],  # Add default/global tags here if needed
-        positions=None
+        positions=positions
     )
 
 print("\n✅ All documents chunked, embedded, and stored.")

@@ -28,7 +28,8 @@ def parse_pdf(pdf_path, margin_top=50, margin_bottom=50, margin_left=50, margin_
                     cleaned_words.append((key, word['text']))
                 else:
                     #testing margin work
-                    print(f"Skipping word '{word['text']}' at {word['x0'] if is_landscape else word['top']} due to margin constraints.")
+                    #print(f"Skipping word '{word['text']}' at {word['x0'] if is_landscape else word['top']} due to margin constraints.")
+                    continue
 
             # Sort words by vertical (portrait) or horizontal (landscape) position
             cleaned_words.sort(key=lambda x: x[0])
@@ -80,10 +81,10 @@ def group_words_by_line(words_with_key, is_landscape, line_tol=5):
 
 # Replace input_pdf and output_txt with desired file paths
 if __name__ == "__main__":
-    input_pdf = "cisco_test.pdf"
+    input_pdf = "900_page.pdf"
     output_dir = Path("documents")
     output_dir.mkdir(exist_ok=True)
-    output_txt = output_dir / "parsed.txt"
+    output_txt = output_dir / "cisco_router.txt"
 
     # Typically margins are 1-inch, which is 72 points for PDF
     cleaned_text = parse_pdf(
