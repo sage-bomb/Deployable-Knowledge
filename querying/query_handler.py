@@ -16,36 +16,29 @@ class QueryHandler:
         filters: Optional[Dict] = None,
         include_metadata: bool = True,
     ) -> List[Dict]:
-        """
-        Run a semantic search with optional metadata filtering.
-        
-        :param query: The input query string
-        :param k: The number of results (chunks) to return
-        :param filters: Metadata filter dictionary
-        :param include_metadata: Whether to include metadata in the results
-        :return: List of dictionaries with chunks and metadata
-        """
         query_embedding = self.embedder.encode([query])[0]
 
         result = self.collection.query(
             query_embeddings=[query_embedding],
             n_results=k,
             where=filters or {},
-            include=["documents", "metadatas"] if include_metadata else ["documents"],
+            include=["documents", "metadatas", "distances"] if include_metadata else ["documents", "distances"],
         )
 
         documents = result["documents"][0]
         metadatas = result.get("metadatas", [[]])[0] if include_metadata else [{}] * len(documents)
+        distances = result.get("distances", [[]])[0]
 
         return [
             {
-                "text": doc,
+                "preview": doc,
                 "metadata": metadata,
                 "tags": metadata.get("tags", []),
                 "source": metadata.get("source", None),
                 "char_range": metadata.get("char_range", None),
                 "start": metadata.get("start", None),
                 "end": metadata.get("end", None),
+                "distance": dist,
             }
-            for doc, metadata in zip(documents, metadatas)
+            for doc, metadata, dist in zip(documents, metadatas, distances)
         ]

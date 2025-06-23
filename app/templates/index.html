@@ -12,13 +12,20 @@
     <form id="query-form">
       <input
         type="text"
-        name="q"
-        id="query-input"
+        name="query"
+        id="query"
         placeholder="Enter a question..."
         required
       />
       <button type="submit">Search</button>
     </form>
+
+    <div id="source-filter-container">
+      <h3>Select Document Sources</h3>
+      <div id="source-checklist">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
 
     <div id="results">
       <h2>Results</h2>
@@ -26,33 +33,109 @@
     </div>
 
     <script>
+      let selectedSources = [];
+
+      // Fetch sources from backend and populate checklist
+      async function fetchSources() {
+        try {
+          const response = await fetch("/sources");
+          const sources = await response.json();
+          const checklist = document.getElementById("source-checklist");
+
+          sources.forEach((source) => {
+            const label = document.createElement("label");
+            const checkbox = document.createElement("input");
+
+            checkbox.type = "checkbox";
+            checkbox.name = "sources";
+            checkbox.value = source;
+
+            // Track selected sources
+            checkbox.addEventListener("change", () => {
+              selectedSources = Array.from(
+                document.querySelectorAll("input[name='sources']:checked")
+              ).map((cb) => cb.value);
+            });
+
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(" " + source));
+            checklist.appendChild(label);
+            checklist.appendChild(document.createElement("br"));
+          });
+        } catch (err) {
+          console.error("Failed to fetch sources:", err);
+          document.getElementById("source-checklist").innerHTML =
+            "<p style='color: red;'>Error loading sources.</p>";
+        }
+      }
+
+      // Attach fetchSources to page load
+      $(document).ready(function () {
+        fetchSources();
+      });
+
+      // Form submission using selected sources
       $("#query-form").on("submit", function (e) {
         e.preventDefault();
-        const formData = $(this).serialize();
+
+        // Check if at least one source checkbox is selected
+        const checkedSources = $(
+          "#source-checklist input[name='sources']:checked"
+        );
+        if (checkedSources.length === 0) {
+          alert("Please select at least one document source.");
+          return; // Prevent form submission
+        }
+
+        const queryText = $("#query").val(); // Your query input field
         const $list = $("#results-list");
         $list.html("<li>Searching...</li>");
 
-        $.post("/query", formData, function (data) {
-          $list.empty();
-          if (!data.results || !data.results.length) {
-            $list.append("<li>No results found.</li>");
-          } else {
-            data.results.forEach((item) => {
-              const tags = item.tags?.length
-                ? `<em>Tags:</em> ${item.tags}`
-                : "";
-              $list.append(`<li>
+        const body = {
+          query: queryText,
+          k: 5,
+          filters: selectedSources.length
+            ? { source: { $in: selectedSources } }
+            : {},
+        };
+
+        console.log("Sending body:", JSON.stringify(body));
+
+        $.ajax({
+          type: "POST",
+          url: "/query",
+          contentType: "application/json",
+          data: JSON.stringify(body),
+          success: function (data) {
+            $list.empty();
+            if (!data.results || !data.results.length) {
+              $list.append("<li>No results found.</li>");
+            } else {
+              data.results.forEach((item) => {
+                const tags = item.tags?.length
+                  ? `<em>Tags:</em> ${item.tags}`
+                  : "";
+
+                // Ensure distance exists and is a number before formatting
+                const distanceText =
+                  typeof item.distance === "number"
+                    ? item.distance.toFixed(4)
+                    : "N/A";
+
+                $list.append(`<li>
     <strong>${item.source}</strong><br>
-    <small>Distance: ${item.distance.toFixed(4)}</small><br><br>
+    <small>Distance: ${distanceText}</small><br><br>
     <div>${item.preview}</div>
     <div style="color: #94a3b8; font-size: 0.9em; margin-top: 0.25rem;">${tags}</div>
   </li>`);
-            });
-          }
-        }).fail(function () {
-          $list.html(
-            '<li style="color: #f87171;">Error retrieving results.</li>'
-          );
+              });
+            }
+          },
+          error: function () {
+            $list.html(
+              '<li style="color: #f87171;">Error retrieving results.</li>'
+            );
+          },
         });
       });
     </script>
