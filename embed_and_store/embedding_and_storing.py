@@ -1,7 +1,13 @@
 import os
+import sys
 from pathlib import Path
 from typing import List, Tuple, Dict
 from db_manager import DBManager
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
 from chunking_algs.chunker import (
     chunk_by_sentences,
     chunk_by_semantic_similarity,
