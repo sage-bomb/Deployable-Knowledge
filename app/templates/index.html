@@ -55,6 +55,47 @@
           );
         });
       });
+
+      $(document).ready(function () {
+          console.log("DOM ready, setting up handlers");
+
+          function appendMessage(role, text) {
+            const $chat = $("#chat-body");
+            const cls = role === "user" ? "color: #60a5fa;" : "color: #facc15;";
+            const escapedText = $('<div>').text(text).html().replace(/\n/g, "<br>");
+            $chat.append(`<p style="${cls}"><strong>${role}:</strong> ${escapedText}</p>`);
+            $chat.scrollTop($chat[0].scrollHeight);
+          }
+
+          $("#chat-send").on("click", function () {
+            console.log("Send clicked");
+            const msg = $("#chat-input").val().trim();
+            if (!msg) return;
+            appendMessage("user", msg);
+            $("#chat-input").val("");
+
+            $.post("/chat", { message: msg })
+              .done(function (data) {
+                console.log("POST /chat response:", data);
+                appendMessage("assistant", data.reply);
+              })
+              .fail(function () {
+                appendMessage("assistant", "⚠️ Failed to respond.");
+              });
+          });
+
+          $("#chat-input").on("keypress", function (e) {
+            if (e.which === 13) $("#chat-send").click();
+          });
+        });
     </script>
+    <div id="chat-widget">
+      <div id="chat-header">💬 Chatbot</div>
+      <div id="chat-body"></div>
+      <div id="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Ask something..." />
+        <button id="chat-send">Send</button>
+      </div>
+    </div>
   </body>
 </html>

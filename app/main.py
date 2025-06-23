@@ -1,10 +1,11 @@
 import sys
 from pathlib import Path
+import subprocess
 
 # Add project root to sys.path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from db_manager import DBManager
+from embed_and_store.db_manager import DBManager
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -53,3 +54,28 @@ async def handle_query(q: str = Form(...)):
         })
 
     return {"results": formatted}
+
+@app.post("/chat", response_class=JSONResponse)
+async def chat(message: str = Form(...)):
+    try:
+        print(f"Received chat message: {message}")  # For logging/debug
+
+        # Ensure Ollama is installed and 'mistral' is available
+        result = subprocess.run(
+            ["ollama", "run", "mistral", message],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+
+        if result.returncode != 0:
+            print("Ollama error:", result.stderr)
+            return JSONResponse(status_code=500, content={"reply": f"Ollama error: {result.stderr}"})
+
+        reply = result.stdout.strip()
+        print("Ollama replied:", reply)  # Log response
+        return {"reply": reply}
+
+    except Exception as e:
+        print("Exception in /chat:", e)
+        return JSONResponse(status_code=500, content={"reply": f"Error: {e}"})
