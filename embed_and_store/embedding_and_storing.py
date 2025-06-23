@@ -1,7 +1,13 @@
 import os
+import sys
 from pathlib import Path
 from typing import List, Tuple, Dict
 from db_manager import DBManager
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
 from chunking_algs.chunker import (
     chunk_by_sentences,
     chunk_by_semantic_similarity,
@@ -57,7 +63,7 @@ for file_path in Path(DATA_DIR).glob("*.txt"):
         segments=segments,
         strategy_name=CHUNKING_METHOD,
         source=file_path.name,
-        tags=["testing","Cisco Router and Security Device Manager User's Guide"],  # Add default/global tags here if needed
+        tags=["testing"],  # Add default/global tags here if needed
         positions=positions
     )
 
