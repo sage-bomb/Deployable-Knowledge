@@ -19,6 +19,9 @@ db.add_segments(segments, strategy_name="top_down", source="contract_001.txt", t
         self.collection = self.client.get_or_create_collection(collection_name)
         self.model = SentenceTransformer("all-MiniLM-L6-v2")
     
+    def get_collection(self, name: str):
+        return self.client.get_collection(name=name)
+    
     def clear_collection(self, batch_size=500):
         """Clear the collection in ChromaDB."""
         all_ids = self.collection.get()["ids"]
