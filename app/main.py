@@ -6,7 +6,7 @@ import subprocess
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from embed_and_store.db_manager import DBManager
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -43,27 +43,21 @@ async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/query", response_class=JSONResponse)
-async def handle_query(q: str = Form(...)):
-    # Embed the query
-    query_embedding = db.embed([q])[0]
-
-    # Search the vector DB
-    results = db.collection.query(
-        query_embeddings=[query_embedding],
-        n_results=5
+def query_route(data: QueryInput = Body(...)):
+    print("Received query:", data.query)  # For logging/debugging
+    print("Filters:", data.filters)  # Log filters if any
+    results = query_handler.run_query(
+        query=data.query,
+        k=data.k,
+        filters=data.filters
     )
+    return {"results": results}
 
-    # Structure results for frontend
-    formatted = []
-    for doc, meta, dist in zip(results["documents"][0], results["metadatas"][0], results["distances"][0]):
-        formatted.append({
-            "source": meta.get("source", "unknown"),
-            "preview": doc[:200],  # optional truncation
-            "distance": dist,
-            "tags": meta.get("metadata_tags", [])
-        })
-
-    return {"results": formatted}
+@app.get("/sources")
+def get_sources():
+    metadatas = query_handler.collection.get(include=["metadatas"])["metadatas"]
+    sources = list({meta.get("source") for meta in metadatas if "source" in meta})
+    return sources
 
 @app.post("/chat", response_class=JSONResponse)
 async def chat(message: str = Form(...)):
