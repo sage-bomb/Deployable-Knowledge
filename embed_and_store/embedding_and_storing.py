@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 from typing import List, Tuple, Dict
 from db_manager import DBManager
+import argparse
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
@@ -16,19 +17,37 @@ from chunking_algs.chunker import (
 )
 
 # === Configuration ===
-DATA_DIR = "documents"  # Directory with .txt files (newline-preserved from PDFs)
+# Define available chunking methods
+CHUNKING_METHOD_OPTIONS = ["sentences", "semantics", "graph", "paragraphs"]
+
+# CLI argument parsing
+parser = argparse.ArgumentParser(description="Embed and store text documents with configurable chunking.")
+parser.add_argument("--data_dir", type=str, default="documents", help="Directory with .txt files (newline-preserved from PDFs)")
+parser.add_argument("--chunking_method", type=str, default="graph", choices=CHUNKING_METHOD_OPTIONS,
+                    help=f"Chunking method to use. Options: {', '.join(CHUNKING_METHOD_OPTIONS)}")
+parser.add_argument("--clear_collection", action="store_true", default=True,
+                    help="Clear the collection before adding new data (default: True). Use --no-clear_collection to disable.")
+parser.add_argument("--no-clear_collection", action="store_false", dest="clear_collection",)
+args = parser.parse_args()
+
+# Configuration
+DATA_DIR = args.data_dir
 CHROMA_PERSIST_DIR = "chroma_db"  # Persistent DB path
 CHROMA_COLLECTION_NAME = "testing_collection"
 CHUNK_SIZE = 500        # Characters per chunk
 CHUNK_OVERLAP = 50      # Overlap between chunks
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-CHUNKING_METHOD = "graph" # Options: sentences, semantics, graph, paragraphs
+CHUNKING_METHOD = args.chunking_method
+
+print(f"Using chunking method: {CHUNKING_METHOD}. Options: {CHUNKING_METHOD_OPTIONS}")
+print(f"Reading data from directory: {DATA_DIR}")
 
 # Use DBManager to handle ChromaDB operations
 db = DBManager(persist_dir=CHROMA_PERSIST_DIR, collection_name=CHROMA_COLLECTION_NAME)
 
-#optional
-db.clear_collection()
+# Optional: Clear collection if argument is True
+if args.clear_collection:
+    db.clear_collection()
 
 # Type of chunking method applied
 def chunk_text(text: str) -> List[Tuple[str, Dict]]:
