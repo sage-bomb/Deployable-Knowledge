@@ -54,3 +54,4 @@ pdfs/
 # --- Miscellaneous ---
 test_queries.txt
 *.md.bak
+refactor_test.py
