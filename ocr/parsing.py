@@ -1,5 +1,6 @@
 import pdfplumber
 from pathlib import Path
+import argparse
 
 def parse_pdf(pdf_path, margin_top=50, margin_bottom=50, margin_left=50, margin_right=50):
     """
@@ -81,20 +82,26 @@ def group_words_by_line(words_with_key, is_landscape, line_tol=5):
 
 # Replace input_pdf and output_txt with desired file paths
 if __name__ == "__main__":
-    input_pdf = "900_page.pdf"
-    output_dir = Path("documents")
-    output_dir.mkdir(exist_ok=True)
-    output_txt = output_dir / "cisco_router.txt"
+    parser = argparse.ArgumentParser(description="Extract clean text from a PDF, removing headers and footers.")
+    parser.add_argument("input_pdf", type=str, help="Path to the input PDF file")
+    parser.add_argument("output_txt", type=str, help="Path to the output text file")
+    parser.add_argument("--margin_top", type=int, default=50, help="Top margin in points (default: 50)")
+    parser.add_argument("--margin_bottom", type=int, default=50, help="Bottom margin in points (default: 50)")
+    parser.add_argument("--margin_left", type=int, default=50, help="Left margin in points (default: 50)")
+    parser.add_argument("--margin_right", type=int, default=50, help="Right margin in points (default: 50)")
 
-    # Typically margins are 1-inch, which is 72 points for PDF
+    args = parser.parse_args()
+
     cleaned_text = parse_pdf(
-        input_pdf,
-        margin_top=120,
-        margin_bottom=120,
-        margin_left=50,
-        margin_right=50
+        args.input_pdf,
+        margin_top=args.margin_top,
+        margin_bottom=args.margin_bottom,
+        margin_left=args.margin_left,
+        margin_right=args.margin_right
     )
 
-    with open(output_txt, "w", encoding="utf-8") as f:
+    output_path = Path(args.output_txt)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(cleaned_text)
-    print(f"Extracted text saved to {output_txt}")
+    print(f"Extracted text saved to {output_path}")
