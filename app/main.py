@@ -5,7 +5,7 @@ import subprocess
 # Add project root to sys.path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from embed_and_store.db_manager import DBManager
+from utility.db_manager import DBManager
 from fastapi import FastAPI, Request, Form, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
