@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Document Search</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <script src="/js/jquery-3.6.0.min.js"></script>
+  </head>
+
+  <body>
+    <h1>Ask a Question</h1>
+    <form id="query-form">
+      <input
+        type="text"
+        name="query"
+        id="query"
+        placeholder="Enter a question..."
+        required
+      />
+      <button type="submit">Search</button>
+    </form>
+
+    <div id="source-filter-container">
+      <h3>Select Document Sources</h3>
+      <div id="source-checklist">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+
+    <div id="results">
+      <h2>Results</h2>
+      <ul id="results-list"></ul>
+    </div>
+
+    <script>
+      let selectedSources = [];
+
+      // Fetch sources from backend and populate checklist
+      async function fetchSources() {
+        try {
+          const response = await fetch("/sources");
+          const sources = await response.json();
+          const checklist = document.getElementById("source-checklist");
+
+          sources.forEach((source) => {
+            const label = document.createElement("label");
+            const checkbox = document.createElement("input");
+
+            checkbox.type = "checkbox";
+            checkbox.name = "sources";
+            checkbox.value = source;
+
+            // Track selected sources
+            checkbox.addEventListener("change", () => {
+              selectedSources = Array.from(
+                document.querySelectorAll("input[name='sources']:checked")
+              ).map((cb) => cb.value);
+            });
+
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(" " + source));
+            checklist.appendChild(label);
+            checklist.appendChild(document.createElement("br"));
+          });
+        } catch (err) {
+          console.error("Failed to fetch sources:", err);
+          document.getElementById("source-checklist").innerHTML =
+            "<p style='color: red;'>Error loading sources.</p>";
+        }
+      }
+
+      // Attach fetchSources to page load
+      $(document).ready(function () {
+        fetchSources();
+      });
+
+      // Form submission using selected sources
+      $("#query-form").on("submit", function (e) {
+        e.preventDefault();
+
+        // Check if at least one source checkbox is selected
+        const checkedSources = $(
+          "#source-checklist input[name='sources']:checked"
+        );
+        if (checkedSources.length === 0) {
+          alert("Please select at least one document source.");
+          return; // Prevent form submission
+        }
+
+        const queryText = $("#query").val(); // Your query input field
+        const $list = $("#results-list");
+        $list.html("<li>Searching...</li>");
+
+        const body = {
+          query: queryText,
+          k: 5,
+          filters: selectedSources.length
+            ? { source: { $in: selectedSources } }
+            : {},
+        };
+
+        console.log("Sending body:", JSON.stringify(body));
+
+        $.ajax({
+          type: "POST",
+          url: "/query",
+          contentType: "application/json",
+          data: JSON.stringify(body),
+          success: function (data) {
+            $list.empty();
+            if (!data.results || !data.results.length) {
+              $list.append("<li>No results found.</li>");
+            } else {
+              data.results.forEach((item) => {
+                const tags = item.tags?.length
+                  ? `<em>Tags:</em> ${item.tags}`
+                  : "";
+
+                // Ensure distance exists and is a number before formatting
+                const distanceText =
+                  typeof item.distance === "number"
+                    ? item.distance.toFixed(4)
+                    : "N/A";
+
+                $list.append(`<li>
+    <strong>${item.source}</strong><br>
+    <small>Distance: ${distanceText}</small><br><br>
+    <div>${item.preview}</div>
+    <div style="color: #94a3b8; font-size: 0.9em; margin-top: 0.25rem;">${tags}</div>
+  </li>`);
+              });
+            }
+          },
+          error: function () {
+            $list.html(
+              '<li style="color: #f87171;">Error retrieving results.</li>'
+            );
+          },
+        });
+      });
+
+      $(document).ready(function () {
+          console.log("DOM ready, setting up handlers");
+
+          function appendMessage(role, text) {
+            const $chat = $("#chat-body");
+            const cls = role === "user" ? "color: #60a5fa;" : "color: #facc15;";
+            const escapedText = $('<div>').text(text).html().replace(/\n/g, "<br>");
+            $chat.append(`<p style="${cls}"><strong>${role}:</strong> ${escapedText}</p>`);
+            $chat.scrollTop($chat[0].scrollHeight);
+          }
+
+          $("#chat-send").on("click", function () {
+            console.log("Send clicked");
+            const msg = $("#chat-input").val().trim();
+            if (!msg) return;
+            appendMessage("user", msg);
+            $("#chat-input").val("");
+
+            $.post("/chat", { message: msg })
+              .done(function (data) {
+                console.log("POST /chat response:", data);
+                appendMessage("assistant", data.reply);
+              })
+              .fail(function () {
+                appendMessage("assistant", "⚠️ Failed to respond.");
+              });
+          });
+
+          $("#chat-input").on("keypress", function (e) {
+            if (e.which === 13) $("#chat-send").click();
+          });
+        });
+    </script>
+    <div id="chat-widget">
+      <div id="chat-header">💬 Chatbot</div>
+      <div id="chat-body"></div>
+      <div id="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Ask something..." />
+        <button id="chat-send">Send</button>
+      </div>
+    </div>
+  </body>
+</html>

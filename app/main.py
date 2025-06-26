@@ -1,85 +1,182 @@
+import os
 import sys
 from pathlib import Path
-import subprocess
+from tempfile import NamedTemporaryFile
 
-# Add project root to sys.path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
-from utility.db_manager import DBManager
-from fastapi import FastAPI, Request, Form, Body
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request, Form, UploadFile
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from sentence_transformers import SentenceTransformer
+from fastapi.responses import HTMLResponse, JSONResponse
 
-from pydantic import BaseModel
-from typing import Any, Optional, Dict
-from querying.query_handler import QueryHandler
+import httpx
 
-# You may want to move this into a startup hook if using larger models
-db = DBManager("chroma_db", "testing_collection")  # path and collection name can be config-driven
-query_handler = QueryHandler(db=db, embedder=SentenceTransformer("all-MiniLM-L6-v2"), collection_name="testing_collection")
+# === Setup Paths ===
+BASE_DIR = Path(__file__).resolve().parent.parent
+UTIL_DIR = BASE_DIR / "utility"
+sys.path.append(str(UTIL_DIR))
+
+# === Imports from Utilities ===
+from parsing import parse_pdf
+from embedding_and_storing import chunk_text, db
 
 
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
-TEMPLATES_DIR = BASE_DIR / "templates"
-
+# === FastAPI Setup ===
 app = FastAPI()
+templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "app" / "static")), name="static")
 
-# Mount static directories
-app.mount("/css", StaticFiles(directory=STATIC_DIR / "css"), name="css")
-app.mount("/js", StaticFiles(directory=STATIC_DIR / "js"), name="js")
+OLLAMA_URL = "http://localhost:11434/api/generate"
 
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-class QueryInput(BaseModel):
-    query: str
-    k: Optional[int] = 5
-    filters: Optional[Dict[str, Dict[str, Any]]] = None
+# === Utilities ===
+def get_documents():
+    raw = db.collection.get(include=["metadatas"])
+    seen = set()
+    docs = []
+    for meta in raw.get("metadatas", []):
+        uid = meta.get("uuid")
+        if uid and uid not in seen:
+            docs.append({
+                "title": meta.get("source", "Untitled"),
+                "id": uid
+            })
+            seen.add(uid)
+    return docs
+
+
+def query_chroma(text: str, top_k: int = 5):
+    embedding = db.embed([text])[0]
+    results = db.collection.query(query_embeddings=[embedding], n_results=top_k)
+    return "\n\n".join(results.get("documents", [[]])[0])
+
+
+# === Routes ===
 
 @app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+async def list_documents(request: Request, q: str = ""):
+    all_docs = get_documents()
+    filtered = [doc for doc in all_docs if q.lower() in doc["title"].lower()] if q else all_docs
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "documents": filtered,
+        "query": q
+    })
 
-@app.post("/query", response_class=JSONResponse)
-def query_route(data: QueryInput = Body(...)):
-    print("Received query:", data.query)  # For logging/debugging
-    print("Filters:", data.filters)  # Log filters if any
-    results = query_handler.run_query(
-        query=data.query,
-        k=data.k,
-        filters=data.filters
-    )
-    return {"results": results}
 
-@app.get("/sources")
-def get_sources():
-    metadatas = query_handler.collection.get(include=["metadatas"])["metadatas"]
-    sources = list({meta.get("source") for meta in metadatas if "source" in meta})
-    return sources
+@app.post("/upload")
+async def upload_pdf(file: UploadFile):
+    try:
+        with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            tmp.write(await file.read())
+            tmp_path = tmp.name
 
-@app.post("/chat", response_class=JSONResponse)
+        # Parse, chunk, and embed
+        text = parse_pdf(tmp_path)
+        chunked = chunk_text(text)
+        segments = [chunk for chunk, _ in chunked]
+        positions = [meta.get("char_range", (None, None)) for _, meta in chunked]
+        db.add_segments(segments, strategy_name="web_ui", source=file.filename, tags=["uploaded"], positions=positions)
+
+        return JSONResponse({"status": "success", "message": f"{file.filename} uploaded and embedded."})
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)})
+
+
+@app.post("/chat")
 async def chat(message: str = Form(...)):
     try:
-        print(f"Received chat message: {message}")  # For logging/debugAdd commentMore actions
+        context = query_chroma(message)
+        prompt = f"""You are answering based on the following context:
 
-        # Ensure Ollama is installed and 'mistral' is available
-        result = subprocess.run(
-            ["ollama", "run", "mistral", message],
-            capture_output=True,
-            text=True,
-            timeout=60
-        )
+{context}
 
-        if result.returncode != 0:
-            print("Ollama error:", result.stderr)
-            return JSONResponse(status_code=500, content={"reply": f"Ollama error: {result.stderr}"})
+Question: {message}
+Answer:"""
 
-        reply = result.stdout.strip()
-        print("Ollama replied:", reply)  # Log response
-        return {"reply": reply}
-
+        async with httpx.AsyncClient() as client:
+            response = await client.post(OLLAMA_URL, json={
+                "model": "mistral:7B",
+                "prompt": prompt,
+                "stream": False
+            })
+            result = response.json()
+            return JSONResponse(content={"response": result.get("response", "[Error: No response]")})
     except Exception as e:
-        print("Exception in /chat:", e)
-        return JSONResponse(status_code=500, content={"reply": f"Error: {e}"})
+        return JSONResponse(content={"response": f"[Error: {str(e)}]"})
+
+
+@app.post("/clear_db")
+async def clear_db():
+    try:
+        db.clear_collection()
+        return JSONResponse({"status": "success", "message": "ChromaDB collection cleared."})
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)})
+
+from fastapi import BackgroundTasks
+from embedding_and_storing import embed_directory
+
+from utility.parsing import parse_pdf
+from pathlib import Path
+
+@app.post("/ingest")
+async def ingest_documents(background_tasks: BackgroundTasks):
+    pdf_dir = Path("pdfs").resolve()
+    txt_dir = Path("documents").resolve()
+    
+    print(f"🔍 Looking for PDFs in: {pdf_dir}")
+    print(f"📁 Saving .txt to: {txt_dir}")
+
+    if not pdf_dir.exists():
+        print("❌ PDF directory does not exist.")
+        return {"status": "error", "message": f"Directory not found: {pdf_dir}"}
+
+    files = list(pdf_dir.glob("*.pdf"))
+    print(f"📄 Found {len(files)} PDFs")
+
+    for pdf_file in files:
+        txt_file = txt_dir / (pdf_file.stem + ".txt")
+        try:
+            print(f"📝 Parsing {pdf_file.name} → {txt_file.name}")
+            parsed_text = parse_pdf(pdf_file)
+            txt_file.write_text(parsed_text, encoding="utf-8")
+        except Exception as e:
+            print(f"⚠️ Failed to parse {pdf_file.name}: {e}")
+
+    background_tasks.add_task(
+        embed_directory,
+        data_dir=str(txt_dir),
+        chunking_method="graph",
+        clear_collection=False,
+        default_tags=["auto_ingested"]
+    )
+
+    return {"status": "started", "message": "Parsed PDFs and scheduled ingestion."}
+
+from fastapi import Query
+from pydantic import BaseModel
+
+class SearchResponse(BaseModel):
+    results: list[str]
+
+@app.get("/search")
+async def search_documents(q: str = Query(...), top_k: int = 5):
+    try:
+        query_embedding = db.embed([q])[0]
+        results = db.collection.query(query_embeddings=[query_embedding], n_results=top_k)
+
+        docs = results.get("documents", [[]])[0]
+        metas = results.get("metadatas", [[]])[0]
+        scores = results.get("distances", [[]])[0]
+
+        enriched_results = []
+        for doc, meta, score in zip(docs, metas, scores):
+            enriched_results.append({
+                "text": doc,
+                "source": meta.get("source", "unknown"),
+                "score": score
+            })
+
+        return {"results": enriched_results}
+    except Exception as e:
+        return {"results": [], "error": str(e)}
