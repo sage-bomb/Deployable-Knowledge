@@ -85,17 +85,30 @@ async def upload_pdf(file: UploadFile):
 @app.post("/chat")
 async def chat(message: str = Form(...)):
     try:
-        context = query_chroma(message)
-        prompt = f"""You are answering based on the following context:
+        # Step 1: Embed user message
+        query_embedding = db.embed([message])[0]
 
-{context}
+        # Step 2: Query top 2 matching chunks
+        results = db.collection.query(query_embeddings=[query_embedding], n_results=2)
 
-Question: {message}
-Answer:"""
+        docs = results.get("documents", [[]])[0]
+        sources = results.get("metadatas", [[]])[0]
 
+        # Step 3: Prepend context to prompt
+        context_blocks = [f"• {doc.strip()}" for doc in docs]
+        context_text = "\n".join(context_blocks)
+
+        prompt = f"""You are a helpful assistant with access to the following context:
+
+{context_text}
+
+User: {message}
+Assistant:"""
+
+        # Step 4: Send to LLM (Ollama)
         async with httpx.AsyncClient() as client:
-            response = await client.post(OLLAMA_URL, json={
-                "model": "mistral:7B",
+            response = await client.post("http://localhost:11434/api/generate", json={
+                "model": "mistral:7b",
                 "prompt": prompt,
                 "stream": False
             })
