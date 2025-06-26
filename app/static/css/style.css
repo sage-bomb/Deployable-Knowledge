@@ -1,139 +1,103 @@
-    body {
-      background-color: #0f172a;
-      color: #f8fafc;
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      margin: 0;
-      padding: 2rem;
-    }
+/* Base styles */
+body {
+  background-color: #121212;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 2rem;
+}
 
-    h1, h2 {
-      color: #e2e8f0;
-    }
+h2 {
+  margin-top: 0;
+  color: #ffffff;
+}
 
-    input[type="text"] {
-      width: 60%;
-      padding: 0.5rem;
-      font-size: 1rem;
-      background-color: #1e293b;
-      color: #f8fafc;
-      border: 1px solid #334155;
-      border-radius: 0.3rem;
-    }
+.container {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
 
-    button {
-      background-color: #2563eb;
-      color: white;
-      padding: 0.5rem 1rem;
-      margin-left: 1rem;
-      border: none;
-      border-radius: 0.3rem;
-      cursor: pointer;
-    }
+/* Columns */
+.column {
+  flex: 1 1 45%;
+  background-color: #1f1f1f;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #00000033;
+}
 
-    button:hover {
-      background-color: #1d4ed8;
-    }
+/* Form + Input */
+form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
 
-    #results {
-      margin-top: 2rem;
-    }
+input[type="text"] {
+  flex: 1;
+  background: #2a2a2a;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+}
 
-    ul#results-list {
-      list-style-type: none;
-      padding: 0;
-    }
+button {
+  background: #444;
+  color: #fff;
+  border: 1px solid #666;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
 
-    ul#results-list li {
-      background-color: #1e293b;
-      border: 1px solid #334155;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      margin-bottom: 1rem;
-    }
+button:hover {
+  background: #555;
+}
 
-    small {
-      color: #cbd5e1;
-    }
+/* Document list */
+ul {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 0;
+}
 
-    a {
-      color: #93c5fd;
-    }
+li {
+  background: #2e2e2e;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #3a3a3a;
+  transition: background 0.2s ease;
+}
 
-    a:hover {
-      text-decoration: underline;
-    }
+li:hover {
+  background: #3a3a3a;
+}
 
-    #chat-widget {
-      position: fixed;
-      bottom: 1rem;
-      right: 1rem;
-      background-color: #1e293b;
-      color: #f8fafc;
-      width: 300px;
-      border: 1px solid #334155;
-      border-radius: 0.5rem;
-      font-size: 0.9rem;
-      display: flex;
-      flex-direction: column;
-      max-height: 400px;
-      z-index: 1000;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-      overflow: hidden;
-      font-family: system-ui, sans-serif;
-    }
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
 
-    #chat-header {
-      background-color: #334155;
-      padding: 0.5rem;
-      font-weight: bold;
-      cursor: pointer;
-      user-select: none;
-      border-top-left-radius: 0.5rem;
-      border-top-right-radius: 0.5rem;
-    }
+  .column {
+    flex: 1 1 100%;
+  }
+}
 
-    #chat-body {
-      flex-grow: 1;
-      overflow-y: auto;
-      padding: 0.5rem;
-      min-height: 150px; /* <-- ensure some visible height */
-      line-height: 1.4;
-      word-wrap: break-word;
-      scrollbar-width: thin;
-    }
+.search-result {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  margin-bottom: 1rem;
+  transition: background 0.2s ease;
+}
 
-    #chat-body p {
-      margin: 0.3rem 0;
-    }
-
-    #chat-input-area {
-      display: flex;
-      align-items: center;
-      border-top: 1px solid #334155;
-      background-color: #0f172a;
-    }
-
-    #chat-input {
-      flex-grow: 1;
-      border: none;
-      padding: 0.5rem;
-      background-color: #0f172a;
-      color: #f8fafc;
-      font-size: 0.9rem;
-      outline: none;
-      border-bottom-left-radius: 0.5rem;
-    }
-
-    #chat-send {
-      background-color: #2563eb;
-      color: white;
-      border: none;
-      padding: 0.5rem;
-      cursor: pointer;
-      border-bottom-right-radius: 0.5rem;
-      transition: background-color 0.3s ease;
-    }
-
-    #chat-send:hover {
-      background-color: #1d4ed8;
-    }
+.search-result:hover {
+  background-color: #333;
+}

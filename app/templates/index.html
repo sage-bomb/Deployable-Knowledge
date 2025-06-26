@@ -1,184 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Document Search</title>
-    <link rel="stylesheet" href="/css/style.css" />
-    <script src="/js/jquery-3.6.0.min.js"></script>
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <title>Document Manager</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <!-- Left Column: Document Manager -->
+    <div class="column">
+      <h2>Document Manager</h2>
+      <form method="get" action="/">
+        <input type="text" name="q" value="{{ query }}" placeholder="Filter documents..." />
+        <button type="submit">Filter</button>
+      </form>
+      <ul>
+        {% for doc in documents %}
+          <li>
+            <strong>{{ doc.title }}</strong><br />
+            <small>ID: {{ doc.id }}</small>
+          </li>
+        {% endfor %}
+        {% if documents|length == 0 %}
+          <li><em>No results found.</em></li>
+        {% endif %}
+      </ul>
+    </div>
 
-  <body>
-    <h1>Ask a Question</h1>
-    <form id="query-form">
-      <input
-        type="text"
-        name="query"
-        id="query"
-        placeholder="Enter a question..."
-        required
-      />
-      <button type="submit">Search</button>
-    </form>
-
-    <div id="source-filter-container">
-      <h3>Select Document Sources</h3>
-      <div id="source-checklist">
-        <!-- Dynamically populated -->
+    <!-- Right Column: LLM Chat and Search -->
+    <div class="column">
+      <h2>Assistant Chat</h2>
+      <div id="chat-box" style="height: 300px; overflow-y: auto; background-color: #1a1a1a; border: 1px solid #333; padding: 1rem; border-radius: 4px;">
+        <div><strong>Assistant:</strong> Hello! How can I help you today?</div>
       </div>
+      <form id="chat-form" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+        <input type="text" id="user-input" placeholder="Type a message..." style="flex: 1;" />
+        <button type="submit">Send</button>
+      </form>
+
+      <h2 style="margin-top: 2rem;">Search Documents</h2>
+      <form id="search-form" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+        <input type="text" id="search-query" placeholder="Enter search text..." style="flex: 1;" />
+        <button type="submit">Search</button>
+      </form>
+      <div id="search-results" style="margin-top: 1rem;"></div>
     </div>
+  </div>
 
-    <div id="results">
-      <h2>Results</h2>
-      <ul id="results-list"></ul>
-    </div>
+  <script>
+    // Chat
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('user-input');
+    const chatBox = document.getElementById('chat-box');
 
-    <script>
-      let selectedSources = [];
+    chatForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const msg = chatInput.value.trim();
+      if (!msg) return;
 
-      // Fetch sources from backend and populate checklist
-      async function fetchSources() {
-        try {
-          const response = await fetch("/sources");
-          const sources = await response.json();
-          const checklist = document.getElementById("source-checklist");
+      const userMsg = document.createElement('div');
+      userMsg.innerHTML = `<strong>You:</strong> ${msg}`;
+      chatBox.appendChild(userMsg);
 
-          sources.forEach((source) => {
-            const label = document.createElement("label");
-            const checkbox = document.createElement("input");
+      const botMsg = document.createElement('div');
+      botMsg.innerHTML = `<strong>Assistant:</strong> <em>Thinking...</em>`;
+      chatBox.appendChild(botMsg);
 
-            checkbox.type = "checkbox";
-            checkbox.name = "sources";
-            checkbox.value = source;
-
-            // Track selected sources
-            checkbox.addEventListener("change", () => {
-              selectedSources = Array.from(
-                document.querySelectorAll("input[name='sources']:checked")
-              ).map((cb) => cb.value);
-            });
-
-            label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(" " + source));
-            checklist.appendChild(label);
-            checklist.appendChild(document.createElement("br"));
-          });
-        } catch (err) {
-          console.error("Failed to fetch sources:", err);
-          document.getElementById("source-checklist").innerHTML =
-            "<p style='color: red;'>Error loading sources.</p>";
-        }
-      }
-
-      // Attach fetchSources to page load
-      $(document).ready(function () {
-        fetchSources();
-      });
-
-      // Form submission using selected sources
-      $("#query-form").on("submit", function (e) {
-        e.preventDefault();
-
-        // Check if at least one source checkbox is selected
-        const checkedSources = $(
-          "#source-checklist input[name='sources']:checked"
-        );
-        if (checkedSources.length === 0) {
-          alert("Please select at least one document source.");
-          return; // Prevent form submission
-        }
-
-        const queryText = $("#query").val(); // Your query input field
-        const $list = $("#results-list");
-        $list.html("<li>Searching...</li>");
-
-        const body = {
-          query: queryText,
-          k: 5,
-          filters: selectedSources.length
-            ? { source: { $in: selectedSources } }
-            : {},
-        };
-
-        console.log("Sending body:", JSON.stringify(body));
-
-        $.ajax({
-          type: "POST",
-          url: "/query",
-          contentType: "application/json",
-          data: JSON.stringify(body),
-          success: function (data) {
-            $list.empty();
-            if (!data.results || !data.results.length) {
-              $list.append("<li>No results found.</li>");
-            } else {
-              data.results.forEach((item) => {
-                const tags = item.tags?.length
-                  ? `<em>Tags:</em> ${item.tags}`
-                  : "";
-
-                // Ensure distance exists and is a number before formatting
-                const distanceText =
-                  typeof item.distance === "number"
-                    ? item.distance.toFixed(4)
-                    : "N/A";
-
-                $list.append(`<li>
-    <strong>${item.source}</strong><br>
-    <small>Distance: ${distanceText}</small><br><br>
-    <div>${item.preview}</div>
-    <div style="color: #94a3b8; font-size: 0.9em; margin-top: 0.25rem;">${tags}</div>
-  </li>`);
-              });
-            }
-          },
-          error: function () {
-            $list.html(
-              '<li style="color: #f87171;">Error retrieving results.</li>'
-            );
-          },
+      fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ message: msg })
+      })
+        .then(res => res.json())
+        .then(data => {
+          botMsg.innerHTML = `<strong>Assistant:</strong> ${data.response}`;
+          chatBox.scrollTop = chatBox.scrollHeight;
+        })
+        .catch(err => {
+          botMsg.innerHTML = `<strong>Assistant:</strong> <em>Error: ${err}</em>`;
         });
-      });
 
-      $(document).ready(function () {
-          console.log("DOM ready, setting up handlers");
+      chatBox.scrollTop = chatBox.scrollHeight;
+      chatInput.value = '';
+    });
 
-          function appendMessage(role, text) {
-            const $chat = $("#chat-body");
-            const cls = role === "user" ? "color: #60a5fa;" : "color: #facc15;";
-            const escapedText = $('<div>').text(text).html().replace(/\n/g, "<br>");
-            $chat.append(`<p style="${cls}"><strong>${role}:</strong> ${escapedText}</p>`);
-            $chat.scrollTop($chat[0].scrollHeight);
+    // Search
+    const searchForm = document.getElementById('search-form');
+    const searchInput = document.getElementById('search-query');
+    const searchResults = document.getElementById('search-results');
+
+    searchForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const query = searchInput.value.trim();
+      if (!query) return;
+
+      searchResults.innerHTML = `<em>Searching...</em>`;
+
+      fetch(`/search?q=${encodeURIComponent(query)}&top_k=5`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.results && data.results.length > 0) {
+            searchResults.innerHTML = data.results.map(result => `
+<div class="search-result">
+  <div><strong>Source:</strong> ${result.source || "unknown"}</div>
+  <div><strong>Match Score:</strong> ${result.score?.toFixed(4) || "n/a"}</div>
+  <div style="margin-top: 0.5rem;">${result.text}</div>
+</div>
+            `).join('');
+          } else {
+            searchResults.innerHTML = `<em>No matches found.</em>`;
           }
-
-          $("#chat-send").on("click", function () {
-            console.log("Send clicked");
-            const msg = $("#chat-input").val().trim();
-            if (!msg) return;
-            appendMessage("user", msg);
-            $("#chat-input").val("");
-
-            $.post("/chat", { message: msg })
-              .done(function (data) {
-                console.log("POST /chat response:", data);
-                appendMessage("assistant", data.reply);
-              })
-              .fail(function () {
-                appendMessage("assistant", "⚠️ Failed to respond.");
-              });
-          });
-
-          $("#chat-input").on("keypress", function (e) {
-            if (e.which === 13) $("#chat-send").click();
-          });
+        })
+        .catch(err => {
+          searchResults.innerHTML = `<em>Error: ${err}</em>`;
         });
-    </script>
-    <div id="chat-widget">
-      <div id="chat-header">💬 Chatbot</div>
-      <div id="chat-body"></div>
-      <div id="chat-input-area">
-        <input type="text" id="chat-input" placeholder="Ask something..." />
-        <button id="chat-send">Send</button>
-      </div>
-    </div>
-  </body>
+    });
+  </script>
+</body>
 </html>
