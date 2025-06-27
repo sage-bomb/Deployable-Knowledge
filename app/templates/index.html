@@ -48,6 +48,11 @@
   </div>
 
   <script>
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+
     // Chat
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('user-input');
@@ -73,7 +78,12 @@
       })
         .then(res => res.json())
         .then(data => {
-          botMsg.innerHTML = `<strong>Assistant:</strong> ${data.response}`;
+const formatted = data.response
+  .replace(/```(.*?)\n([\s\S]*?)```/g, (_, lang, code) => {
+    return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`;
+  });
+
+botMsg.innerHTML = `<strong>Assistant:</strong><br>${formatted}`;
           chatBox.scrollTop = chatBox.scrollHeight;
         })
         .catch(err => {
