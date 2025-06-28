@@ -89,8 +89,9 @@ def split_text_by_length(text, max_chars=100000):
         start = end
     return chunks
 
+
 def chunk_by_graph_rank(text, max_sentences=4):
-    nlp = spacy.load("en_core_web_sm")
+    nlp = spacy.load("en_core_web_trf")
     nlp.add_pipe("textrank", last=True)  # Ensure PyTextRank is applied
     nlp.max_length = 2_000_000  # Optional: Increase limit if you're confident in memory
 
