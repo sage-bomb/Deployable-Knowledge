@@ -16,13 +16,15 @@
       </form>
       <ul>
         {% for doc in documents %}
-          <li>
-            <strong>{{ doc.title }}</strong><br />
-            <small>ID: {{ doc.id }}</small>
-          </li>
+        <li data-doc-id="{{ doc.id }}" data-active="{{ 'true' if doc.active else 'false' }}">
+          <strong>{{ doc.title }}</strong><br />
+          <small>Segments: {{ doc.segments }}</small><br />
+          <small>Status: <span class="status-label">{{ 'Active' if doc.active else 'Inactive' }}</span></small><br />
+          <button class="toggle-btn">Toggle</button>
+        </li>
         {% endfor %}
         {% if documents|length == 0 %}
-          <li><em>No results found.</em></li>
+        <li><em>No results found.</em></li>
         {% endif %}
       </ul>
     </div>
@@ -47,84 +49,138 @@
     </div>
   </div>
 
-  <script>
-function escapeHtml(str) {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
+<script>
+  // === Local toggle state ===
+  const toggleStates = {};
 
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    const li = btn.closest('li');
+    const docId = li.getAttribute('data-doc-id');
+    const statusSpan = li.querySelector('.status-label');
+    const initialActive = li.getAttribute('data-active') === "true";
+    toggleStates[docId] = initialActive;
 
-    // Chat
-    const chatForm = document.getElementById('chat-form');
-    const chatInput = document.getElementById('user-input');
-    const chatBox = document.getElementById('chat-box');
+    btn.textContent = initialActive ? "Deactivate" : "Activate";
 
-    chatForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const msg = chatInput.value.trim();
-      if (!msg) return;
-
-      const userMsg = document.createElement('div');
-      userMsg.innerHTML = `<strong>You:</strong> ${msg}`;
-      chatBox.appendChild(userMsg);
-
-      const botMsg = document.createElement('div');
-      botMsg.innerHTML = `<strong>Assistant:</strong> <em>Thinking...</em>`;
-      chatBox.appendChild(botMsg);
-
-      fetch("/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ message: msg })
-      })
-        .then(res => res.json())
-        .then(data => {
-const formatted = data.response
-  .replace(/```(.*?)\n([\s\S]*?)```/g, (_, lang, code) => {
-    return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`;
+    btn.addEventListener('click', () => {
+      const isActive = toggleStates[docId];
+      toggleStates[docId] = !isActive;
+      statusSpan.textContent = isActive ? "Inactive" : "Active";
+      btn.textContent = isActive ? "Activate" : "Deactivate";
+    });
   });
 
-botMsg.innerHTML = `<strong>Assistant:</strong><br>${formatted}`;
-          chatBox.scrollTop = chatBox.scrollHeight;
-        })
-        .catch(err => {
-          botMsg.innerHTML = `<strong>Assistant:</strong> <em>Error: ${err}</em>`;
-        });
+  function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;");
+  }
 
+  function isActive(source) {
+    return !(toggleStates[source] === false);
+  }
+
+  function renderSearchResults(results, filterFn = () => true) {
+  if (!Array.isArray(results) || results.length === 0) {
+    return `<em>No matches found.</em>`;
+  }
+
+  return results
+    .map(result => {
+      if (typeof result === "string") {
+        return { text: result, source: "unknown", score: null };
+      }
+      return result;
+    })
+    .filter(filterFn)
+    .map(result => {
+      return `
+        <div class="search-result">
+          <div><strong>Source:</strong> ${escapeHtml(result.source || "unknown")}</div>
+          <div><strong>Match Score:</strong> ${result.score != null ? result.score.toFixed(4) : "n/a"}</div>
+          <div style="margin-top: 0.5rem;">${escapeHtml(result.text)}</div>
+        </div>
+      `;
+    })
+    .join('');
+}
+
+  // === Chat ===
+  const chatForm = document.getElementById('chat-form');
+  const chatInput = document.getElementById('user-input');
+  const chatBox = document.getElementById('chat-box');
+  const searchResults = document.getElementById('search-results');
+
+  chatForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+
+    const inactive = Object.entries(toggleStates)
+      .filter(([_, v]) => v === false)
+      .map(([k]) => k);
+
+    const userMsg = document.createElement('div');
+    userMsg.innerHTML = `<strong>You:</strong> ${msg}`;
+    chatBox.appendChild(userMsg);
+
+    const botMsg = document.createElement('div');
+    botMsg.innerHTML = `<strong>Assistant:</strong> <em>Thinking...</em>`;
+    chatBox.appendChild(botMsg);
+
+    fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        message: msg,
+        inactive: JSON.stringify(inactive)
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const formatted = data.response.replace(/```(.*?)\n([\s\S]*?)```/g, (_, lang, code) => {
+        return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`;
+      });
+      botMsg.innerHTML = `<strong>Assistant:</strong><br>${formatted}`;
       chatBox.scrollTop = chatBox.scrollHeight;
-      chatInput.value = '';
+
+      // Render RAG context with filtering
+      if (Array.isArray(data.context)) {
+        searchResults.innerHTML = `
+          <h3>RAG Context Used:</h3>
+          ${renderSearchResults(data.context, r => isActive(r.source))}
+        `;
+      }
+    })
+    .catch(err => {
+      botMsg.innerHTML = `<strong>Assistant:</strong> <em>Error: ${err}</em>`;
     });
 
-    // Search
-    const searchForm = document.getElementById('search-form');
-    const searchInput = document.getElementById('search-query');
-    const searchResults = document.getElementById('search-results');
+    chatBox.scrollTop = chatBox.scrollHeight;
+    chatInput.value = '';
+  });
 
-    searchForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const query = searchInput.value.trim();
-      if (!query) return;
+  // === Search ===
+  const searchForm = document.getElementById('search-form');
+  const searchInput = document.getElementById('search-query');
 
-      searchResults.innerHTML = `<em>Searching...</em>`;
+  searchForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const query = searchInput.value.trim();
+    if (!query) return;
 
-      fetch(`/search?q=${encodeURIComponent(query)}&top_k=5`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.results && data.results.length > 0) {
-            searchResults.innerHTML = data.results.map(result => `
-<div class="search-result">
-  <div><strong>Source:</strong> ${result.source || "unknown"}</div>
-  <div><strong>Match Score:</strong> ${result.score?.toFixed(4) || "n/a"}</div>
-  <div style="margin-top: 0.5rem;">${result.text}</div>
-</div>
-            `).join('');
-          } else {
-            searchResults.innerHTML = `<em>No matches found.</em>`;
-          }
-        })
-        .catch(err => {
-          searchResults.innerHTML = `<em>Error: ${err}</em>`;
-        });
-    });
-  </script>
+    searchResults.innerHTML = `<em>Searching...</em>`;
+
+    fetch(`/search?q=${encodeURIComponent(query)}&top_k=5`)
+      .then(res => res.json())
+      .then(data => {
+        searchResults.innerHTML = renderSearchResults(data.results, r => isActive(r.source));
+      })
+      .catch(err => {
+        searchResults.innerHTML = `<em>Error: ${err}</em>`;
+      });
+  });
+</script>
+
 </body>
 </html>
