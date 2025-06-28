@@ -39,7 +39,12 @@
         <input type="text" id="user-input" placeholder="Type a message..." style="flex: 1;" />
         <button type="submit">Send</button>
       </form>
-
+<h2 style="margin-top: 2rem;">Upload File</h2>
+<form id="upload-form" enctype="multipart/form-data" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 1rem;">
+  <input type="file" id="file-input" name="file" />
+  <button type="submit">Upload</button>
+</form>
+<div id="upload-status" style="margin-top: 0.5rem;"></div>
       <h2 style="margin-top: 2rem;">Search Documents</h2>
       <form id="search-form" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
         <input type="text" id="search-query" placeholder="Enter search text..." style="flex: 1;" />
@@ -180,6 +185,41 @@
         searchResults.innerHTML = `<em>Error: ${err}</em>`;
       });
   });
+// === File Upload ===
+const uploadForm = document.getElementById('upload-form');
+const fileInput = document.getElementById('file-input');
+const uploadStatus = document.getElementById('upload-status');
+
+uploadForm.addEventListener('submit', function (e) {
+  e.preventDefault();
+  const file = fileInput.files[0];
+  if (!file) {
+    uploadStatus.textContent = "⚠️ Please select a file to upload.";
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  uploadStatus.textContent = "⏳ Uploading...";
+
+  fetch("/upload", {
+    method: "POST",
+    body: formData
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "success") {
+        uploadStatus.textContent = `✅ ${data.message}`;
+      } else {
+        uploadStatus.textContent = `❌ Error: ${data.message}`;
+      }
+    })
+    .catch(err => {
+      uploadStatus.textContent = `❌ Upload failed: ${err}`;
+    });
+});
+
 </script>
 
 </body>

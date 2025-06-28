@@ -2,11 +2,12 @@ from fastapi import APIRouter, UploadFile, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pathlib import Path
 from utility.parsing import parse_pdf
-from utility.embedding_and_storing import db, chunk_text, embed_directory
+from utility.embedding_and_storing import db, chunk_text, embed_directory, embed_file
 
 router = APIRouter()
 UPLOAD_DIR = Path("documents")
 UPLOAD_DIR.mkdir(exist_ok=True)
+
 
 @router.post("/upload")
 async def upload_file(file: UploadFile):
@@ -14,15 +15,18 @@ async def upload_file(file: UploadFile):
         destination = UPLOAD_DIR / file.filename
         with open(destination, "wb") as f:
             f.write(await file.read())
-        text = parse_pdf(destination)
-        chunked = chunk_text(text)
-        segments = [chunk for chunk, _ in chunked]
-        positions = [meta.get("char_range", (None, None)) for _, meta in chunked]
-        db.add_segments(segments, strategy_name="web_ui", source=file.filename, tags=["uploaded"], positions=positions)
-        return JSONResponse({"status": "success", "message": f"{file.filename} uploaded and embedded."})
-    except Exception as e:
-        return JSONResponse({"status": "error", "message": str(e)})
 
+        embed_file(destination, chunking_method="graph", source_name=file.filename, tags=["uploaded", "web_ui"])
+
+        return JSONResponse({
+            "status": "success",
+            "message": f"{file.filename} uploaded and embedded."
+        })
+    except Exception as e:
+        return JSONResponse({
+            "status": "error",
+            "message": str(e)
+        })
 @router.post("/ingest")
 async def ingest_documents(background_tasks: BackgroundTasks):
     pdf_dir = Path("pdfs").resolve()
