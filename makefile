@@ -17,7 +17,7 @@ install: venv
 	$(PIP) install -r requirements.txt
 
 run: install
-	$(UVICORN) $(APP_MODULE) --reload
+	PYTHONPATH=. $(UVICORN) app.main:app --reload
 
 clean:
 	rm -rf $(VENV_NAME)

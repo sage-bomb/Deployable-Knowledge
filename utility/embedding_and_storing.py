@@ -2,10 +2,10 @@ import os
 import sys
 from pathlib import Path
 from typing import List, Tuple, Dict, Optional
-from db_manager import DBManager
+from utility.db_manager import DBManager
 
 # Import chunkers
-from chunking_algs.chunker import (
+from utility.chunking_algs.chunker import (
     chunk_by_sentences,
     chunk_by_semantic_similarity,
     chunk_by_graph_rank,
