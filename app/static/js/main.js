@@ -233,6 +233,7 @@ function initUploadHandler() {
       .then(data => {
         if (data.status === "success") {
           uploadStatus.textContent = `✅ ${data.message}`;
+          fetchDocuments(); // Refresh document list after upload
         } else {
           uploadStatus.textContent = `❌ Error: ${data.message}`;
         }
