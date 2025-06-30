@@ -1,3 +1,5 @@
+
+
 import os
 import sys
 from pathlib import Path
@@ -14,13 +16,13 @@ from utility.chunking_algs.chunker import (
 )
 
 # === Config ===
-DEFAULT_CHROMA_DIR = "chroma_db"
-DEFAULT_COLLECTION_NAME = "testing_collection"
-DEFAULT_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-CHUNKING_METHOD_OPTIONS = ["sentences", "semantics", "graph", "paragraphs"]
+from config import (
+    CHROMA_DB_DIR, COLLECTION_NAME, EMBEDDING_MODEL_NAME,
+    DEFAULT_CHUNKING_METHOD, CHUNKING_METHOD_OPTIONS
+)
 
 # === DB Setup ===
-db = DBManager(persist_dir=DEFAULT_CHROMA_DIR, collection_name=DEFAULT_COLLECTION_NAME)
+db = DBManager(persist_dir=CHROMA_DB_DIR, collection_name=COLLECTION_NAME)
 
 def chunk_text(text: str, method: str = "graph") -> List[Tuple[str, Dict]]:
     if method == "sentences":

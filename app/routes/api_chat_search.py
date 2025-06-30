@@ -3,9 +3,9 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 import json, requests
 from utility.embedding_and_storing import db
+from config import OLLAMA_URL
 
 router = APIRouter()
-OLLAMA_URL = "http://localhost:11434/api/generate"
 
 @router.post("/chat")
 async def chat(message: str = Form(...), inactive: Optional[str] = Form(None)):

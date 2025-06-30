@@ -5,9 +5,12 @@ from pathlib import Path
 from utility.parsing import parse_pdf
 from utility.embedding_and_storing import db, chunk_text, embed_directory, embed_file
 
+from config import UPLOAD_DIR, PDF_DIR, DEFAULT_CHUNKING_METHOD
+
 router = APIRouter()
-UPLOAD_DIR = Path("documents")
-UPLOAD_DIR.mkdir(exist_ok=True)
+
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+PDF_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @router.post("/upload")
@@ -17,7 +20,7 @@ async def upload_file(file: UploadFile):
         with open(destination, "wb") as f:
             f.write(await file.read())
 
-        embed_file(destination, chunking_method="graph", source_name=file.filename, tags=["uploaded", "web_ui"])
+        embed_file(destination, chunking_method=DEFAULT_CHUNKING_METHOD, source_name=file.filename, tags=["uploaded", "web_ui"])
 
         return JSONResponse({
             "status": "success",
@@ -33,19 +36,19 @@ async def upload_file(file: UploadFile):
 @router.post("/remove")
 async def remove_document(source: str = Form(...)):
     try:
-        db.delete_by_source(source)  # <- you'll need to implement this if not available
+        db.delete_by_source(source)
         file_path = UPLOAD_DIR / source
         if file_path.exists():
             os.remove(file_path)
         return JSONResponse({"status": "success", "message": f"{source} removed."})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 
 @router.post("/ingest")
 async def ingest_documents(background_tasks: BackgroundTasks):
-    pdf_dir = Path("pdfs").resolve()
-    txt_dir = Path("documents").resolve()
+    pdf_dir = PDF_DIR.resolve()
+    txt_dir = UPLOAD_DIR.resolve()
     for pdf_file in pdf_dir.glob("*.pdf"):
         txt_file = txt_dir / f"{pdf_file.stem}.txt"
         try:
@@ -53,8 +56,15 @@ async def ingest_documents(background_tasks: BackgroundTasks):
             txt_file.write_text(parsed_text, encoding="utf-8")
         except Exception as e:
             print(f"Failed to parse {pdf_file.name}: {e}")
-    background_tasks.add_task(embed_directory, data_dir=str(txt_dir), chunking_method="graph", clear_collection=False, default_tags=["auto_ingested"])
+    background_tasks.add_task(
+        embed_directory,
+        data_dir=str(txt_dir),
+        chunking_method=DEFAULT_CHUNKING_METHOD,
+        clear_collection=False,
+        default_tags=["auto_ingested"]
+    )
     return {"status": "started", "message": "Parsed PDFs and scheduled ingestion."}
+
 
 @router.post("/clear_db")
 async def clear_db():

@@ -1,4 +1,10 @@
 
+from config import CHROMA_DB_DIR, COLLECTION_NAME, EMBEDDING_MODEL_NAME, LOCAL_MODEL_PATH
+
+
+
+
+
 import uuid
 from typing import List, Optional
 from sentence_transformers import SentenceTransformer
@@ -15,10 +21,12 @@ segments = segmenter.segment(text)
 db.add_segments(segments, strategy_name="top_down", source="contract_001.txt", tags=["legal"])
 """
     def __init__(self, persist_dir: str, collection_name: str):
-        self.client = chromadb.PersistentClient(path=persist_dir)
+        self.client = chromadb.PersistentClient(path=str(persist_dir))        
         self.collection = self.client.get_or_create_collection(collection_name)
-        self.model = SentenceTransformer("all-MiniLM-L6-v2")
-    
+        model_path = str(LOCAL_MODEL_PATH) if LOCAL_MODEL_PATH.exists() else EMBEDDING_MODEL_NAME
+        self.model = SentenceTransformer(model_path) 
+
+
     def get_collection(self, name: str):
         return self.client.get_collection(name=name)
     

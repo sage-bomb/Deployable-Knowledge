@@ -1,30 +1,73 @@
-# Makefile
+# Makefile for Deployable-Knowledge
 
-# kill chroma's telemetry
+# === Environment Variables ===
 export CHROMA_TELEMETRY_ENABLED=false
+export TRANSFORMERS_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
 
+# === Config ===
 VENV_NAME := venv
 PYTHON := python3
 PIP := $(VENV_NAME)/bin/pip
 UVICORN := $(VENV_NAME)/bin/uvicorn
 APP_MODULE := app.main:app
+MODEL_DIR := tmp_model
+MODEL_FILE := $(MODEL_DIR)/config.json
+STAMP_FILE := $(VENV_NAME)/.installed.ok
 
-.PHONY: all venv install run clean
+.PHONY: all venv install setup-online run run-offline clean check-network
 
+# === Master Setup ===
 all: venv install
 
+# === Virtual Environment ===
 venv:
 	$(PYTHON) -m venv $(VENV_NAME)
 
+# === Dependency Installation ===
 install: venv
-	$(PIP) install -r requirements.txt
-	. $(VENV_NAME)/bin/activate && python -m spacy download en_core_web_trf
-	. $(VENV_NAME)/bin/activate && python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+	$(PIP) install -r requirements.txt && touch $(STAMP_FILE)
 
-run: install
-	CHROMA_TELEMETRY_ENABLED=false PYTHONPATH=. $(UVICORN) app.main:app --reload
+# === Online Setup ===
+setup-online: install
+	@if [ ! -f $(MODEL_FILE) ]; then \
+		echo "📥 Downloading model..."; \
+		. $(VENV_NAME)/bin/activate && \
+		python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2').save('$(MODEL_DIR)')"; \
+	else \
+		echo "🗂️  Model already exists at $(MODEL_FILE). Skipping download."; \
+	fi
+	@. $(VENV_NAME)/bin/activate && python -m spacy download en_core_web_trf
 
+# === Run Logic ===
+run:
+	@if ping -c 1 -W 1 1.1.1.1 >/dev/null 2>&1; then \
+		echo "🌐 Network detected."; \
+		NEEDS_SETUP=0; \
+		if [ ! -f $(STAMP_FILE) ]; then \
+			echo "📦 Missing Python dependencies."; NEEDS_SETUP=1; \
+		fi; \
+		if [ ! -f $(MODEL_FILE) ]; then \
+			echo "📁 Missing model files."; NEEDS_SETUP=1; \
+		fi; \
+		if [ $$NEEDS_SETUP -eq 1 ]; then \
+			echo "⚙️  Running full setup..."; \
+			$(MAKE) setup-online; \
+		else \
+			echo "✅ All requirements and model found. Skipping setup."; \
+		fi; \
+	else \
+		echo "🚫 No network. Running in offline mode..."; \
+	fi; \
+	$(MAKE) run-offline
+
+# === Run Without Setup ===
+run-offline:
+	PYTHONPATH=. $(UVICORN) $(APP_MODULE) --reload
+
+# === Cleanup ===
 clean:
 	rm -rf $(VENV_NAME)
-	rm -rf chroma/  # or whatever your DB directory is
-	rm -rf tmp_model/
+	rm -rf chroma/
+	rm -rf $(MODEL_DIR)
+
