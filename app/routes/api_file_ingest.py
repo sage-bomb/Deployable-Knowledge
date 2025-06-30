@@ -1,4 +1,5 @@
-from fastapi import APIRouter, UploadFile, BackgroundTasks
+import os
+from fastapi import APIRouter, UploadFile, BackgroundTasks, HTTPException, Form
 from fastapi.responses import JSONResponse
 from pathlib import Path
 from utility.parsing import parse_pdf
@@ -27,6 +28,20 @@ async def upload_file(file: UploadFile):
             "status": "error",
             "message": str(e)
         })
+
+
+@router.post("/remove")
+async def remove_document(source: str = Form(...)):
+    try:
+        db.delete_by_source(source)  # <- you'll need to implement this if not available
+        file_path = UPLOAD_DIR / source
+        if file_path.exists():
+            os.remove(file_path)
+        return JSONResponse({"status": "success", "message": f"{source} removed."})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
 @router.post("/ingest")
 async def ingest_documents(background_tasks: BackgroundTasks):
     pdf_dir = Path("pdfs").resolve()

@@ -83,4 +83,24 @@ db.add_segments(segments, strategy_name="top_down", source="contract_001.txt", t
         print(type(metas), metas[:3])  # Debugging: print type and first 3 metadata entries
         self.collection.add(ids=ids, documents=docs, metadatas=metas, embeddings=embeddings)
 
+    def delete_by_source(self, source_name: str, batch_size=500):
+        """
+        Delete all entries from the collection that match a given source name.
+        """
+        all_data = self.collection.get(include=["metadatas"])
+        to_delete = [
+            id_ for id_, meta in zip(all_data["ids"], all_data["metadatas"])
+            if meta.get("source") == source_name
+        ]
+
+        total = len(to_delete)
+        if not total:
+            print(f"No documents found for source: {source_name}")
+            return
+
+        for i in range(0, total, batch_size):
+            batch = to_delete[i:i + batch_size]
+            self.collection.delete(ids=batch)
+
+        print(f"🗑️ Deleted {total} segments for source: {source_name}")
 

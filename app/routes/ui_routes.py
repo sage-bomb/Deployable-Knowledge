@@ -15,6 +15,11 @@ def get_documents():
             doc_map[source]["count"] += 1
     return [{"title": k, "id": k, "segments": v["count"]} for k, v in doc_map.items()]
 
+
+@router.get("/documents")
+async def list_documents_json():
+    return get_documents()
+
 @router.get("/", response_class=HTMLResponse)
 async def list_documents(request: Request, q: str = ""):
     from app.main import templates

@@ -2,225 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Document Manager</title>
+  <title>Deployable Knowledge</title>
   <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="/static/js/main.js" defer></script>
 </head>
 <body>
-  <div class="container">
-    <!-- Left Column: Document Manager -->
-    <div class="column">
-      <h2>Document Manager</h2>
-      <form method="get" action="/">
-        <input type="text" name="q" value="{{ query }}" placeholder="Filter documents..." />
-        <button type="submit">Filter</button>
-      </form>
-      <ul>
-        {% for doc in documents %}
-        <li data-doc-id="{{ doc.id }}" data-active="{{ 'true' if doc.active else 'false' }}">
-          <strong>{{ doc.title }}</strong><br />
-          <small>Segments: {{ doc.segments }}</small><br />
-          <small>Status: <span class="status-label">{{ 'Active' if doc.active else 'Inactive' }}</span></small><br />
-          <button class="toggle-btn">Toggle</button>
-        </li>
-        {% endfor %}
-        {% if documents|length == 0 %}
-        <li><em>No results found.</em></li>
-        {% endif %}
-      </ul>
-    </div>
 
-    <!-- Right Column: LLM Chat and Search -->
-    <div class="column">
-      <h2>Assistant Chat</h2>
-      <div id="chat-box" style="height: 300px; overflow-y: auto; background-color: #1a1a1a; border: 1px solid #333; padding: 1rem; border-radius: 4px;">
-        <div><strong>Assistant:</strong> Hello! How can I help you today?</div>
+  <div class="top-banner">Deployable Knowledge</div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-content">
+      <p id="confirm-message">Are you sure?</p>
+      <div class="modal-actions">
+        <button id="confirm-yes">Yes</button>
+        <button id="confirm-no">Cancel</button>
       </div>
-      <form id="chat-form" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-        <input type="text" id="user-input" placeholder="Type a message..." style="flex: 1;" />
-        <button type="submit">Send</button>
-      </form>
-<h2 style="margin-top: 2rem;">Upload File</h2>
-<form id="upload-form" enctype="multipart/form-data" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 1rem;">
-  <input type="file" id="file-input" name="file" />
-  <button type="submit">Upload</button>
-</form>
-<div id="upload-status" style="margin-top: 0.5rem;"></div>
-      <h2 style="margin-top: 2rem;">Search Documents</h2>
-      <form id="search-form" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-        <input type="text" id="search-query" placeholder="Enter search text..." style="flex: 1;" />
-        <button type="submit">Search</button>
-      </form>
-      <div id="search-results" style="margin-top: 1rem;"></div>
     </div>
   </div>
 
-<script>
-  // === Local toggle state ===
-  const toggleStates = {};
+  <div class="container">
 
-  document.querySelectorAll('.toggle-btn').forEach(btn => {
-    const li = btn.closest('li');
-    const docId = li.getAttribute('data-doc-id');
-    const statusSpan = li.querySelector('.status-label');
-    const initialActive = li.getAttribute('data-active') === "true";
-    toggleStates[docId] = initialActive;
+    <!-- Document Manager -->
+    <div class="column">
+      <h2>Document Library</h2>
 
-    btn.textContent = initialActive ? "Deactivate" : "Activate";
+      <form id="upload-form">
+        <input type="file" id="file-input" name="file" />
+        <button type="submit">Upload</button>
+      </form>
+      <div id="upload-status" class="status-text"></div>
 
-    btn.addEventListener('click', () => {
-      const isActive = toggleStates[docId];
-      toggleStates[docId] = !isActive;
-      statusSpan.textContent = isActive ? "Inactive" : "Active";
-      btn.textContent = isActive ? "Activate" : "Deactivate";
-    });
-  });
+      <form id="filter-form">
+        <input type="text" id="filter-input" placeholder="Filter documents..." />
+        <button type="submit">Filter</button>
+      </form>
 
-  function escapeHtml(str) {
-    return str.replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;");
-  }
+      <ul id="document-list">
+        <li><em>Loading documents...</em></li>
+      </ul>
+    </div>
 
-  function isActive(source) {
-    return !(toggleStates[source] === false);
-  }
+    <!-- Chat + Search -->
+    <div class="column">
+      <h2>Assistant Chat</h2>
+      <div id="chat-box" class="chat-box">
+        <div><strong>Assistant:</strong> Hello! How can I help you today?</div>
+      </div>
+      <form id="chat-form">
+        <input type="text" id="user-input" placeholder="Type a message..." />
+        <button type="submit">Send</button>
+      </form>
 
-  function renderSearchResults(results, filterFn = () => true) {
-  if (!Array.isArray(results) || results.length === 0) {
-    return `<em>No matches found.</em>`;
-  }
-
-  return results
-    .map(result => {
-      if (typeof result === "string") {
-        return { text: result, source: "unknown", score: null };
-      }
-      return result;
-    })
-    .filter(filterFn)
-    .map(result => {
-      return `
-        <div class="search-result">
-          <div><strong>Source:</strong> ${escapeHtml(result.source || "unknown")}</div>
-          <div><strong>Match Score:</strong> ${result.score != null ? result.score.toFixed(4) : "n/a"}</div>
-          <div style="margin-top: 0.5rem;">${escapeHtml(result.text)}</div>
-        </div>
-      `;
-    })
-    .join('');
-}
-
-  // === Chat ===
-  const chatForm = document.getElementById('chat-form');
-  const chatInput = document.getElementById('user-input');
-  const chatBox = document.getElementById('chat-box');
-  const searchResults = document.getElementById('search-results');
-
-  chatForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const msg = chatInput.value.trim();
-    if (!msg) return;
-
-    const inactive = Object.entries(toggleStates)
-      .filter(([_, v]) => v === false)
-      .map(([k]) => k);
-
-    const userMsg = document.createElement('div');
-    userMsg.innerHTML = `<strong>You:</strong> ${msg}`;
-    chatBox.appendChild(userMsg);
-
-    const botMsg = document.createElement('div');
-    botMsg.innerHTML = `<strong>Assistant:</strong> <em>Thinking...</em>`;
-    chatBox.appendChild(botMsg);
-
-    fetch("/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        message: msg,
-        inactive: JSON.stringify(inactive)
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      const formatted = data.response.replace(/```(.*?)\n([\s\S]*?)```/g, (_, lang, code) => {
-        return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`;
-      });
-      botMsg.innerHTML = `<strong>Assistant:</strong><br>${formatted}`;
-      chatBox.scrollTop = chatBox.scrollHeight;
-
-      // Render RAG context with filtering
-      if (Array.isArray(data.context)) {
-        searchResults.innerHTML = `
-          <h3>RAG Context Used:</h3>
-          ${renderSearchResults(data.context, r => isActive(r.source))}
-        `;
-      }
-    })
-    .catch(err => {
-      botMsg.innerHTML = `<strong>Assistant:</strong> <em>Error: ${err}</em>`;
-    });
-
-    chatBox.scrollTop = chatBox.scrollHeight;
-    chatInput.value = '';
-  });
-
-  // === Search ===
-  const searchForm = document.getElementById('search-form');
-  const searchInput = document.getElementById('search-query');
-
-  searchForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const query = searchInput.value.trim();
-    if (!query) return;
-
-    searchResults.innerHTML = `<em>Searching...</em>`;
-
-    fetch(`/search?q=${encodeURIComponent(query)}&top_k=5`)
-      .then(res => res.json())
-      .then(data => {
-        searchResults.innerHTML = renderSearchResults(data.results, r => isActive(r.source));
-      })
-      .catch(err => {
-        searchResults.innerHTML = `<em>Error: ${err}</em>`;
-      });
-  });
-// === File Upload ===
-const uploadForm = document.getElementById('upload-form');
-const fileInput = document.getElementById('file-input');
-const uploadStatus = document.getElementById('upload-status');
-
-uploadForm.addEventListener('submit', function (e) {
-  e.preventDefault();
-  const file = fileInput.files[0];
-  if (!file) {
-    uploadStatus.textContent = "⚠️ Please select a file to upload.";
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  uploadStatus.textContent = "⏳ Uploading...";
-
-  fetch("/upload", {
-    method: "POST",
-    body: formData
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === "success") {
-        uploadStatus.textContent = `✅ ${data.message}`;
-      } else {
-        uploadStatus.textContent = `❌ Error: ${data.message}`;
-      }
-    })
-    .catch(err => {
-      uploadStatus.textContent = `❌ Upload failed: ${err}`;
-    });
-});
-
-</script>
+      <h2>Search Documents</h2>
+      <form id="search-form">
+        <input type="text" id="search-query" placeholder="Enter search text..." />
+        <button type="submit">Search</button>
+      </form>
+      <div id="search-results"></div>
+    </div>
+  </div>
 
 </body>
 </html>

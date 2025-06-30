@@ -26,3 +26,5 @@ run: install
 
 clean:
 	rm -rf $(VENV_NAME)
+	rm -rf chroma/  # or whatever your DB directory is
+	rm -rf tmp_model/

@@ -42,6 +42,7 @@ parsed_texts/
 
 # --- Model cache or sentence-transformers ---
 cache/
+tmp_model/
 sentence-transformers/
 huggingface_cache/
 *.bin
@@ -49,8 +50,8 @@ huggingface_cache/
 
 # --- PDF files ---
 *.pdf
+documents/
 pdfs/
-
 # --- Miscellaneous ---
 test_queries.txt
 *.md.bak
