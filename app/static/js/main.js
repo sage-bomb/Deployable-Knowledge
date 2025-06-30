@@ -154,10 +154,19 @@ function initChatHandler() {
     })
       .then(res => res.json())
       .then(data => {
-        const formatted = data.response.replace(/```(.*?)\n([\s\S]*?)```/g, (_, lang, code) =>
-          `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`
-        );
-        botMsg.innerHTML = `<strong>Assistant:</strong><br>${formatted}`;
+        if (!data.response) {
+    botMsg.innerHTML = `<strong>Assistant:</strong> <em>No response received from the server.</em>`;
+    return;
+  }
+        console.log("✅ Chat response data:", data);  // add this line
+
+        // const formatted = data.response.replace(/```(.*?)\n([\s\S]*?)```/g, (_, lang, code) =>
+        //   `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`
+        // );
+        // botMsg.innerHTML = `<strong>Assistant:</strong><br>${formatted}`;
+
+        botMsg.innerHTML = `<strong>Assistant:</strong><br>${data.response}`;
+
         chatBox.scrollTop = chatBox.scrollHeight;
 
         if (Array.isArray(data.context)) {

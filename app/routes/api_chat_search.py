@@ -5,6 +5,8 @@ import json, requests
 from utility.embedding_and_storing import db
 from config import OLLAMA_URL
 
+import markdown2
+
 router = APIRouter()
 
 @router.post("/chat")
@@ -13,14 +15,36 @@ async def chat(message: str = Form(...), inactive: Optional[str] = Form(None)):
         inactive_sources = set(json.loads(inactive or "[]"))
         embedding = db.embed([message])[0]
         results = db.collection.query(query_embeddings=[embedding], n_results=10)
+
+        documents = results.get("documents", [[]])[0]
+        metadatas = results.get("metadatas", [[]])[0]
+        scores = results.get("distances", [[]])[0]
+
         context_blocks = [
-            f"[{i+1}] {doc.strip().replace('\n', ' ')}"
-            for i, (doc, meta) in enumerate(zip(results["documents"][0], results["metadatas"][0]))
+            {
+                "text": doc.strip().replace("\n", " "),
+                "source": meta.get("source", "unknown"),
+                "score": score
+            }
+            for doc, meta, score in zip(documents, metadatas, scores)
             if meta.get("source") not in inactive_sources
         ]
-        prompt = f"""You are a helpful assistant with access to the following context:\n\n{''.join(context_blocks)}\n\nUser: {message}\nAssistant:"""
+
+        context_string = "\n\n".join(
+            f"[{i+1}] {block['text']}" for i, block in enumerate(context_blocks)
+        )
+
+        prompt = f"""You are a helpful assistant with access to the following context:\n\n{context_string}\n\nUser: {message}\nAssistant:"""
         response = requests.post(OLLAMA_URL, json={"model": "mistral:7b", "prompt": prompt, "stream": False})
-        return JSONResponse(content={"response": response.json().get("response", "[Error: No response]"), "context": context_blocks})
+        chatbot_response = response.json().get("response", "[Error: No response]")
+        formatted_html = markdown2.markdown(chatbot_response)
+
+        print("🚀 Response JSON:", {    "response": formatted_html,    "context": context_blocks})
+
+        return JSONResponse(content={
+    "response": formatted_html,
+    "context": context_blocks
+})
     except Exception as e:
         return JSONResponse(content={"response": f"[Error: {str(e)}]"})
 
