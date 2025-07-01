@@ -37,7 +37,14 @@ async def chat(message: str = Form(...), inactive: Optional[str] = Form(None)):
         prompt = f"""You are a helpful assistant with access to the following context:\n\n{context_string}\n\nUser: {message}\nAssistant:"""
         response = requests.post(OLLAMA_URL, json={"model": "mistral:7b", "prompt": prompt, "stream": False})
         chatbot_response = response.json().get("response", "[Error: No response]")
-        formatted_html = markdown2.markdown(chatbot_response)
+        formatted_html = markdown2.markdown(chatbot_response, extras=[
+            "fenced-code-blocks",
+            "code-friendly",
+            "strike",
+            "header-ids",
+            "break-on-newline",
+            "tables"
+        ])
 
         print("🚀 Response JSON:", {    "response": formatted_html,    "context": context_blocks})
 
