@@ -244,13 +244,23 @@ function initUploadHandler() {
       });
 
       const data = await res.json();
-      if (data.status === "success" || data.uploads) {
-        uploadStatus.textContent = `✅ Upload complete.`;
+      console.log("Upload response:", data);
+
+      if (data.uploads && Array.isArray(data.uploads)) {
+        const successCount = data.uploads.filter(f => f.status === 'success').length;
+        const errorFiles = data.uploads.filter(f => f.status === 'error');
+        
+        uploadStatus.textContent = `✅ ${successCount} file(s) uploaded successfully.`;
+        
+        if (errorFiles.length > 0) {
+          const errorMessages = errorFiles.map(f => `${f.filename}: ${f.message}`).join('\n');
+          alert(`Some files failed to upload:\n${errorMessages}`);
+        }
+
         fetchDocuments(); // Refresh document list
-        alert(JSON.stringify(data.uploads || data, null, 2));
       } else {
-        uploadStatus.textContent = `❌ Error: ${data.message || "Unknown error."}`;
-      }
+        uploadStatus.textContent = `❌ Error: Unexpected response from server.`;
+}
     } catch (err) {
       uploadStatus.textContent = `❌ Upload failed: ${escapeHtml(err.message || err)}`;
     }
