@@ -1,23 +1,42 @@
-/* Base styles */
-body {
-  background-color: #121212;
-  color: #e0e0e0;
-  font-family: 'Segoe UI', sans-serif;
+/* === Base Theme === */
+:root {
+  --bg-main: #121212;
+  --bg-panel: #1f1f1f;
+  --bg-card: #2a2a2a;
+  --bg-hover: #3a3a3a;
+  --text-main: #e0e0e0;
+  --text-dim: #ccc;
+  --border-light: #333;
+  --border-mid: #444;
+  --border-strong: #666;
+  --accent-blue: #4ea3f1;
+  --accent-blue-hover: #76c4ff;
+  --danger: #c0392b;
+  --radius: 4px;
+  --font-ui: 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  color: inherit;
+  font-family: inherit;
+}
+
+html, body {
   margin: 0;
   padding: 0;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-ui);
 }
 
+/* === Typography === */
 h2 {
   margin-top: 0;
-  color: #ffffff;
+  color: #fff;
 }
 
-.status-text {
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  color: #ccc;
-}
-
+/* === Layout === */
 .container {
   display: flex;
   flex-wrap: wrap;
@@ -25,30 +44,24 @@ h2 {
   padding: 2rem;
 }
 
-/* Banner */
-.top-banner {
-  background-color: #1f1f1f;
-  color: #ffffff;
-  padding: 1rem 2rem;
-  text-align: center;
-  font-size: 1.25rem;
-  font-weight: bold;
-  border-bottom: 1px solid #333;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-  background-image: linear-gradient(to right, #1f1f1f, #2a2a2a);
-  letter-spacing: 0.05em;
-}
-
-/* Columns */
 .column {
   flex: 1 1 45%;
-  background-color: #1f1f1f;
+  background-color: var(--bg-panel);
   padding: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 0 10px #00000033;
 }
 
-/* Form styles */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+  .column {
+    flex: 1 1 100%;
+  }
+}
+
+/* === UI Elements === */
 form {
   display: flex;
   gap: 0.5rem;
@@ -56,21 +69,34 @@ form {
 }
 
 input[type="text"],
-input[type="file"] {
+input[type="file"],
+select {
   flex: 1;
-  background: #2a2a2a;
+  background: var(--bg-card);
   color: #fff;
-  border: 1px solid #444;
+  border: 1px solid var(--border-mid);
   padding: 0.5rem 0.75rem;
-  border-radius: 4px;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+}
+
+select {
+  appearance: none;
+  cursor: pointer;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--border-strong);
+  box-shadow: 0 0 3px var(--accent-blue);
 }
 
 button {
-  background: #444;
+  background: var(--border-mid);
   color: #fff;
-  border: 1px solid #666;
+  border: 1px solid var(--border-strong);
   padding: 0.5rem 1rem;
-  border-radius: 4px;
+  border-radius: var(--radius);
   cursor: pointer;
   transition: background 0.2s ease;
 }
@@ -79,7 +105,7 @@ button:hover {
   background: #555;
 }
 
-/* Document list */
+/* === Lists === */
 ul {
   list-style: none;
   padding-left: 0;
@@ -89,46 +115,46 @@ ul {
 li {
   background: #2e2e2e;
   padding: 0.75rem;
-  border-radius: 4px;
+  border-radius: var(--radius);
   margin-bottom: 0.5rem;
-  border: 1px solid #3a3a3a;
+  border: 1px solid var(--border-mid);
   transition: background 0.2s ease;
 }
 
 li:hover {
-  background: #3a3a3a;
+  background: var(--bg-hover);
 }
 
-/* Search Results */
+/* === Search Results === */
 .search-result {
-  background-color: #2a2a2a;
-  color: #e0e0e0;
+  background-color: var(--bg-card);
+  color: var(--text-main);
   padding: 0.75rem;
-  border-radius: 4px;
-  border: 1px solid #444;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-mid);
   margin-bottom: 1rem;
   transition: background 0.2s ease;
 }
 
 .search-result:hover {
-  background-color: #333;
+  background-color: var(--bg-hover);
 }
 
-/* Chat Box */
+/* === Chat Box === */
 .chat-box {
   height: 300px;
   overflow-y: auto;
   background-color: #1a1a1a;
-  border: 1px solid #333;
+  border: 1px solid var(--border-light);
   padding: 1rem;
-  border-radius: 4px;
+  border-radius: var(--radius);
   margin-bottom: 1rem;
 }
 
-/* Modal */
+/* === Modal === */
 .modal {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.65);
   display: flex;
   justify-content: center;
@@ -141,7 +167,7 @@ li:hover {
 }
 
 .modal-content {
-  background-color: #2a2a2a;
+  background-color: var(--bg-card);
   padding: 1.5rem;
   border-radius: 6px;
   max-width: 400px;
@@ -159,27 +185,118 @@ li:hover {
 .modal-actions button {
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius);
   cursor: pointer;
 }
 
 #confirm-yes {
-  background-color: #c0392b;
+  background-color: var(--danger);
   color: white;
 }
 
 #confirm-no {
-  background-color: #444;
+  background-color: var(--border-mid);
   color: white;
 }
 
-/* Responsive layout */
-@media (max-width: 768px) {
-  .container {
-    flex-direction: column;
-  }
-
-  .column {
-    flex: 1 1 100%;
-  }
+/* === Banner === */
+.top-banner {
+  background: linear-gradient(to right, var(--bg-panel), #2a2a2a);
+  color: #fff;
+  padding: 1rem 2rem;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: bold;
+  border-bottom: 1px solid var(--border-light);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.05em;
 }
+
+/* === Collapsible Panel === */
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.column-wrapper {
+  position: relative;
+  transition: width 0.3s ease;
+}
+
+#doc-panel-wrapper.collapsed {
+  width: 2.5rem;
+  flex: 0 0 2.5rem;
+  overflow: hidden;
+}
+
+#doc-panel-wrapper.collapsed .column {
+  padding: 0.5rem;
+}
+
+#doc-panel-wrapper.collapsed h2,
+#doc-panel-wrapper.collapsed form,
+#doc-panel-wrapper.collapsed ul,
+#doc-panel-wrapper.collapsed .status-text {
+  display: none;
+}
+
+#toggle-docs-btn {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  margin-left: auto;
+}
+
+/* === Link Styling === */
+a {
+  color: var(--accent-blue);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: var(--accent-blue-hover);
+}
+
+/* === Utility === */
+.status-text {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+}
+
+/* === Default catch-all === */
+button,
+input,
+select,
+textarea,
+a,
+div,
+section,
+article {
+  font-family: var(--font-ui);
+  background-color: transparent;
+}
+select {
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-mid);
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  appearance: none;
+  cursor: pointer;
+}
+
+select option {
+  background-color: var(--bg-card);
+  color: var(--text-main);
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 3px var(--accent-blue);
+}
+

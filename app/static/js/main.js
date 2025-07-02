@@ -69,13 +69,22 @@ function renderSearchResults(results, filterFn = () => true) {
     .filter(filterFn)
     .map(result => `
       <div class="search-result">
-        <div><strong>Source:</strong> ${escapeHtml(result.source || "unknown")}</div>
+        <div><strong>Source:</strong> <a href="/documents/${encodeURIComponent(result.source)}" target="_blank">${escapeHtml(result.source)}</a></div>
         <div><strong>Match Score:</strong> ${result.score != null ? result.score.toFixed(4) : "n/a"}</div>
         <div style="margin-top: 0.5rem;">${escapeHtml(result.text)}</div>
       </div>
     `)
     .join('');
 }
+
+
+document.getElementById("toggle-docs-btn").addEventListener("click", () => {
+  const wrapper = document.getElementById("doc-panel-wrapper");
+  const btn = document.getElementById("toggle-docs-btn");
+
+  wrapper.classList.toggle("collapsed");
+  btn.textContent = wrapper.classList.contains("collapsed") ? "»" : "«";
+});
 
 function showConfirmation(message) {
   return new Promise((resolve) => {
@@ -195,8 +204,9 @@ function initSearchHandler() {
     if (!query) return;
 
     searchResults.innerHTML = `<em>Searching...</em>`;
-
-    fetch(`/search?q=${encodeURIComponent(query)}&top_k=5`)
+    const topKInput = document.getElementById("top-k-select");
+    const topK = parseInt(topKInput.value, 10);
+    fetch(`/search?q=${encodeURIComponent(query)}&top_k=${topK}`)
       .then(res => res.json())
       .then(data => {
         searchResults.innerHTML = renderSearchResults(data.results, r => isActive(r.source));
@@ -208,39 +218,42 @@ function initSearchHandler() {
 }
 
 function initUploadHandler() {
-  const uploadForm = document.getElementById('upload-form');
-  const fileInput = document.getElementById('file-input');
-  const uploadStatus = document.getElementById('upload-status');
+  const uploadForm = document.getElementById("upload-form");
+  const fileInput = document.getElementById("file-input");
+  const uploadStatus = document.getElementById("upload-status");
 
-  uploadForm.addEventListener('submit', function (e) {
+  uploadForm.addEventListener("submit", async function (e) {
     e.preventDefault();
-    const file = fileInput.files[0];
-    if (!file) {
-      uploadStatus.textContent = "⚠️ Please select a file to upload.";
+    const files = fileInput.files;
+    if (!files || files.length === 0) {
+      uploadStatus.textContent = "⚠️ Please select one or more files to upload.";
       return;
     }
 
     const formData = new FormData();
-    formData.append("file", file);
+    for (const file of files) {
+      formData.append("files", file);
+    }
 
     uploadStatus.textContent = "⏳ Uploading...";
 
-    fetch("/upload", {
-      method: "POST",
-      body: formData
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "success") {
-          uploadStatus.textContent = `✅ ${data.message}`;
-          fetchDocuments(); // Refresh document list after upload
-        } else {
-          uploadStatus.textContent = `❌ Error: ${data.message}`;
-        }
-      })
-      .catch(err => {
-        uploadStatus.textContent = `❌ Upload failed: ${escapeHtml(err.message || err)}`;
+    try {
+      const res = await fetch("/upload", {
+        method: "POST",
+        body: formData
       });
+
+      const data = await res.json();
+      if (data.status === "success" || data.uploads) {
+        uploadStatus.textContent = `✅ Upload complete.`;
+        fetchDocuments(); // Refresh document list
+        alert(JSON.stringify(data.uploads || data, null, 2));
+      } else {
+        uploadStatus.textContent = `❌ Error: ${data.message || "Unknown error."}`;
+      }
+    } catch (err) {
+      uploadStatus.textContent = `❌ Upload failed: ${escapeHtml(err.message || err)}`;
+    }
   });
 }
 function renderDocumentList(docs, filter = "") {

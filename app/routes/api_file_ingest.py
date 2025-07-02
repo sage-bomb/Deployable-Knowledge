@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter, UploadFile, BackgroundTasks, HTTPException, Form
+from fastapi import APIRouter, UploadFile, BackgroundTasks, HTTPException, Form, File
 from fastapi.responses import JSONResponse
 from pathlib import Path
 from utility.parsing import parse_pdf
@@ -12,26 +12,31 @@ router = APIRouter()
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 PDF_DIR.mkdir(parents=True, exist_ok=True)
 
-
 @router.post("/upload")
-async def upload_file(file: UploadFile):
-    try:
-        destination = UPLOAD_DIR / file.filename
-        with open(destination, "wb") as f:
-            f.write(await file.read())
+async def upload_files(files: list[UploadFile] = File(...)):
+    results = []
+    for file in files:
+        try:
+            destination = UPLOAD_DIR / file.filename
+            with open(destination, "wb") as f:
+                f.write(await file.read())
 
-        embed_file(destination, chunking_method=DEFAULT_CHUNKING_METHOD, source_name=file.filename, tags=["uploaded", "web_ui"])
+            embed_file(
+                file_path=destination,
+                chunking_method="graph",  # Or make this dynamic
+                source_name=file.filename,
+                tags=["uploaded"]
+            )
 
-        return JSONResponse({
-            "status": "success",
-            "message": f"{file.filename} uploaded and embedded."
-        })
-    except Exception as e:
-        return JSONResponse({
-            "status": "error",
-            "message": str(e)
-        })
+            results.append({"filename": file.filename, "status": "success"})
+        except Exception as e:
+            results.append({
+                "filename": file.filename,
+                "status": "error",
+                "message": str(e)
+            })
 
+    return JSONResponse({"uploads": results})
 
 @router.post("/remove")
 async def remove_document(source: str = Form(...)):

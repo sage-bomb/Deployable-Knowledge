@@ -23,25 +23,30 @@
 
   <div class="container">
 
-    <!-- Document Manager -->
-    <div class="column">
+<div id="doc-panel-wrapper" class="column-wrapper">
+  <div class="column" id="doc-manager">
+    <div class="header-row">
       <h2>Document Library</h2>
-
-      <form id="upload-form">
-        <input type="file" id="file-input" name="file" />
-        <button type="submit">Upload</button>
-      </form>
-      <div id="upload-status" class="status-text"></div>
-
-      <form id="filter-form">
-        <input type="text" id="filter-input" placeholder="Filter documents..." />
-        <button type="submit">Filter</button>
-      </form>
-
-      <ul id="document-list">
-        <li><em>Loading documents...</em></li>
-      </ul>
+      <button id="toggle-docs-btn">«</button>
     </div>
+
+    <form id="upload-form" method="post" enctype="multipart/form-data">
+      <input type="file" name="files" id="file-input" multiple />
+      <button type="submit">Upload</button>
+    </form>
+
+    <div id="upload-status" class="status-text"></div>
+
+    <form id="filter-form">
+      <input type="text" id="filter-input" placeholder="Filter documents..." />
+      <button type="submit">Filter</button>
+    </form>
+
+    <ul id="document-list">
+      <li><em>Loading documents...</em></li>
+    </ul>
+  </div>
+</div>
 
     <!-- Chat + Search -->
     <div class="column">
@@ -55,10 +60,15 @@
       </form>
 
       <h2>Search Documents</h2>
-      <form id="search-form">
-        <input type="text" id="search-query" placeholder="Enter search text..." />
-        <button type="submit">Search</button>
-      </form>
+<form id="search-form">
+  <input type="text" id="search-query" placeholder="Enter search text..." />
+  <select id="top-k-select">
+    <option value="5">5</option>
+    <option value="10">10</option>
+    <option value="15">15</option>
+  </select>
+  <button type="submit">Search</button>
+</form>
       <div id="search-results"></div>
     </div>
   </div>
