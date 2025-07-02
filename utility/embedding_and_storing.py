@@ -11,7 +11,7 @@ from utility.parsing import parse_pdf
 from utility.chunking_algs.chunker import (
     chunk_by_sentences,
     chunk_by_semantic_similarity,
-    chunk_by_graph_rank,
+    safe_chunk_by_graph_rank,
     chunk_by_paragraphs
 )
 
@@ -28,11 +28,12 @@ def chunk_text(text: str, method: str = "graph") -> List[Tuple[str, Dict]]:
     if method == "sentences":
         return chunk_by_sentences(text, max_chars=500)
     elif method == "semantics":
-        return chunk_by_semantic_similarity(text, model_name=DEFAULT_EMBEDDING_MODEL, threshold=0.6)
+        return chunk_by_semantic_similarity(text, model_name=EMBEDDING_MODEL_NAME, threshold=0.6)
     elif method == "graph":
-        return chunk_by_graph_rank(text, max_sentences=4)
+        return safe_chunk_by_graph_rank(text, max_sentences=4, model_name=EMBEDDING_MODEL_NAME)
+        #return chunk_by_graph_rank(text, max_sentences=4)
     elif method == "paragraphs":
-        return chunk_by_paragraphs(text, model_name=DEFAULT_EMBEDDING_MODEL, threshold=0.7)
+        return chunk_by_paragraphs(text, model_name=EMBEDDING_MODEL_NAME, threshold=0.7)
     else:
         raise ValueError(f"Unsupported chunking method: {method}")
 

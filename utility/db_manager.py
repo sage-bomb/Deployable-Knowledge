@@ -43,8 +43,39 @@ db.add_segments(segments, strategy_name="top_down", source="contract_001.txt", t
 
         print(f"Collection deleted", total, "documents removed.")
 
-    def embed(self, texts: List[str]) -> List[List[float]]:
-        return self.model.encode(texts).tolist()
+    # def embed(self, texts: List[str]) -> List[List[float]]:
+    #     return self.model.encode(texts).tolist()
+    
+    def embed(self, docs: List[str], max_batch_tokens: int = 5120):
+        embeddings = []
+        current_batch = []
+        current_tokens = 0
+
+        tokenizer = self.model.tokenizer
+
+        for doc in docs:
+            # Truncate each doc manually to 512 tokens
+            tokens = tokenizer.encode(doc, truncation=True, max_length=512)
+            truncated_doc = tokenizer.decode(tokens, skip_special_tokens=True)
+
+            num_tokens = len(tokens)
+            if num_tokens > max_batch_tokens:
+                embeddings.append(self.model.encode(truncated_doc))
+                continue
+
+            if current_tokens + num_tokens > max_batch_tokens:
+                embeddings.extend(self.model.encode(current_batch))
+                current_batch = [truncated_doc]
+                current_tokens = num_tokens
+            else:
+                current_batch.append(truncated_doc)
+                current_tokens += num_tokens
+
+        if current_batch:
+            embeddings.extend(self.model.encode(current_batch))
+
+        return embeddings
+
 
     def build_entry(
         self,

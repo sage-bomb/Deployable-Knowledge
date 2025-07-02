@@ -1,5 +1,6 @@
 from nltk.tokenize import sent_tokenize
 from sentence_transformers import SentenceTransformer, util
+from transformers import AutoTokenizer
 import spacy
 import pytextrank
 
@@ -141,7 +142,79 @@ def chunk_by_graph_rank(text, max_sentences=4):
 
     return all_chunks
 
+def safe_chunk_by_graph_rank(text, max_sentences=4, max_tokens_per_chunk=512, model_name="sentence-transformers/all-MiniLM-L6-v2"):
+    # Load and configure spaCy pipeline
+    nlp = spacy.load("en_core_web_sm")
+    nlp.max_length = 2_000_000
+    nlp.add_pipe("textrank", last=True)
+    tokenizer = SentenceTransformer(model_name).tokenizer
 
+    # Optional: break very large input into subchunks to keep memory/token safe
+    def split_text_by_length(text, max_tokens=2000):
+        words = text.split()
+        chunks = []
+        i = 0
+        while i < len(words):
+            chunk_words = words[i:i + max_tokens]
+            chunk = " ".join(chunk_words)
+            chunks.append(chunk)
+            i += max_tokens
+        return chunks
+
+    all_chunks = []
+    chunk_idx = 0
+    global_offset = 0
+
+    for subtext in split_text_by_length(text, max_tokens=2000):
+        doc = nlp(subtext)
+        current_sentences = []
+        for sent in doc.sents:
+            sent_text = sent.text
+            sent_tokens = tokenizer.encode(sent_text, truncation=True)
+
+            if len(sent_tokens) > max_tokens_per_chunk:
+                # Too long — truncate at the sentence level
+                sent_tokens = sent_tokens[:max_tokens_per_chunk]
+                sent_text = tokenizer.decode(sent_tokens, skip_special_tokens=True)
+
+            current_sentences.append(sent_text)
+
+            joined = " ".join(current_sentences)
+            joined_tokens = tokenizer.encode(joined, truncation=False)
+
+            if len(current_sentences) >= max_sentences or len(joined_tokens) >= max_tokens_per_chunk:
+                chunk_text = " ".join(current_sentences)
+                start = text.find(chunk_text, global_offset)
+
+                all_chunks.append((
+                    chunk_text.strip(),
+                    {
+                        "chunk_idx": chunk_idx,
+                        "char_range": (start, start + len(chunk_text)),
+                        "num_sentences": len(current_sentences),
+                    }
+                ))
+
+                global_offset = start + len(chunk_text)
+                chunk_idx += 1
+                current_sentences = []
+
+        # Add remaining
+        if current_sentences:
+            chunk_text = " ".join(current_sentences)
+            start = text.find(chunk_text, global_offset)
+            all_chunks.append((
+                chunk_text.strip(),
+                {
+                    "chunk_idx": chunk_idx,
+                    "char_range": (start, start + len(chunk_text)),
+                    "num_sentences": len(current_sentences),
+                }
+            ))
+            chunk_idx += 1
+            global_offset = start + len(chunk_text)
+
+    return all_chunks
 
 def chunk_by_paragraphs(text, model_name="all-MiniLM-L6-v2", threshold=0.7):
     model = SentenceTransformer(model_name)
