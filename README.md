@@ -24,6 +24,7 @@ This project is a RAG (Retrieval-Augmented Generation) system that works offline
 
 ---
 
+```text
 .
 ├── app/                               # FastAPI app logic and route definitions
 │   ├── main.py                        # Entry point for the API
@@ -56,3 +57,4 @@ This project is a RAG (Retrieval-Augmented Generation) system that works offline
 ├── requirements.txt                  # Python package dependencies
 ├── README.md                         # Project documentation (you are here)
 └── .gitignore                        # Git ignore rules
+```
