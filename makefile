@@ -37,7 +37,7 @@ setup-online: install
 	else \
 		echo "🗂️  Model already exists at $(MODEL_FILE). Skipping download."; \
 	fi
-	@. $(VENV_NAME)/bin/activate && python -m spacy download en_core_web_trf
+	@. $(VENV_NAME)/bin/activate && python -m spacy download en_core_web_sm
 
 # === Run Logic ===
 run:

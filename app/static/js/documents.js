@@ -1,0 +1,116 @@
+// documents.js — handles document list, toggles, filters, removal
+
+import { $, escapeHtml, showConfirmation } from './dom.js';
+import { setToggle, getToggle, initToggleState } from './state.js';
+
+let allDocs = [];
+
+export function initDocuments() {
+  fetchDocuments();
+  setupFilterForm();
+
+  const btn = $("toggle-docs-btn");
+  const wrapper = $("doc-panel-wrapper");
+  if (btn && wrapper) {
+    btn.addEventListener("click", () => {
+      wrapper.classList.toggle("collapsed");
+      btn.textContent = wrapper.classList.contains("collapsed") ? "»" : "«";
+    });
+  }
+}
+function fetchDocuments() {
+  fetch("/documents")
+    .then(res => res.json())
+    .then(docs => {
+      allDocs = docs;
+      renderDocumentList(allDocs);
+    })
+    .catch(err => {
+      const list = $("document-list");
+      if (list) {
+        list.innerHTML = `<li><em>Error: ${escapeHtml(err.message || err)}</em></li>`;
+      }
+    });
+}
+function setupFilterForm() {
+  const form = $("filter-form");
+  const input = $("filter-input");
+  if (!form || !input) return;
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    renderDocumentList(allDocs, input.value.trim());
+  });
+}
+
+
+function renderDocumentList(docs, filter = "") {
+  const list = $("document-list");
+  if (!list) return;
+
+  list.innerHTML = ""; // Clear list
+
+  const filtered = docs.filter(doc =>
+    doc.title.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  if (filtered.length === 0) {
+    list.innerHTML = "<li><em>No results found.</em></li>";
+    return;
+  }
+
+  filtered.forEach(doc => {
+    const li = document.createElement("li");
+    li.setAttribute("data-doc-id", doc.id);
+    li.setAttribute("data-active", "true");
+
+    const statusSpan = document.createElement("span");
+    statusSpan.className = "status-label";
+    statusSpan.textContent = "Active";
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "toggle-btn";
+    toggleBtn.textContent = "Deactivate";
+
+    initToggleState(doc.id, true);
+
+    toggleBtn.addEventListener("click", () => {
+      const current = getToggle(doc.id);
+      setToggle(doc.id, !current);
+      statusSpan.textContent = current ? "Inactive" : "Active";
+      toggleBtn.textContent = current ? "Activate" : "Deactivate";
+    });
+
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "Remove";
+    removeBtn.style.marginLeft = "0.5rem";
+    removeBtn.addEventListener("click", () => {
+      showConfirmation(`Remove document "${doc.title}"?`).then(confirmed => {
+        if (!confirmed) return;
+
+        fetch("/remove", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ source: doc.id })
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === "success") fetchDocuments();
+            else alert(`Error: ${data.message}`);
+          })
+          .catch(err => alert(`Failed to remove: ${err.message || err}`));
+      });
+    });
+
+    li.innerHTML = `
+      <strong>${escapeHtml(doc.title)}</strong><br />
+      <small>Segments: ${doc.segments}</small><br />
+      <small>Status: </small>
+    `;
+    li.appendChild(statusSpan);
+    li.appendChild(document.createElement("br"));
+    li.appendChild(toggleBtn);
+    li.appendChild(removeBtn);
+    list.appendChild(li);
+  });
+}

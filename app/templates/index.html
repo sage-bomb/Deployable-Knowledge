@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Deployable Knowledge</title>
   <link rel="stylesheet" href="/static/css/style.css" />
-  <script src="/static/js/main.js" defer></script>
+  <script type="module" src="/static/js/main.js"></script>
 </head>
 <body>
 
@@ -60,15 +60,15 @@
       </form>
 
       <h2>Search Documents</h2>
-<form id="search-form">
-  <input type="text" id="search-query" placeholder="Enter search text..." />
-  <select id="top-k-select">
-    <option value="5">5</option>
-    <option value="10">10</option>
-    <option value="15">15</option>
-  </select>
-  <button type="submit">Search</button>
-</form>
+      <form id="search-form">
+        <input type="text" id="search-query" placeholder="Enter search text..." />
+        <select id="top-k-select">
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="15">15</option>
+        </select>
+        <button type="submit">Search</button>
+      </form>
       <div id="search-results"></div>
     </div>
   </div>
