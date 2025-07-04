@@ -75,11 +75,12 @@ async def search_documents(q: str = Query(...), top_k: int = 5):
 from fastapi.responses import StreamingResponse
 import json, requests, markdown2, asyncio
 
-from fastapi.responses import StreamingResponse
-import json
-
 @router.post("/chat-stream")
-async def chat_stream(message: str = Form(...), inactive: Optional[str] = Form(None)):
+async def chat_stream(
+    message: str = Form(...),
+    inactive: Optional[str] = Form(None),
+    persona: str = Form("") 
+):
     try:
         inactive_sources = set(json.loads(inactive or "[]"))
         embedding = db.embed([message])[0]
@@ -103,9 +104,14 @@ async def chat_stream(message: str = Form(...), inactive: Optional[str] = Form(N
             f"[{i+1}] {block['text']}" for i, block in enumerate(context_blocks)
         )
 
-        prompt = f"""You are a helpful assistant with access to the following context:\n\n{context_string}\n\nUser: {message}\nAssistant:"""
+        # === Add user and system persona to prompt ===
+        system_persona = "You are a helpful assistant with access to the following context:"
+        user_persona = persona.strip()
+        persona_block = f"\n\n{user_persona}" if user_persona else ""
 
-        # Start Ollama stream
+        prompt = f"""{system_persona}\n\n{context_string}{persona_block}\n\nUser: {message}\nAssistant:"""
+
+        # === Streaming response ===
         def event_stream():
             response = requests.post(
                 OLLAMA_URL,
@@ -115,15 +121,12 @@ async def chat_stream(message: str = Form(...), inactive: Optional[str] = Form(N
 
             yield b"<strong>Assistant:</strong><br>"
 
-            decoder = json.JSONDecoder()
-            buffer = ""
-
             for line in response.iter_lines(decode_unicode=True):
                 if not line:
                     continue
                 try:
                     data = json.loads(line)
-                    if "done" in data and data["done"]:
+                    if data.get("done"):
                         break
                     if "response" in data:
                         yield data["response"].encode("utf-8")

@@ -142,7 +142,8 @@ li:hover {
 
 /* === Chat Box === */
 .chat-box {
-  height: 300px;
+  max-height: none;
+  overflow: visible;
   overflow-y: auto;
   background-color: #1a1a1a;
   border: 1px solid var(--border-light);
@@ -152,14 +153,18 @@ li:hover {
 }
 
 /* === Modal === */
+
 .modal {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
 }
 
 .modal.hidden {
@@ -169,34 +174,35 @@ li:hover {
 .modal-content {
   background-color: var(--bg-card);
   padding: 1.5rem;
-  border-radius: 6px;
-  max-width: 400px;
-  box-shadow: 0 0 15px #00000088;
-  text-align: center;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.modal textarea {
+  width: 100%;
+  padding: 0.5rem;
+  background: #2a2a2a;
+  border: 1px solid var(--border-mid);
+  color: #fff;
+  font-family: monospace;
+  font-size: 1rem;
+  border-radius: var(--radius);
+  resize: vertical;
 }
 
 .modal-actions {
-  margin-top: 1rem;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 1rem;
-}
-
-.modal-actions button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-
-#confirm-yes {
-  background-color: var(--danger);
-  color: white;
-}
-
-#confirm-no {
-  background-color: var(--border-mid);
-  color: white;
+  margin-top: 1rem;
 }
 
 /* === Banner === */
@@ -300,3 +306,6 @@ select:focus {
   box-shadow: 0 0 3px var(--accent-blue);
 }
 
+.hidden {
+  display: none;
+}
