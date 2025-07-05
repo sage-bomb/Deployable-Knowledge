@@ -1,60 +1,89 @@
 # Deployable-Knowledge
 
-On edge/Offline knowledge retrieval and generation tool
+**Offline-First RAG System for Tactical and Edge Environments**
 
 ---
 
 ## Overview
 
-This project is a RAG (Retrieval-Augmented Generation) system that works offline with a local LLM (Large Language Model). The pipeline has these key components:
+Deployable-Knowledge is an offline-capable Retrieval-Augmented Generation (RAG) system that integrates a local LLM with document search and chat-based interaction. It’s designed to support field use where network connectivity is unavailable or restricted.
 
-- **Document Ingestion**: Chunking and embedding uploaded source documents.
-- **Vector Store**: ChromaDB is used to store and retrieve document embeddings by similarity.
-- **LLM Generation**: Mistral 7b is used for generating responses based on retrieved documents.
-- **API Layer**: FastAPI interface for querying and ingesting documents.
+---
+
+## Features
+
+- **Document Ingestion**: Supports PDF, plain text, and OCR-enabled ingestion.
+- **Advanced Chunking**: Multiple algorithms including sentence-based, PageRank, and semantic recursive chunking.
+- **Vector Store**: Efficient local embedding storage via ChromaDB.
+- **Local LLM Inference**: Compatible with `mistral:7b` and similar models running on `ollama`.
+- **Live Chat + Search**: Web-based UI for contextual question answering and multi-doc search.
+- **Persona Editor**: Customize assistant behavior during the session.
 
 ---
 
 ## Architecture
 
-- **Embedding Model**: Can vary, an example is `all-MiniLM-L6-v2`.
-- **LLM Model**: `Mistral 7b` is used for text generation.
-- **Chunking Strategy**: default set to GraphRank, but other strategies such as sentence can be used.
-- **Vector Store**: `ChromaDB` with persisted disk storage.
-
----
-
 ```text
 .
-├── app/                               # FastAPI app logic and route definitions
-│   ├── main.py                        # Entry point for the API
-│   ├── routes/                        # Modular route handlers
-│   │   ├── api_file_ingest.py        # Document ingestion endpoints
-│   │   ├── api_chat_search.py        # Chat and search endpoints
-│   │   └── ui_routes.py              # UI-related routes
-│   ├── static/                       # Static files for the FastAPI app
+├── app/                               # FastAPI application
+│   ├── main.py                        # App entrypoint
+│   ├── routes/                        # REST route modules
+│   │   ├── api_chat_search.py         # Chat and search endpoints
+│   │   ├── api_file_ingest.py         # Document ingest
+│   │   └── ui_routes.py               # Serves UI
+│   ├── static/                        # Frontend files
 │   │   ├── css/
-│   │   │   └── style.css             # CSS stylesheets
-│   │   └── js/
-│   │       └── main.js               # JavaScript files
-│   └── templates/                    # HTML templates for the FastAPI app
+│   │   │   └── style.css
+│   │   ├── favicon.ico
+│   │   └── js/                        # Modular JavaScript
+│   │       ├── chat.js
+│   │       ├── documents.js
+│   │       ├── dom.js
+│   │       ├── main.js
+│   │       ├── marked.min.js
+│   │       ├── persona_editor.js
+│   │       ├── render.js
+│   │       ├── search.js
+│   │       ├── state.js
+│   │       └── upload.js
+│   └── templates/
 │       └── index.html
 │
-├── utility/                           # Document ingestion, embedding, and indexing scripts
-│   ├── chunking_algs/                # Chunking algorithms for document processing
+├── utility/                           # Backend document + embedding logic
+│   ├── chunking_algs/
 │   │   ├── chunker.py
 │   │   ├── chunking_test_suite.py
 │   │   ├── dynamic_bottom_to_top_chunking.py
 │   │   ├── dynamic_top_to_bottom_chunking.py
 │   │   ├── graph_pagerank_chunking.py
 │   │   └── semantic_recursive_chunking.py
-│   ├── db_manager.py                 # ChromaDB management functions
-│   ├── embedding_and_storing.py      # Embedding and storing documents
-│   └── parsing.py                    # Document parsing utilities
+│   ├── db_manager.py
+│   ├── embedding_and_storing.py
+│   └── parsing.py
 │
-├── config.py                         # Centralized configuration and environment loading
-├── Makefile                          # Workflow automation: setup, run, clean
-├── requirements.txt                  # Python package dependencies
-├── README.md                         # Project documentation (you are here)
-└── .gitignore                        # Git ignore rules
+├── config.py                          # Central config values
+├── requirements.txt                   # Python dependencies
+├── makefile                           # Common dev commands
+├── README.md
+└── .gitignore
 ```
+
+---
+
+## Run Instructions
+
+1. Install Python dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Start the FastAPI server:
+
+   ```bash
+   make run
+   ```
+
+3. Ensure `ollama` is running and accessible.
+
+4. Navigate to `http://localhost:8000` in your browser.
