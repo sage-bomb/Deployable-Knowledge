@@ -4,6 +4,7 @@ import { $, escapeHtml } from './dom.js';
 import { getToggle } from './state.js';
 import { renderSearchResultsBlock } from './render.js';
 
+
 export function initSearch() {
   const searchForm = $("search-form");
   const searchInput = $("search-query");
@@ -11,6 +12,13 @@ export function initSearch() {
   const topKInput = $("top-k-select");
 
   if (!searchForm || !searchInput || !searchResults || !topKInput) return;
+
+    const docWrapper = document.getElementById("search-panel-wrapper");
+    const toggleBtn = document.getElementById("toggle-search-btn");
+
+    toggleBtn?.addEventListener("click", () => {
+    docWrapper.classList.toggle("collapsed");
+    });
 
   searchForm.addEventListener("submit", function (e) {
     e.preventDefault();

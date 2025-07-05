@@ -309,3 +309,20 @@ select:focus {
 .hidden {
   display: none;
 }
+
+#search-panel-wrapper.collapsed {
+  width: 2.5rem;
+  flex: 0 0 2.5rem;
+  overflow: hidden;
+}
+
+#search-panel-wrapper.collapsed .column {
+  padding: 0.5rem;
+}
+
+#search-panel-wrapper.collapsed h2,
+#search-panel-wrapper.collapsed form,
+#search-panel-wrapper.collapsed ul,
+#search-panel-wrapper.collapsed .status-text {
+  display: none;
+}
