@@ -12,7 +12,7 @@ CHROMA_DB_DIR = BASE_DIR / "chroma_db"
 COLLECTION_NAME = "default_collection"
 
 # === Embedding Model ===
-EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L12-v2")
 LOCAL_MODEL_PATH = MODEL_DIR
 
 # === Chunking ===
