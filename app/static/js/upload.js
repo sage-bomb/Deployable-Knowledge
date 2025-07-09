@@ -4,9 +4,9 @@ import { $, escapeHtml } from './dom.js';
 import { initDocuments } from './documents.js'; // to refresh doc list
 
 export function initUpload() {
-  const uploadForm = $("upload-form");
-  const fileInput = $("file-input");
-  const uploadStatus = $("upload-status");
+  const uploadForm = document.getElementById("upload-form");
+  const fileInput = document.getElementById("file-input");
+  const uploadStatus = document.getElementById("upload-status");
 
   if (!uploadForm || !fileInput || !uploadStatus) return;
 
