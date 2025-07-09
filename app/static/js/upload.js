@@ -31,6 +31,11 @@ export function initUpload() {
         body: formData
       });
 
+      if (!res.ok) {
+        const text = await res.text(); // fallback if not JSON
+        throw new Error(`Server responded with status ${res.status}: ${text}`);
+      }
+
       const data = await res.json();
       console.log("Upload response:", data);
 
