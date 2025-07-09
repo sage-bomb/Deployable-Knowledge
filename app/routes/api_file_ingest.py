@@ -14,13 +14,19 @@ PDF_DIR.mkdir(parents=True, exist_ok=True)
 
 @router.post("/upload")
 async def upload_files(files: list[UploadFile] = File(...)):
+    print("🔄 /upload endpoint called")
+    print(f"📦 Received {len(files)} file(s)")
     results = []
     for file in files:
+        print(f"📁 Handling file: {file.filename}")
         try:
             destination = UPLOAD_DIR / file.filename
+            print(f"📥 Saving to: {destination}")
             with open(destination, "wb") as f:
                 f.write(await file.read())
+            print(f"✅ File saved: {file.filename}")
 
+            print("🧠 Starting embedding for:", destination)
             embed_file(
                 file_path=destination,
                 chunking_method="graph",  # Or make this dynamic
@@ -30,6 +36,7 @@ async def upload_files(files: list[UploadFile] = File(...)):
 
             results.append({"filename": file.filename, "status": "success"})
         except Exception as e:
+            print(f"❌ Error processing {file.filename}: {str(e)}")
             results.append({
                 "filename": file.filename,
                 "status": "error",
