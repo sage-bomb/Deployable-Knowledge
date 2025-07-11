@@ -31,9 +31,13 @@ install: venv
 # === Online Setup ===
 setup-online: install
 	@if [ ! -f $(MODEL_FILE) ]; then \
-		echo "📥 Downloading model..."; \
+		echo "📥 Downloading all-MiniLM-L12-v2 model..."; \
 		. $(VENV_NAME)/bin/activate && \
-		python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2').save('$(MODEL_DIR)')"; \
+		python -c "\
+from huggingface_hub import snapshot_download; \
+snapshot_download(repo_id='sentence-transformers/all-MiniLM-L12-v2', \
+                  local_dir='$(MODEL_DIR)', \
+                  local_dir_use_symlinks=False)"; \
 	else \
 		echo "🗂️  Model already exists at $(MODEL_FILE). Skipping download."; \
 	fi
