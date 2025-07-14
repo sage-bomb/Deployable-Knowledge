@@ -140,6 +140,12 @@ li:hover {
   background-color: var(--bg-hover);
 }
 
+#search-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Optional: space between items */
+}
+
 /* === Chat Box === */
 .chat-box {
   max-height: none;
