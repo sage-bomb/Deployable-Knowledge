@@ -142,7 +142,7 @@ def chunk_by_graph_rank(text, max_sentences=4):
 
     return all_chunks
 
-def safe_chunk_by_graph_rank(text, max_sentences=4, max_tokens_per_chunk=512, model_name="sentence-transformers/all-MiniLM-L6-v2"):
+def safe_chunk_by_graph_rank(text, max_sentences=4, max_tokens_per_chunk=256, model_name="sentence-transformers/all-MiniLM-L6-v2"):
     # Load and configure spaCy pipeline
     nlp = spacy.load("en_core_web_sm")
     nlp.max_length = 2_000_000
