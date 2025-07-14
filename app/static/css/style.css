@@ -152,6 +152,29 @@ li:hover {
   margin-bottom: 1rem;
 }
 
+#chat-form input[type="text"] {
+  width: 70%;
+  padding: 0.5rem;
+  background-color: var(--text-main);
+  border: 1px solid var(--border-light);
+  color: #1a1a1a;
+  border-radius: var(--radius);
+  margin-right: 0.5rem;
+}
+
+#chat-form button {
+  padding: 0.5rem 1rem;
+  background-color: var(--text-main);
+  color: #1a1a1a;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+#chat-form button:hover {
+  background-color: var(--accent-blue-hover);
+}
+
 /* === Modal === */
 
 .modal {
