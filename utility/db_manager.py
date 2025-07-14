@@ -9,6 +9,7 @@ import uuid
 from typing import List, Optional
 from sentence_transformers import SentenceTransformer
 import chromadb
+from chromadb.config import Settings
 
 class DBManager:
     """from db_manager import ChromaDBManager
@@ -21,7 +22,7 @@ segments = segmenter.segment(text)
 db.add_segments(segments, strategy_name="top_down", source="contract_001.txt", tags=["legal"])
 """
     def __init__(self, persist_dir: str, collection_name: str):
-        self.client = chromadb.PersistentClient(path=str(persist_dir))        
+        self.client = chromadb.PersistentClient(path=str(persist_dir), settings=Settings(anonymized_telemetry=False))        
         self.collection = self.client.get_or_create_collection(collection_name)
         model_path = str(LOCAL_MODEL_PATH) if LOCAL_MODEL_PATH.exists() else EMBEDDING_MODEL_NAME
         self.model = SentenceTransformer(model_path) 
