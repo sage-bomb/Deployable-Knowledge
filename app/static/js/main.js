@@ -1,10 +1,11 @@
-import { initChat } from './chat.js';
-import { initSearch } from './search.js';
-import { initUpload } from './upload.js';
-import { initDocuments } from './documents.js';
-import { initPersonaModal } from './persona_editor.js';
+import { initChat } from '/static/js/chat.js';
+import { initSearch } from '/static/js/search.js';
+import { initUpload } from '/static/js/upload.js';
+import { initDocuments } from '/static/js/documents.js';
+import { initPersonaModal } from '/static/js/persona_editor.js';
 
 function runInit() {
+  //console.log("✅ runInit executing");
   initDocuments();
   initChat();
   initSearch();

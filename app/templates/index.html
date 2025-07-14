@@ -4,12 +4,9 @@
   <meta charset="UTF-8" />
   <title>Deployable Knowledge</title>
   <link rel="icon" href="/static/favicon.ico" />  
-  <link rel="stylesheet" href="/static/css/style.css" />
-<script type="module">
-  import "/static/js/marked.min.js";
-  window.marked = marked;
-</script>  
+  <link rel="stylesheet" href="/static/css/style.css" /> 
   <script type="module" src="/static/js/main.js"></script>
+  <script type="module" src="/static/js/marked.min.js"></script>
 </head>
 <body>
 
@@ -44,7 +41,7 @@
   <div class="column" id="doc-manager">
     <div class="header-row">
       <h2>Document Library</h2>
-      <button id="toggle-docs-btn" title="Toggle Document Library">«</button>
+      <button id="toggle-docs-btn" title="Minimize Document Library">«</button>
     </div>
 
     <form id="upload-form" method="post" enctype="multipart/form-data">
@@ -66,18 +63,17 @@
 </div>
 
     <!-- Chat + Search -->
-    <div class="column">
-      <h2>Assistant Chat</h2>
-      <div id="chat-box" class="chat-box">
-        <div><strong>Assistant:</strong> Hello! How can I help you today?</div>
-      </div>
-      <form id="chat-form">
-        <input type="text" id="user-input" placeholder="Type a message..." />
-        <button type="submit">Send</button>
-      </form>
-  <div id="search-panel-wrapper" class="column-wrapper">
-  
-      <button id="toggle-search-btn" title="Toggle Search Results">🡸</button>
+  <div class="column">
+    <h2>Assistant Chat</h2>
+    <div id="chat-box" class="chat-box">
+      <div><strong>Assistant:</strong> Hello! How can I help you today?</div>
+    </div>
+    <form id="chat-form">
+      <input type="text" id="user-input" placeholder="Type a message..." />
+      <button type="submit" id="submit-button">Send</button>
+    </form>
+    <div id="search-panel-wrapper" class="column-wrapper">
+      <button id="toggle-search-btn" title="Minimize Search Results">🡸</button>
       <h2>Search Documents</h2>
       <form id="search-form">
         <input type="text" id="search-query" placeholder="Enter search text..." />
@@ -91,10 +87,7 @@
       </form>
       <div id="search-results"></div>
     </div>
-    </div>
   </div>
-
-
 
 </body>
 </html>

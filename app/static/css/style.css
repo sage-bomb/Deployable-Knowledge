@@ -335,6 +335,11 @@ select:focus {
   box-shadow: 0 0 3px var(--accent-blue);
 }
 
+input:disabled, button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .hidden {
   display: none;
 }

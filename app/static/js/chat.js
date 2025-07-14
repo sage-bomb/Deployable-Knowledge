@@ -4,68 +4,88 @@ import { $, escapeHtml } from './dom.js';
 import { getInactiveIds } from './state.js';
 import { renderSearchResultsBlock } from './render.js';
 
+
 export function initChat() {
+  //console.log("✅ initChat called");
+
   const chatForm = $("chat-form");
   const chatInput = $("user-input");
   const chatBox = $("chat-box");
-  const docLimitInput = $("doc-limit"); // moved here
+  const docLimitInput = $("doc-limit");
+  const submitButton = $("submit-button");
+
+  // console.log("chatForm:", chatForm);
+  // console.log("chatInput:", chatInput);
+  // console.log("submitButton:", submitButton)
 
   chatForm.addEventListener("submit", async function (e) {
-  e.preventDefault();
-  const msg = chatInput.value.trim();
-  if (!msg) return;
+    //console.log("Chat form submitted and fired");
+    e.preventDefault();
+    const msg = chatInput.value.trim();
+    if (!msg) return;
 
-  chatBox.innerHTML += `<div><strong>You:</strong> ${escapeHtml(msg)}</div>`;
-  const botMsg = document.createElement("div");
-  botMsg.innerHTML = `<strong>Assistant:</strong><br>`;
-  chatBox.appendChild(botMsg);
-  chatBox.scrollTop = chatBox.scrollHeight;
+    //Disabling inputs
+    chatInput.disabled = true;
+    submitButton.disabled = true;
+    submitButton.textContent = "Loading...";
 
-  // === Run context search BEFORE clearing the input ===
-  try {
-    const searchLimit = $("search-doc-limit")?.value || 5;
-    const contextResponse = await fetch(`/search?q=${encodeURIComponent(msg)}&top_k=${searchLimit}`);
-    const contextData = await contextResponse.json();
+    //Clearing input
+    chatInput.value = '';
 
-    if (contextData?.results?.length) {
-      const searchResults = $("search-results");
-      searchResults.innerHTML = `
-        <h3>RAG Context Used:</h3>
-        ${renderSearchResultsBlock(contextData.results)}
-      `;
-    }
-  } catch (err) {
-    console.error("Context search failed", err);
-  }
-
-
-const persona = $("persona-text")?.value || "";
-const response = await fetch("/chat-stream", {
-  method: "POST",
-  headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  body: new URLSearchParams({ message: msg, persona })
-});
-
-  if (!response.body) {
-    botMsg.innerHTML += "<em>No response body</em>";
-    return;
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder("utf-8");
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    botMsg.innerHTML = `<strong>Assistant:</strong><br>${window.marked.parse(buffer)}`;
+    chatBox.innerHTML += `<br><div><strong>You:</strong> ${escapeHtml(msg)}</div>`;
+    const botMsg = document.createElement("div");
+    botMsg.innerHTML = ``;
+    chatBox.appendChild(botMsg);
     chatBox.scrollTop = chatBox.scrollHeight;
-  }
 
-  chatInput.value = '';
-});
+    // === Run context search BEFORE clearing the input ===
+    try {
+      const searchLimit = $("search-doc-limit")?.value || 5;
+      const contextResponse = await fetch(`/search?q=${encodeURIComponent(msg)}&top_k=${searchLimit}`);
+      const contextData = await contextResponse.json();
+
+      if (contextData?.results?.length) {
+        const searchResults = $("search-results");
+        searchResults.innerHTML = `
+          <h3>RAG Context Used:</h3>
+          ${renderSearchResultsBlock(contextData.results)}
+        `;
+      }
+    } catch (err) {
+      console.error("Context search failed", err);
+    }
+
+
+  const persona = $("persona-text")?.value || "";
+  const response = await fetch("/chat-stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ message: msg, persona })
+  });
+
+    if (!response.body) {
+      botMsg.innerHTML += "<em>No response body</em>";
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      botMsg.innerHTML = `<br>${window.marked.parse(buffer)}`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    chatInput.disabled = false;
+    submitButton.disabled = false;
+    submitButton.textContent = "Send";
+    chatInput.focus();
+  });
 }
 
 
