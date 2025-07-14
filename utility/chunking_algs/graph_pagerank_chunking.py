@@ -1,7 +1,6 @@
 import networkx as nx
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
-from nltk.tokenize import sent_tokenize
 import numpy as np
 import re
 
@@ -34,6 +33,7 @@ def pagerank_chunk_text(text, model_name="all-mpnet-base-v2", sim_threshold=0.5,
     seed_indices = sorted(pageranks, key=pageranks.get, reverse=True)
     used = set()
     chunks = []
+    chunk_idx=0
 
     for idx in seed_indices:
         if idx in used:
@@ -56,6 +56,14 @@ def pagerank_chunk_text(text, model_name="all-mpnet-base-v2", sim_threshold=0.5,
             used.add(i)
             i += 1
 
-        chunks.append(" ".join([sentences[i] for i in chunk]))
+        new_chunk=" ".join([sentences[i] for i in chunk])
+        start = text.find(new_chunk)
+        chunks.append(new_chunk, {
+            "chunk_idx": chunk_idx,
+            "char_range": (start, start + len(new_chunk)),
+            "num_sentences": new_chunk.count('.') + new_chunk.count('!') + new_chunk.count('?')
+        })
+        chunk_idx=chunk_idx+1
+
 
     return chunks
