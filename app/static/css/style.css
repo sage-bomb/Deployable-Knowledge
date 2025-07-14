@@ -181,6 +181,21 @@ li:hover {
   background-color: var(--accent-blue-hover);
 }
 
+/* === Warning Messages === */
+
+.warning-box {
+      background-color: #ffe5e5;
+      color: #a94442;
+      border: 1px solid #f5c2c7;
+      border-radius: 4px;
+      padding: 0.5em 1em;
+      font-size: 1em;
+      max-width: 400px;
+      box-sizing: border-box;
+      display: inline-block;
+      vertical-align: middle;
+}
+
 /* === Modal === */
 
 .modal {
