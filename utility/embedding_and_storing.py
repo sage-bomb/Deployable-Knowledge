@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List, Tuple, Dict, Optional
 from utility.db_manager import DBManager
 from utility.parsing import parse_pdf  
+import re
 
 # Import chunkers
 from utility.chunking_algs.chunker import (
@@ -42,6 +43,13 @@ def chunk_text(text: str, method: str = "graph") -> List[Tuple[str, Dict]]:
         return pagerank_chunk_text(text, model_name=EMBEDDING_MODEL_NAME, sim_threshold=0.7)
     else:
         raise ValueError(f"Unsupported chunking method: {method}")
+    
+def is_all_caps(text, threshold=0.8):
+    cleaned = re.sub(r'[\W\d_]+', '', text)
+    if not cleaned:
+        return False
+    upper_count = sum(1 for c in cleaned if c.isupper())
+    return (upper_count / len(cleaned)) >= threshold
 
 def extract_text(file_path: Path) -> str:
     if file_path.suffix.lower() == ".pdf":
@@ -55,7 +63,8 @@ def embed_file(
     file_path: Path,
     chunking_method: str = "graph",
     source_name: Optional[str] = None,
-    tags: Optional[List[str]] = None
+    tags: Optional[List[str]] = None,
+    filter_chunks: bool = False,
 ) -> None:
     """
     Process a single file: parse, chunk, embed, store.
@@ -67,6 +76,8 @@ def embed_file(
     text = extract_text(file_path)
 
     chunks_with_meta = chunk_text(text, method=chunking_method)
+    if filter_chunks:
+        chunks_with_meta = [chunk for chunk in chunks_with_meta if not is_all_caps(chunk[0])]
     segments = [chunk for chunk, _ in chunks_with_meta]
     positions = [meta.get("char_range", (None, None)) for _, meta in chunks_with_meta]
 
@@ -86,6 +97,7 @@ def embed_directory(
     chunking_method: str = "graph",
     clear_collection: bool = False,
     default_tags: Optional[List[str]] = None,
+    filter_chunks: bool = False,
 ):
     data_path = Path(data_dir)
     if not data_path.exists():
@@ -109,7 +121,8 @@ def embed_directory(
                 file_path=file_path,
                 chunking_method=chunking_method,
                 source_name=file_path.name,
-                tags=default_tags or ["embedded"]
+                tags=default_tags or ["embedded"],
+                filter_chunks=filter_chunks
             )
         except Exception as e:
             print(f"❌ Failed to embed {file_path.name}: {e}")
@@ -125,11 +138,13 @@ if __name__ == "__main__":
     parser.add_argument("--data_dir", type=str, default="documents", help="Directory with .txt files")
     parser.add_argument("--chunking_method", type=str, default="graph", choices=CHUNKING_METHOD_OPTIONS)
     parser.add_argument("--clear_collection", action="store_true", help="Clear collection before inserting")
+    parser.add_argument("--filter_chunks", action="store_true", help="Filter out all-uppercase chunks (usually headers) during chunking")
     args = parser.parse_args()
 
     embed_directory(
         data_dir=args.data_dir,
         chunking_method=args.chunking_method,
         clear_collection=args.clear_collection,
-        default_tags=["testing"]
+        default_tags=["testing"],
+        filter_chunks=args.filter_chunks
     )
