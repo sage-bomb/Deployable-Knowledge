@@ -12,12 +12,12 @@ CHROMA_DB_DIR = BASE_DIR / "chroma_db"
 COLLECTION_NAME = "default_collection"
 
 # === Embedding Model ===
-EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L12-v2")
 LOCAL_MODEL_PATH = MODEL_DIR
 
 # === Chunking ===
-DEFAULT_CHUNKING_METHOD = "graph"
-CHUNKING_METHOD_OPTIONS = ["sentences", "semantics", "graph", "paragraphs"]
+DEFAULT_CHUNKING_METHOD = "dynamic"
+CHUNKING_METHOD_OPTIONS = ["sentences", "semantics", "graph", "paragraphs", "dynamic"]
 
 # === Ollama ===
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")

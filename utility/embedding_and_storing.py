@@ -14,6 +14,7 @@ from utility.chunking_algs.chunker import (
     safe_chunk_by_graph_rank,
     chunk_by_paragraphs
 )
+from utility.chunking_algs.dynamic_bottom_to_top_chunking import merge_sentences_bottom_up
 
 # === Config ===
 from config import (
@@ -34,6 +35,8 @@ def chunk_text(text: str, method: str = "graph") -> List[Tuple[str, Dict]]:
         #return chunk_by_graph_rank(text, max_sentences=4)
     elif method == "paragraphs":
         return chunk_by_paragraphs(text, model_name=EMBEDDING_MODEL_NAME, threshold=0.7)
+    elif method == "dynamic":
+        return merge_sentences_bottom_up(text, similarity_threshold=0.7, model=EMBEDDING_MODEL_NAME)
     else:
         raise ValueError(f"Unsupported chunking method: {method}")
 
