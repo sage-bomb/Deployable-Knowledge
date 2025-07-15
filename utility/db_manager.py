@@ -119,9 +119,19 @@ db.add_segments(segments, strategy_name="top_down", source="contract_001.txt", t
             docs.append(doc)
             metas.append(meta)
 
-        embeddings = self.embed(docs)
-        print(type(metas), metas[:3])  # Debugging: print type and first 3 metadata entries
-        self.collection.add(ids=ids, documents=docs, metadatas=metas, embeddings=embeddings)
+        batch_size=5000    
+
+        for i in range(0, len(docs), batch_size):
+            batch_ids = ids[i:i + batch_size]
+            batch_docs = docs[i:i + batch_size]
+            batch_metas = metas[i:i + batch_size]
+            batch_embeddings = self.embed(batch_docs)
+            self.collection.add(
+                ids=batch_ids,
+                documents=batch_docs,
+                metadatas=batch_metas,
+                embeddings=batch_embeddings
+            )
 
     def delete_by_source(self, source_name: str, batch_size=500):
         """
