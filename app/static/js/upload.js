@@ -1,5 +1,3 @@
-// upload.js — handles file upload logic and refresh
-
 import { $, escapeHtml } from './dom.js';
 import { initDocuments } from './documents.js'; // to refresh doc list
 
@@ -18,39 +16,52 @@ export function initUpload() {
       return;
     }
 
-    const formData = new FormData();
-    for (const file of files) {
-      formData.append("files", file);
-    }
+    let successCount = 0;
+    let errorFiles = [];
 
-    uploadStatus.textContent = "⏳ Uploading...";
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      uploadStatus.textContent = `⏳ Uploading (${i + 1}/${files.length})...`;
 
-    try {
-      const res = await fetch("/upload", {
-        method: "POST",
-        body: formData
-      });
+      const formData = new FormData();
+      formData.append("files", file); // same field name the server expects
 
-      const data = await res.json();
-      console.log("Upload response:", data);
+      try {
+        const res = await fetch("/upload", {
+          method: "POST",
+          body: formData
+        });
 
-      if (data.uploads && Array.isArray(data.uploads)) {
-        const successCount = data.uploads.filter(f => f.status === 'success').length;
-        const errorFiles = data.uploads.filter(f => f.status === 'error');
+        const data = await res.json();
+        console.log(`Upload response for ${file.name}:`, data);
 
-        uploadStatus.textContent = `✅ ${successCount} file(s) uploaded successfully.`;
-
-        if (errorFiles.length > 0) {
-          const errorMessages = errorFiles.map(f => `${f.filename}: ${f.message}`).join('\n');
-          alert(`Some files failed to upload:\n${errorMessages}`);
+        if (
+          data.uploads &&
+          Array.isArray(data.uploads) &&
+          data.uploads[0]?.status === "success"
+        ) {
+          successCount++;
+        } else {
+          errorFiles.push({
+            filename: file.name,
+            message: data.uploads?.[0]?.message || "Unknown error"
+          });
         }
-
-        initDocuments(); // Refresh document list
-      } else {
-        uploadStatus.textContent = `❌ Error: Unexpected response from server.`;
+      } catch (err) {
+        errorFiles.push({
+          filename: file.name,
+          message: err.message || "Network error"
+        });
       }
-    } catch (err) {
-      uploadStatus.textContent = `❌ Upload failed: ${escapeHtml(err.message || err)}`;
     }
+
+    uploadStatus.textContent = `✅ ${successCount} file(s) uploaded successfully.`;
+
+    if (errorFiles.length > 0) {
+      const errorMessages = errorFiles.map(f => `${f.filename}: ${f.message}`).join("\n");
+      alert(`Some files failed to upload:\n${errorMessages}`);
+    }
+
+    initDocuments(); // Refresh document list
   });
 }
