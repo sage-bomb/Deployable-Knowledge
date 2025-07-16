@@ -43,70 +43,76 @@
       <button id="open-persona-btn">Edit Persona</button>
     </div>
 
-    <div class="container">
-      <div id="doc-panel-wrapper" class="column-wrapper scrollable">
-        <div class="column" id="doc-manager">
-          <div class="header-row">
-            <h2>Document Library</h2>
-            <button id="toggle-docs-btn" title="Minimize Document Library">
-              «
+    <div class="feature-layout">
+      <div class="container">
+        <div id="doc-panel-wrapper" class="column-wrapper scrollable">
+          <div class="column" id="doc-manager">
+            <div class="header-row">
+              <h2>Document Library</h2>
+              <button id="toggle-docs-btn" title="Minimize Document Library">
+                «
+              </button>
+            </div>
+
+            <form id="upload-form" method="post" enctype="multipart/form-data">
+              <input type="file" name="files" id="file-input" multiple />
+              <button type="submit">Upload</button>
+            </form>
+
+            <div id="upload-status" class="status-text"></div>
+
+            <form id="filter-form">
+              <input
+                type="text"
+                id="filter-input"
+                placeholder="Filter documents..."
+              />
+              <button type="submit">Filter</button>
+            </form>
+
+            <ul id="document-list">
+              <li><em>Loading documents...</em></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Chat + Search -->
+        <div class="column scrollable">
+          <h2>Assistant Chat</h2>
+          <div id="chat-box" class="chat-box">
+            <div>
+              <strong>Assistant:</strong> Hello! How can I help you today?
+            </div>
+          </div>
+          <form id="chat-form">
+            <input
+              type="text"
+              id="user-input"
+              placeholder="Type a message..."
+            />
+            <button type="submit" id="submit-button">Send</button>
+          </form>
+          <div id="search-panel-wrapper" class="column-wrapper">
+            <button id="toggle-search-btn" title="Minimize Search Results">
+              🡸
             </button>
+            <h2>Search Documents</h2>
+            <form id="search-form">
+              <input
+                type="text"
+                id="search-query"
+                placeholder="Enter search text..."
+              />
+              <label for="top-k-select">Number of results:</label>
+              <select id="top-k-select">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+              </select>
+              <button type="submit">Search</button>
+            </form>
+            <div id="search-results"></div>
           </div>
-
-          <form id="upload-form" method="post" enctype="multipart/form-data">
-            <input type="file" name="files" id="file-input" multiple />
-            <button type="submit">Upload</button>
-          </form>
-
-          <div id="upload-status" class="status-text"></div>
-
-          <form id="filter-form">
-            <input
-              type="text"
-              id="filter-input"
-              placeholder="Filter documents..."
-            />
-            <button type="submit">Filter</button>
-          </form>
-
-          <ul id="document-list">
-            <li><em>Loading documents...</em></li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Chat + Search -->
-      <div class="column scrollable">
-        <h2>Assistant Chat</h2>
-        <div id="chat-box" class="chat-box">
-          <div>
-            <strong>Assistant:</strong> Hello! How can I help you today?
-          </div>
-        </div>
-        <form id="chat-form">
-          <input type="text" id="user-input" placeholder="Type a message..." />
-          <button type="submit" id="submit-button">Send</button>
-        </form>
-        <div id="search-panel-wrapper" class="column-wrapper">
-          <button id="toggle-search-btn" title="Minimize Search Results">
-            🡸
-          </button>
-          <h2>Search Documents</h2>
-          <form id="search-form">
-            <input
-              type="text"
-              id="search-query"
-              placeholder="Enter search text..."
-            />
-            <label for="top-k-select">Number of results:</label>
-            <select id="top-k-select">
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="15">15</option>
-            </select>
-            <button type="submit">Search</button>
-          </form>
-          <div id="search-results"></div>
         </div>
       </div>
     </div>

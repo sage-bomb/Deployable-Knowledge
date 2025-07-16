@@ -108,7 +108,7 @@ function renderDocumentList(docs, filter = "") {
     });
 
     li.innerHTML = `
-      <strong>${escapeHtml(doc.title)}</strong><br />
+      <strong title="${escapeHtml(doc.title)}">${escapeHtml(doc.title)}</strong><br />
       <small>Segments: ${doc.segments}</small><br />
       <small>Status: </small>
     `;

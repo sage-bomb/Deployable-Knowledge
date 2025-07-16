@@ -38,18 +38,47 @@ h2 {
 
 /* === Layout === */
 .container {
-  display: flex;
-  flex-wrap: wrap;
+  display: flex;          /* keep flex */
+  flex-wrap: nowrap;      /* prevent wrapping, force side-by-side */
   gap: 2rem;
   padding: 2rem;
+  width: 100%;
+  height: 100vh;          /* full viewport height, adjust if needed */
+  box-sizing: border-box;
+  overflow: hidden;       /* prevent unwanted scrollbars */
 }
 
 .column {
-  flex: 1 1 45%;
   background-color: var(--bg-panel);
   padding: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 0 10px #00000033;
+  overflow-y: auto;       /* scroll vertically if needed */
+  box-sizing: border-box;
+}
+
+/* Fix widths: left panel fixed, right panel flexible */
+#doc-panel-wrapper {
+  flex: 0 0 400px;        /* fixed width */
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.container > .column.scrollable:last-child {
+  flex: 1;                /* take remaining space */
+  min-width: 0;           /* important to allow shrinking */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Prevent document titles from expanding */
+#document-list li strong {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
