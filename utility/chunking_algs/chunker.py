@@ -11,65 +11,69 @@ import re
 def safe_sent_tokenize(text):
     return re.split(r'(?<=[.!?]) +', text.strip())
 
-def chunk_by_sentences(text, max_chars=500):
-    sentences = safe_sent_tokenize(text)  # <- no nltk here
-
+def chunk_by_sentences(sentences_with_page, max_chars=500):
     chunks = []
-    current, start_char, chunk_idx = "", 0, 0
+    current, current_pages = "", []
+    chunk_idx = 0
 
-    for sent in sentences:
-        if len(current) + len(sent) < max_chars:
-            current += " " + sent
+    for sentence, page in sentences_with_page:
+        if len(current) + len(sentence) < max_chars:
+            current += " " + sentence
+            current_pages.append(page)
         else:
             chunk_text = current.strip()
             chunks.append((chunk_text, {
                 "chunk_idx": chunk_idx,
-                "start_char": start_char,
+                "page": min(current_pages) if current_pages else None,
                 "num_sentences": chunk_text.count('.') + chunk_text.count('!') + chunk_text.count('?')
             }))
             chunk_idx += 1
-            start_char += len(chunk_text)
-            current = sent
+            current = sentence
+            current_pages = [page]
 
     if current:
         chunk_text = current.strip()
         chunks.append((chunk_text, {
             "chunk_idx": chunk_idx,
-            "start_char": start_char,
+            "page": min(current_pages) if current_pages else None,
             "num_sentences": chunk_text.count('.') + chunk_text.count('!') + chunk_text.count('?')
         }))
+
     return chunks
 
 
-def chunk_by_semantic_similarity(text, model_name="all-MiniLM-L6-v2", threshold=0.6):
+def chunk_by_semantic_similarity(sentences_with_page, model_name="all-MiniLM-L6-v2", threshold=0.6):
     model = SentenceTransformer(model_name)
-    sentences = safe_sent_tokenize(text)
+    sentences = [s for s, _ in sentences_with_page]
+    pages = [p for _, p in sentences_with_page]
     embeddings = model.encode(sentences, convert_to_tensor=True)
 
     chunks = []
-    current_chunk, start_char, chunk_idx = [], 0, 0
+    current_chunk, current_pages = [], []
+    chunk_idx = 0
 
     for i in range(1, len(sentences)):
-        current_chunk.append(sentences[i-1])
-        sim = util.pytorch_cos_sim(embeddings[i-1], embeddings[i]).item()
+        current_chunk.append(sentences[i - 1])
+        current_pages.append(pages[i - 1])
+        sim = util.pytorch_cos_sim(embeddings[i - 1], embeddings[i]).item()
         if sim < threshold:
             chunk_text = " ".join(current_chunk)
             chunks.append((chunk_text.strip(), {
                 "chunk_idx": chunk_idx,
-                "start_char": text.find(chunk_text),
+                "page": min(current_pages),
                 "semantic_break": True
             }))
             chunk_idx += 1
-            current_chunk = []
+            current_chunk, current_pages = [], []
 
     current_chunk.append(sentences[-1])
-    if current_chunk:
-        chunk_text = " ".join(current_chunk)
-        chunks.append((chunk_text.strip(), {
-            "chunk_idx": chunk_idx,
-            "start_char": text.find(chunk_text),
-            "semantic_break": False
-        }))
+    current_pages.append(pages[-1])
+    chunk_text = " ".join(current_chunk)
+    chunks.append((chunk_text.strip(), {
+        "chunk_idx": chunk_idx,
+        "page": min(current_pages),
+        "semantic_break": False
+    }))
     return chunks
 
 def split_text_by_length(text, max_chars=100000):
@@ -142,108 +146,90 @@ def chunk_by_graph_rank(text, max_sentences=4):
 
     return all_chunks
 
-def safe_chunk_by_graph_rank(text, max_sentences=4, max_tokens_per_chunk=256, model_name="sentence-transformers/all-MiniLM-L6-v2"):
-    # Load and configure spaCy pipeline
+def safe_chunk_by_graph_rank(sentences_with_page, max_sentences=4, max_tokens_per_chunk=256, model_name="all-MiniLM-L6-v2"):
     nlp = spacy.load("en_core_web_sm")
     nlp.max_length = 2_000_000
     nlp.add_pipe("textrank", last=True)
-    tokenizer = SentenceTransformer(model_name).tokenizer
 
-    # Optional: break very large input into subchunks to keep memory/token safe
-    def split_text_by_length(text, max_tokens=2000):
-        words = text.split()
-        chunks = []
-        i = 0
-        while i < len(words):
-            chunk_words = words[i:i + max_tokens]
-            chunk = " ".join(chunk_words)
-            chunks.append(chunk)
-            i += max_tokens
-        return chunks
+    model = SentenceTransformer(model_name)
+    tokenizer = model.tokenizer
 
-    all_chunks = []
+    chunks = []
     chunk_idx = 0
-    global_offset = 0
+    current_sentences = []
+    current_pages = []
 
-    for subtext in split_text_by_length(text, max_tokens=2000):
-        doc = nlp(subtext)
-        current_sentences = []
-        for sent in doc.sents:
-            sent_text = sent.text
-            sent_tokens = tokenizer.encode(sent_text, truncation=True)
-
-            if len(sent_tokens) > max_tokens_per_chunk:
-                # Too long — truncate at the sentence level
-                sent_tokens = sent_tokens[:max_tokens_per_chunk]
-                sent_text = tokenizer.decode(sent_tokens, skip_special_tokens=True)
-
-            current_sentences.append(sent_text)
-
-            joined = " ".join(current_sentences)
-            joined_tokens = tokenizer.encode(joined, truncation=False)
-
-            if len(current_sentences) >= max_sentences or len(joined_tokens) >= max_tokens_per_chunk:
-                chunk_text = " ".join(current_sentences)
-                start = text.find(chunk_text, global_offset)
-
-                all_chunks.append((
-                    chunk_text.strip(),
-                    {
-                        "chunk_idx": chunk_idx,
-                        "char_range": (start, start + len(chunk_text)),
-                        "num_sentences": len(current_sentences),
-                    }
-                ))
-
-                global_offset = start + len(chunk_text)
-                chunk_idx += 1
-                current_sentences = []
-
-        # Add remaining
+    def flush_chunk():
+        nonlocal chunk_idx, current_sentences, current_pages
         if current_sentences:
             chunk_text = " ".join(current_sentences)
-            start = text.find(chunk_text, global_offset)
-            all_chunks.append((
+            page = min(current_pages) if current_pages else None
+            chunks.append((
                 chunk_text.strip(),
                 {
                     "chunk_idx": chunk_idx,
-                    "char_range": (start, start + len(chunk_text)),
-                    "num_sentences": len(current_sentences),
+                    "page": page,
+                    "num_sentences": len(current_sentences)
                 }
             ))
             chunk_idx += 1
-            global_offset = start + len(chunk_text)
+            current_sentences = []
+            current_pages = []
 
-    return all_chunks
+    for (sent_text, page) in sentences_with_page:
+        token_ids = tokenizer.encode(sent_text, truncation=True)
 
-def chunk_by_paragraphs(text, model_name="all-MiniLM-L6-v2", threshold=0.7):
+        if len(token_ids) > max_tokens_per_chunk:
+            token_ids = token_ids[:max_tokens_per_chunk]
+            sent_text = tokenizer.decode(token_ids, skip_special_tokens=True)
+
+        current_sentences.append(sent_text)
+        current_pages.append(page)
+
+        joined = " ".join(current_sentences)
+        joined_token_ids = tokenizer.encode(joined, truncation=False)
+
+        if len(current_sentences) >= max_sentences or len(joined_token_ids) >= max_tokens_per_chunk:
+            flush_chunk()
+
+    flush_chunk()
+    return chunks
+
+
+def chunk_by_paragraphs(text, page_aware_sentences, model_name="all-MiniLM-L6-v2", threshold=0.7):
     model = SentenceTransformer(model_name)
     paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
     embeddings = model.encode(paragraphs, convert_to_tensor=True)
 
-    chunks, current, chunk_idx = [], [], 0
-    char_offset = 0
+    chunks, current, current_pages = [], [], []
+    chunk_idx = 0
+
+    # map each paragraph to its most common page number based on sentences
+    para_pages = []
+    for para in paragraphs:
+        para_sents = [page for sent, page in page_aware_sentences if sent in para]
+        para_pages.append(min(para_sents) if para_sents else None)
 
     for i in range(1, len(paragraphs)):
-        current.append(paragraphs[i-1])
-        sim = util.pytorch_cos_sim(embeddings[i-1], embeddings[i]).item()
+        current.append(paragraphs[i - 1])
+        current_pages.append(para_pages[i - 1])
+        sim = util.pytorch_cos_sim(embeddings[i - 1], embeddings[i]).item()
         if sim < threshold:
             chunk_text = "\n\n".join(current)
             chunks.append((chunk_text.strip(), {
                 "chunk_idx": chunk_idx,
-                "start_char": text.find(chunk_text, char_offset),
+                "page": min(current_pages),
                 "semantic_gap": True
             }))
-            char_offset += len(chunk_text)
             chunk_idx += 1
-            current = []
+            current, current_pages = [], []
 
     current.append(paragraphs[-1])
-    if current:
-        chunk_text = "\n\n".join(current)
-        chunks.append((chunk_text.strip(), {
-            "chunk_idx": chunk_idx,
-            "start_char": text.find(chunk_text, char_offset),
-            "semantic_gap": False
-        }))
+    current_pages.append(para_pages[-1])
+    chunk_text = "\n\n".join(current)
+    chunks.append((chunk_text.strip(), {
+        "chunk_idx": chunk_idx,
+        "page": min(current_pages),
+        "semantic_gap": False
+    }))
     return chunks
