@@ -282,6 +282,13 @@ li:hover {
   margin-left: auto;
 }
 
+/* === Scrolling === */
+
+.scrollable {
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
 /* === Link Styling === */
 a {
   color: var(--accent-blue);
