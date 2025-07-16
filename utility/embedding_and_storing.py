@@ -78,6 +78,7 @@ def embed_file(
     chunks_with_meta = chunk_text(text, method=chunking_method)
     if filter_chunks:
         chunks_with_meta = [chunk for chunk in chunks_with_meta if not is_all_caps(chunk[0])]
+    chunks_with_meta = [chunk for chunk in chunks_with_meta if len(chunk[0].split()) >= 5]
     segments = [chunk for chunk, _ in chunks_with_meta]
     positions = [meta.get("char_range", (None, None)) for _, meta in chunks_with_meta]
 
