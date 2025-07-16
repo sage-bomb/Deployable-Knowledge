@@ -295,6 +295,7 @@ li:hover {
   width: 2.5rem;
   flex: 0 0 2.5rem;
   overflow: hidden;
+  max-width: 2.5rem;
 }
 
 #doc-panel-wrapper.collapsed .column {
