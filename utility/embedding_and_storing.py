@@ -55,7 +55,8 @@ def extract_text(file_path: Path) -> str:
     if file_path.suffix.lower() == ".pdf":
         return parse_pdf(str(file_path))
     elif file_path.suffix.lower() == ".txt":
-        return file_path.read_text(encoding="utf-8")
+        text = file_path.read_text(encoding="utf-8")
+        return [text]
     else:
         raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
@@ -74,20 +75,47 @@ def embed_file(
     
     print(f"📄 Embedding file: {file_path.name}")
     text = extract_text(file_path)
+    page_offsets=[]
+    full_text=""
 
-    chunks_with_meta = chunk_text(text, method=chunking_method)
+    for page_num, page in enumerate(text, start=1):
+        start_idx = len(full_text)
+        full_text += page + "\n\n"
+        end_idx = len(full_text)
+        page_offsets.append((start_idx, end_idx, page_num))
+
+    chunks_with_meta = chunk_text(full_text, method=chunking_method)
     if filter_chunks:
         chunks_with_meta = [chunk for chunk in chunks_with_meta if not is_all_caps(chunk[0])]
     chunks_with_meta = [chunk for chunk in chunks_with_meta if len(chunk[0].split()) >= 5]
-    segments = [chunk for chunk, _ in chunks_with_meta]
-    positions = [meta.get("char_range", (None, None)) for _, meta in chunks_with_meta]
+    
+    final_chunks = []
+    for chunked_text, meta in chunks_with_meta:
+        char_range = meta.get("char_range", None)
+        if not char_range or char_range == (None, None):
+            page = None
+        else:
+            start_char, _ = char_range
+            # find which page range the start of the chunk is in
+            page = None
+            for start, end, pg in page_offsets:
+                if start <= start_char < end:
+                    page = pg
+                    break
+        meta["page"] = page
+        final_chunks.append((chunked_text, meta))
+
+    segments = [chunk for chunk, _ in final_chunks]
+    positions = [meta.get("char_range", (None, None)) for _, meta in final_chunks]
+    pages = [meta.get("page", None) for _, meta in final_chunks]
 
     db.add_segments(
         segments=segments,
         strategy_name=chunking_method,
         source=source_name or file_path.name,
         tags=tags or ["embedded"],
-        positions=positions
+        positions=positions,
+        page=pages
     )
 
     print(f"✅ File embedded: {file_path.name}")

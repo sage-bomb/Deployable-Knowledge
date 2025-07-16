@@ -13,6 +13,15 @@ def pagerank_chunk_text(text, model_name="all-mpnet-base-v2", sim_threshold=0.5,
     model = SentenceTransformer(model_name)
     embeddings = model.encode(sentences, convert_to_tensor=False)
 
+     # Track sentence start/end positions for char_range mapping
+    sentence_ranges = []
+    offset = 0
+    for sent in sentences:
+        start = text.find(sent, offset)
+        end = start + len(sent)
+        sentence_ranges.append((start, end))
+        offset = end
+
     # ---- STEP 2: Build Similarity Graph ----
     G = nx.Graph()
     sim_matrix = cosine_similarity(embeddings)
@@ -57,11 +66,12 @@ def pagerank_chunk_text(text, model_name="all-mpnet-base-v2", sim_threshold=0.5,
             i += 1
 
         new_chunk=" ".join([sentences[i] for i in chunk])
-        start = text.find(new_chunk)
+        first_idx=chunk[0]
+        start_char, _ = sentence_ranges[first_idx]
         chunks.append(new_chunk, {
             "chunk_idx": chunk_idx,
-            "char_range": (start, start + len(new_chunk)),
-            "num_sentences": new_chunk.count('.') + new_chunk.count('!') + new_chunk.count('?')
+            "char_range": (start_char, start_char + len(new_chunk)),
+            "num_sentences": len(chunk)
         })
         chunk_idx=chunk_idx+1
 

@@ -3,23 +3,30 @@ from pathlib import Path
 import argparse
 from collections import Counter
 
-def remove_frequent_lines(page_texts, threshold=0.5):
+def remove_frequent_lines(pages, threshold=0.5):
     """
-    Remove lines that appear in more than `threshold` proportion of pages.
+    Removes lines that appear on more than `threshold` proportion of pages.
+    Expects `pages` as a list of dicts with "page" and "text".
+    Returns same structure with filtered text.
     """
-    all_lines = [line.strip() for text in page_texts for line in text.split("\n") if line.strip()]
+    all_lines = [line.strip() for page in pages for line in page["text"].split("\n") if line.strip()]
     line_counts = Counter(all_lines)
-    total_pages = len(page_texts)
+    total_pages = len(pages)
+
     common_lines = {
         line for line, count in line_counts.items()
         if count / total_pages > threshold
     }
 
     filtered_pages = []
-    for text in page_texts:
-        lines = text.split("\n")
-        filtered = [line for line in lines if line.strip() not in common_lines]
-        filtered_pages.append("\n".join(filtered))
+    for page in pages:
+        lines = page["text"].split("\n")
+        filtered_lines = [line for line in lines if line.strip() not in common_lines]
+        filtered_pages.append({
+            "page": page["page"],
+            "text": "\n".join(filtered_lines)
+        })
+
     return filtered_pages
 
 def parse_pdf(pdf_path, margin_top=50, margin_bottom=50, margin_left=50, margin_right=50):
@@ -55,11 +62,17 @@ def parse_pdf(pdf_path, margin_top=50, margin_bottom=50, margin_left=50, margin_
             # Sort words by vertical (portrait) or horizontal (landscape) position
             cleaned_words.sort(key=lambda x: x[0])
             grouped_lines = group_words_by_line(cleaned_words, is_landscape)
-            all_cleaned_text.append("\n".join(grouped_lines))
-    
-    all_cleaned_text = remove_frequent_lines(all_cleaned_text)
+        
+        all_cleaned_text.append({
+            "page": page_idx + 1,
+            "text": "\n".join(grouped_lines)
+        })
 
-    return "\n\n".join(all_cleaned_text)
+    all_cleaned_text = remove_frequent_lines(all_cleaned_text)  # update this function if needed
+
+    return all_cleaned_text
+
+    return all_cleaned_text
 
 
 def is_within_margins(word, page, is_landscape, margin_top, margin_bottom, margin_left, margin_right):

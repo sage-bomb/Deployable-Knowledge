@@ -18,3 +18,13 @@ if (document.readyState === "loading") {
 } else {
   runInit();
 }
+
+window.goToPage = function (source, page) {
+  if (!page) {
+    alert("No page information available");
+    return;
+  }
+
+  // Open the PDF file directly at a specific page
+  window.open(`/documents/${encodeURIComponent(source)}#page=${page}`, "_blank");
+};
