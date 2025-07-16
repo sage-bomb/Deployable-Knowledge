@@ -1,6 +1,26 @@
 import pdfplumber
 from pathlib import Path
 import argparse
+from collections import Counter
+
+def remove_frequent_lines(page_texts, threshold=0.5):
+    """
+    Remove lines that appear in more than `threshold` proportion of pages.
+    """
+    all_lines = [line.strip() for text in page_texts for line in text.split("\n") if line.strip()]
+    line_counts = Counter(all_lines)
+    total_pages = len(page_texts)
+    common_lines = {
+        line for line, count in line_counts.items()
+        if count / total_pages > threshold
+    }
+
+    filtered_pages = []
+    for text in page_texts:
+        lines = text.split("\n")
+        filtered = [line for line in lines if line.strip() not in common_lines]
+        filtered_pages.append("\n".join(filtered))
+    return filtered_pages
 
 def parse_pdf(pdf_path, margin_top=50, margin_bottom=50, margin_left=50, margin_right=50):
     """
@@ -36,6 +56,8 @@ def parse_pdf(pdf_path, margin_top=50, margin_bottom=50, margin_left=50, margin_
             cleaned_words.sort(key=lambda x: x[0])
             grouped_lines = group_words_by_line(cleaned_words, is_landscape)
             all_cleaned_text.append("\n".join(grouped_lines))
+    
+    all_cleaned_text = remove_frequent_lines(all_cleaned_text)
 
     return "\n\n".join(all_cleaned_text)
 
