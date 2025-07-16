@@ -282,6 +282,21 @@ li:hover {
   margin-left: auto;
 }
 
+.toggle-btn.btn-active {
+  background-color: #4CAF50; /* Green for active */
+  color: white;
+}
+
+.toggle-btn.btn-inactive {
+  background-color: #ffbf00; /* Amber for inactive */
+  color: white;
+}
+
+.toggle-btn.btn-active:hover,
+.toggle-btn.btn-inactive:hover {
+  filter: brightness(85%);
+}
+
 /* === Scrolling === */
 
 .scrollable {

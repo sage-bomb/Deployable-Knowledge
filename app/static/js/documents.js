@@ -69,16 +69,21 @@ function renderDocumentList(docs, filter = "") {
     statusSpan.textContent = "Active";
 
     const toggleBtn = document.createElement("button");
-    toggleBtn.className = "toggle-btn";
+    toggleBtn.className = "toggle-btn btn-active";
     toggleBtn.textContent = "Deactivate";
 
     initToggleState(doc.id, true);
 
     toggleBtn.addEventListener("click", () => {
       const current = getToggle(doc.id);
+      const next = !current;
       setToggle(doc.id, !current);
+
       statusSpan.textContent = current ? "Inactive" : "Active";
       toggleBtn.textContent = current ? "Activate" : "Deactivate";
+
+      toggleBtn.classList.toggle("btn-active", next);
+      toggleBtn.classList.toggle("btn-inactive", !next);
     });
 
     const removeBtn = document.createElement("button");
