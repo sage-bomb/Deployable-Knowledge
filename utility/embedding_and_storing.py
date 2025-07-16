@@ -16,7 +16,7 @@ from utility.chunking_algs.chunker import (
     chunk_by_paragraphs
 )
 from utility.chunking_algs.dynamic_bottom_to_top_chunking import merge_sentences_bottom_up
-from utility.chunking_algs.graph_pagerank_chunking import pagerank_chunk_text
+from utility.chunking_algs.graph_pagerank_chunking import pagerank_chunk_text_with_page_tracking
 
 # === Config ===
 from config import (
@@ -27,7 +27,7 @@ from config import (
 # === DB Setup ===
 db = DBManager(persist_dir=CHROMA_DB_DIR, collection_name=COLLECTION_NAME)
 
-def chunk_text(text: str, method: str = "graph") -> List[Tuple[str, Dict]]:
+def chunk_text(text: str, method: str = "graph-pagerank") -> List[Tuple[str, Dict]]:
     if method == "sentences":
         return chunk_by_sentences(text, max_chars=500)
     elif method == "semantics":
@@ -40,7 +40,7 @@ def chunk_text(text: str, method: str = "graph") -> List[Tuple[str, Dict]]:
     elif method == "dynamic":
         return merge_sentences_bottom_up(text, similarity_threshold=0.7, model=EMBEDDING_MODEL_NAME)
     elif method == "graph-pagerank":
-        return pagerank_chunk_text(text, model_name=EMBEDDING_MODEL_NAME, sim_threshold=0.7)
+        return pagerank_chunk_text_with_page_tracking(text, model_name=EMBEDDING_MODEL_NAME, sim_threshold=0.7)
     else:
         raise ValueError(f"Unsupported chunking method: {method}")
     
@@ -62,52 +62,44 @@ def extract_text(file_path: Path) -> str:
 
 def embed_file(
     file_path: Path,
-    chunking_method: str = "graph",
+    chunking_method: str = "graph-pagerank",
     source_name: Optional[str] = None,
     tags: Optional[List[str]] = None,
     filter_chunks: bool = False,
 ) -> None:
-    """
-    Process a single file: parse, chunk, embed, store.
-    """
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
-    
+
     print(f"📄 Embedding file: {file_path.name}")
-    text = extract_text(file_path)
-    page_offsets=[]
-    full_text=""
-
-    for page_num, page in enumerate(text, start=1):
-        start_idx = len(full_text)
-        full_text += page + "\n\n"
-        end_idx = len(full_text)
-        page_offsets.append((start_idx, end_idx, page_num))
-
-    chunks_with_meta = chunk_text(full_text, method=chunking_method)
-    if filter_chunks:
-        chunks_with_meta = [chunk for chunk in chunks_with_meta if not is_all_caps(chunk[0])]
-    chunks_with_meta = [chunk for chunk in chunks_with_meta if len(chunk[0].split()) >= 5]
+    pages = extract_text(file_path)  # expects list of dicts {"page": n, "text": "..."}
     
-    final_chunks = []
-    for chunked_text, meta in chunks_with_meta:
-        char_range = meta.get("char_range", None)
-        if not char_range or char_range == (None, None):
-            page = None
-        else:
-            start_char, _ = char_range
-            # find which page range the start of the chunk is in
-            page = None
-            for start, end, pg in page_offsets:
-                if start <= start_char < end:
-                    page = pg
-                    break
-        meta["page"] = page
-        final_chunks.append((chunked_text, meta))
+    all_chunks_with_meta = []
 
-    segments = [chunk for chunk, _ in final_chunks]
-    positions = [meta.get("char_range", (None, None)) for _, meta in final_chunks]
-    pages = [meta.get("page", None) for _, meta in final_chunks]
+    for page in pages:
+        page_num = page.get("page")
+        page_text = page.get("text", "")
+        print(f"Page {page_num} length: {len(page_text)}")
+        
+        # Chunk page text separately
+        chunks_with_meta = chunk_text(page_text, method=chunking_method)
+        
+        # Add page info directly to meta for each chunk
+        for chunk_text_, meta in chunks_with_meta:
+            meta["page"] = page_num
+            all_chunks_with_meta.append((chunk_text_, meta))
+    
+    # Optional filtering on all chunks
+    if filter_chunks:
+        all_chunks_with_meta = [
+            (chunk, meta) for chunk, meta in all_chunks_with_meta if not is_all_caps(chunk)
+        ]
+    all_chunks_with_meta = [
+        (chunk, meta) for chunk, meta in all_chunks_with_meta if len(chunk.split()) >= 5
+    ]
+
+    segments = [chunk for chunk, _ in all_chunks_with_meta]
+    positions = [meta.get("char_range", (None, None)) for _, meta in all_chunks_with_meta]
+    pages = [meta.get("page") for _, meta in all_chunks_with_meta]
 
     db.add_segments(
         segments=segments,
@@ -115,9 +107,8 @@ def embed_file(
         source=source_name or file_path.name,
         tags=tags or ["embedded"],
         positions=positions,
-        page=pages
+        page=pages,
     )
-
     print(f"✅ File embedded: {file_path.name}")
 
 

@@ -3,7 +3,7 @@ from pathlib import Path
 import argparse
 from collections import Counter
 
-def remove_frequent_lines(pages, threshold=0.5):
+def remove_frequent_lines(pages, threshold=0.9):
     """
     Removes lines that appear on more than `threshold` proportion of pages.
     Expects `pages` as a list of dicts with "page" and "text".
@@ -42,6 +42,7 @@ def parse_pdf(pdf_path, margin_top=50, margin_bottom=50, margin_left=50, margin_
     with pdfplumber.open(pdf_path) as pdf:
         for page_idx, page in enumerate(pdf.pages):
             words = page.extract_words()
+            print(f"Page {page_idx+1} total words extracted: {len(words)}")
             if not words:
                 continue
 
@@ -49,28 +50,27 @@ def parse_pdf(pdf_path, margin_top=50, margin_bottom=50, margin_left=50, margin_
 
             cleaned_words = []
             for word in words:
-                # margin information
-                # print(f"{word['text']:30} top: {word['top']:.1f} bottom: {word['bottom']:.1f}")
                 if is_within_margins(word, page, is_landscape, margin_top, margin_bottom, margin_left, margin_right):
                     key = word['x0'] if is_landscape else word['top']
                     cleaned_words.append((key, word['text']))
                 else:
-                    #testing margin work
-                    #print(f"Skipping word '{word['text']}' at {word['x0'] if is_landscape else word['top']} due to margin constraints.")
                     continue
+            
+            print(len(cleaned_words))
 
             # Sort words by vertical (portrait) or horizontal (landscape) position
             cleaned_words.sort(key=lambda x: x[0])
             grouped_lines = group_words_by_line(cleaned_words, is_landscape)
         
-        all_cleaned_text.append({
-            "page": page_idx + 1,
-            "text": "\n".join(grouped_lines)
-        })
+            all_cleaned_text.append({
+                "page": page_idx + 1,
+                "text": "\n".join(grouped_lines)
+            })
 
-    all_cleaned_text = remove_frequent_lines(all_cleaned_text)  # update this function if needed
+    # Uncomment if you want to remove frequent header/footer lines
+    # all_cleaned_text = remove_frequent_lines(all_cleaned_text)
 
-    return all_cleaned_text
+    print(all_cleaned_text)
 
     return all_cleaned_text
 
@@ -137,6 +137,10 @@ if __name__ == "__main__":
 
     output_path = Path(args.output_txt)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Join all page texts into one string before writing
+    full_text = "\n\n".join(page["text"] for page in cleaned_text)
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write(cleaned_text)
+        f.write(full_text)
+
     print(f"Extracted text saved to {output_path}")
