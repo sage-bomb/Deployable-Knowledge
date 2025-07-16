@@ -25,6 +25,7 @@
 html, body {
   margin: 0;
   padding: 0;
+  height: 100%;
   background-color: var(--bg-main);
   color: var(--text-main);
   font-family: var(--font-ui);
@@ -55,12 +56,13 @@ h2 {
   box-shadow: 0 0 10px #00000033;
   overflow-y: auto;       /* scroll vertically if needed */
   box-sizing: border-box;
+  height: 100vh;
 }
 
 /* Fix widths: left panel fixed, right panel flexible */
 #doc-panel-wrapper {
-  flex: 0 0 400px;        /* fixed width */
-  max-width: 400px;
+  flex: 0 0 450px;        /* fixed width */
+  max-width: 450px;
   display: flex;
   flex-direction: column;
 }
@@ -70,6 +72,7 @@ h2 {
   min-width: 0;           /* important to allow shrinking */
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 /* Prevent document titles from expanding */
@@ -179,7 +182,7 @@ li:hover {
 .chat-box {
   max-height: none;
   overflow: visible;
-  overflow-y: auto;
+  overflow-y: visible;
   background-color: #1a1a1a;
   border: 1px solid var(--border-light);
   padding: 1rem;
