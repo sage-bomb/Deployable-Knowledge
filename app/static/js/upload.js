@@ -21,7 +21,7 @@ export function initUpload() {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      uploadStatus.textContent = `⏳ Uploading (${i + 1}/${files.length})...`;
+      uploadStatus.innerHTML = `⏳ Uploading (${i + 1}/${files.length})... <span style="color: red;">Using chat at the same time may cause performance issues.</span>`;
 
       const formData = new FormData();
       formData.append("files", file); // same field name the server expects
