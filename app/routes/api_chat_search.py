@@ -39,11 +39,9 @@ async def chat(message: str = Form(...), inactive: Optional[str] = Form(None)):
         chatbot_response = response.json().get("response", "[Error: No response]")
         formatted_html = markdown2.markdown(chatbot_response, extras=[
             "fenced-code-blocks",
-            "code-friendly",
             "strike",
-            "header-ids",
-            "break-on-newline",
-            "tables"
+            "tables",
+            "cuddled-lists"
         ])
 
         print("🚀 Response JSON:", {    "response": formatted_html,    "context": context_blocks})
