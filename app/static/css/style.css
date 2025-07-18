@@ -65,6 +65,9 @@ h2 {
   max-width: 450px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  max-height: 100vh;
+  position: relative;
 }
 
 .container > .column.scrollable:last-child {
