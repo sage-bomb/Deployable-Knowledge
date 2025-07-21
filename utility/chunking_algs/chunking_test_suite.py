@@ -4,7 +4,6 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from rapidfuzz import fuzz
 import sys
-from contextlib import redirect_stdout
 from contextlib import contextmanager
 import re
 

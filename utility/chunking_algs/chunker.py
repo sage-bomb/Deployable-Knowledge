@@ -1,5 +1,4 @@
 from sentence_transformers import SentenceTransformer, util
-from transformers import AutoTokenizer
 import spacy
 import pytextrank
 
