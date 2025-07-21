@@ -4,6 +4,14 @@ import { $, escapeHtml } from './dom.js';
 import { getInactiveIds } from './state.js';
 import { renderSearchResultsBlock } from './render.js';
 
+function getUserId() {
+  let userId = localStorage.getItem("user_id");
+  if (!userId) {
+    userId = "guest-" + Math.random().toString(36).substring(2, 10);
+    localStorage.setItem("user_id", userId);
+  }
+  return userId;
+}
 
 export function initChat() {
   //console.log("✅ initChat called");
@@ -57,10 +65,18 @@ export function initChat() {
 
 
   const persona = $("persona-text")?.value || "";
+  
+  const userId = getUserId();
+  print(userId);
+
   const response = await fetch("/chat-stream", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ message: msg, persona })
+    body: new URLSearchParams({
+      message: msg,
+      persona,
+      user_id: userId
+    })
   });
 
     if (!response.body) {
