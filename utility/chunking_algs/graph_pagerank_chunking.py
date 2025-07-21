@@ -4,36 +4,24 @@ from sentence_transformers import SentenceTransformer
 import numpy as np
 import re
 
-def sentence_tokenize_with_page(text_by_page):
-    """
-    Given a list of {"page": int, "text": str}, return
-    List of (sentence, page) pairs.
-    """
-    pattern = r'(?<=[.!?])\s+'
-    result = []
+def safe_sent_tokenize(text):
+    return re.split(r'(?<=[.!?]) +', text.strip())
 
-    for page_data in text_by_page:
-        page = page_data["page"]
-        raw_text = page_data["text"].strip()
-        sentences = re.split(pattern, raw_text)
-        for s in sentences:
-            sentence = s.strip()
-            if sentence:
-                result.append((sentence, page))
-    return result
-def pagerank_chunk_text(text_by_page, model_name="all-mpnet-base-v2", sim_threshold=0.7, expansion_threshold=0.5):
-    """
-    Text-by-page version that avoids char_range, tracks page per sentence.
-    """
-    sentence_page_pairs = sentence_tokenize_with_page(text_by_page)
-    if not sentence_page_pairs:
-        return []
-
-    sentences = [s for s, _ in sentence_page_pairs]
-    sentence_pages = [pg for _, pg in sentence_page_pairs]
-
+def pagerank_chunk_text(text, model_name="all-mpnet-base-v2", sim_threshold=0.5, top_k=5, expansion_threshold=0.5):
+    # ---- STEP 1: Preprocessing ----
+    sentences = safe_sent_tokenize(text)
     model = SentenceTransformer(model_name)
     embeddings = model.encode(sentences, convert_to_tensor=False)
+
+
+    # Track sentence start/end positions for char_range mapping
+    sentence_ranges = []
+    offset = 0
+    for sent in sentences:
+        start = text.find(sent, offset)
+        end = start + len(sent)
+        sentence_ranges.append((start, end))
+        offset = end
     
     # ---- STEP 2: Build Similarity Graph ----
     G = nx.Graph()
@@ -78,19 +66,14 @@ def pagerank_chunk_text(text_by_page, model_name="all-mpnet-base-v2", sim_thresh
             used.add(i)
             i += 1
 
-        new_chunk = " ".join([sentences[i] for i in chunk])
-        # Choose page number of the first sentence in chunk
-        page_number = sentence_pages[chunk[0]]
-
-        chunks.append((
-            new_chunk,
-            {
-                "chunk_idx": chunk_idx,
-                "page": page_number,
-                "num_sentences": len(chunk)
-            }
-        ))
-        chunk_idx += 1
+        new_chunk=" ".join([sentences[i] for i in chunk])
+        first_idx=chunk[0]
+        start_char, _ = sentence_ranges[first_idx]
+        chunks.append(new_chunk, {
+            "chunk_idx": chunk_idx,
+            "num_sentences": len(chunk)
+        })
+        chunk_idx=chunk_idx+1
 
 
     return chunks
