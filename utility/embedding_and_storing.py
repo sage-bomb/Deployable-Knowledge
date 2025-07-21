@@ -55,7 +55,8 @@ def extract_text(file_path: Path) -> str:
     if file_path.suffix.lower() == ".pdf":
         return parse_pdf(str(file_path))
     elif file_path.suffix.lower() == ".txt":
-        return file_path.read_text(encoding="utf-8")
+        text = file_path.read_text(encoding="utf-8")
+        return [text]
     else:
         raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
@@ -73,21 +74,43 @@ def embed_file(
         raise FileNotFoundError(f"File not found: {file_path}")
     
     print(f"📄 Embedding file: {file_path.name}")
-    text = extract_text(file_path)
+    
+    pages = extract_text(file_path)  # expects list of dicts {"page": n, "text": "..."}
+    
+    all_chunks_with_meta = []
 
-    chunks_with_meta = chunk_text(text, method=chunking_method)
+    for page in pages:
+        page_num = page.get("page")
+        page_text = page.get("text", "")
+        print(f"Page {page_num} length: {len(page_text)}")
+        
+        # Chunk page text separately
+        chunks_with_meta = chunk_text(page_text, method=chunking_method)
+        
+        # Add page info directly to meta for each chunk
+        for chunk_text_, meta in chunks_with_meta:
+            meta["page"] = page_num
+            all_chunks_with_meta.append((chunk_text_, meta))
+    # Optional filtering on all chunks
     if filter_chunks:
-        chunks_with_meta = [chunk for chunk in chunks_with_meta if not is_all_caps(chunk[0])]
-    chunks_with_meta = [chunk for chunk in chunks_with_meta if len(chunk[0].split()) >= 5]
-    segments = [chunk for chunk, _ in chunks_with_meta]
-    positions = [meta.get("char_range", (None, None)) for _, meta in chunks_with_meta]
+        all_chunks_with_meta = [
+            (chunk, meta) for chunk, meta in all_chunks_with_meta if not is_all_caps(chunk)
+        ]
+    all_chunks_with_meta = [
+        (chunk, meta) for chunk, meta in all_chunks_with_meta if len(chunk.split()) >= 5
+    ]
+
+    segments = [chunk for chunk, _ in all_chunks_with_meta]
+    positions = [meta.get("char_range", (None, None)) for _, meta in all_chunks_with_meta]
+    pages = [meta.get("page") for _, meta in all_chunks_with_meta]
 
     db.add_segments(
         segments=segments,
         strategy_name=chunking_method,
         source=source_name or file_path.name,
         tags=tags or ["embedded"],
-        positions=positions
+        positions=positions,
+        page=pages,
     )
 
     print(f"✅ File embedded: {file_path.name}")

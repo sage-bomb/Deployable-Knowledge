@@ -109,12 +109,16 @@ db.add_segments(segments, strategy_name="top_down", source="contract_001.txt", t
         source: str,
         tags: Optional[List[str]] = None,
         positions: Optional[List[tuple]] = None,
+        page: Optional[List[Optional[int]]] = None,
     ):
         print("tags:", tags)  # Debugging: print tags
         ids, docs, metas = [], [], []
         for i, segment in enumerate(segments):
             start, end = (positions[i] if positions else (-1, -1))
+            p = page[i] if page else None
             _id, doc, meta = self.build_entry(segment, i, strategy_name, source, tags, start, end)
+            if p is not None:
+                meta["page"] = p
             ids.append(_id)
             docs.append(doc)
             metas.append(meta)

@@ -59,7 +59,7 @@ async def search_documents(q: str = Query(...), top_k: int = 5):
         embedding = db.embed([q])[0]
         results = db.collection.query(query_embeddings=[embedding], n_results=top_k)
         enriched_results = [
-            {"text": doc, "source": meta.get("source", "unknown"), "score": score}
+            {"text": doc, "source": meta.get("source", "unknown"), "score": score, "page": meta.get("page", None)}
             for doc, meta, score in zip(
                 results.get("documents", [[]])[0],
                 results.get("metadatas", [[]])[0],
