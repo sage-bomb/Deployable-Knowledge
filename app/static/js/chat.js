@@ -21,6 +21,7 @@ export function initChat() {
   const chatBox = $("chat-box");
   const docLimitInput = $("doc-limit");
   const submitButton = $("submit-button");
+  const clearButton = $("clear-history");
 
   // console.log("chatForm:", chatForm);
   // console.log("chatInput:", chatInput);
@@ -63,6 +64,14 @@ export function initChat() {
       console.error("Context search failed", err);
     }
 
+  clearButton.addEventListener("click", function() {
+    clearButton.disabled = true;
+
+    chatBox.innerHTML = "";
+
+    clearButton.disabled = false;
+    chatInput.focus();
+  })
 
   const persona = $("persona-text")?.value || "";
   
