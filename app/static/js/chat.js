@@ -67,7 +67,7 @@ export function initChat() {
   const persona = $("persona-text")?.value || "";
   
   const userId = getUserId();
-  print(userId);
+  console.log(userId);
 
   const response = await fetch("/chat-stream", {
     method: "POST",
