@@ -1,4 +1,3 @@
-from nltk.tokenize import sent_tokenize
 from sentence_transformers import SentenceTransformer, util
 from transformers import AutoTokenizer
 import spacy

@@ -6,6 +6,7 @@ from rapidfuzz import fuzz
 import sys
 from contextlib import redirect_stdout
 from contextlib import contextmanager
+import re
 
 class ChunkingTestSuite:
     def __init__(
@@ -97,13 +98,15 @@ def log_to_file_and_console(log_path):
             sys.stdout = original_stdout
 
 if __name__ == "__main__":
-    from nltk.tokenize import sent_tokenize
 
     def simple_split(text):
         return [p.strip() for p in text.split('\n\n') if p.strip()]
+    
+    def safe_sent_tokenize(text):
+        return re.split(r'(?<=[.!?]) +', text.strip())
 
     def sentence_chunk(text):
-        return sent_tokenize(text)
+        return safe_sent_tokenize(text)
 
     queries_with_answers = [
         ("What does clicking the Summary button do", "Clicking the Summary button hides the details about the connection, restricting the information to the IP address, Type, Slot, Status, and Description."),

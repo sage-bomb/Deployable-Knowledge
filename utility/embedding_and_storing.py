@@ -175,9 +175,6 @@ if __name__ == "__main__":
 
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
-import nltk
-nltk.download("punkt")
-from nltk.tokenize import sent_tokenize
 import numpy as np
 import re
 
