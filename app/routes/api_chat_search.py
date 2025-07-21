@@ -111,6 +111,8 @@ async def chat(
         # Update memory
         with lock:
             history.append((message, chatbot_response))
+            if len(history) > 20:  # Limit history to last 20 exchanges
+                history[:] = history[-20:]
             memory["summary"] = update_summary(summary, message, chatbot_response)
 
         return JSONResponse(content={
@@ -246,6 +248,8 @@ async def chat_stream(
             # After stream ends, update memory
             with lock:
                 history.append((message, assistant_msg))
+                if len(history) > 20:
+                    history[:] = history[-20:]
                 memory["summary"] = update_summary(summary, message, assistant_msg)
 
         return StreamingResponse(event_stream(), media_type="text/html")
