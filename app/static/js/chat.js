@@ -4,6 +4,14 @@ import { $, escapeHtml } from './dom.js';
 import { getInactiveIds } from './state.js';
 import { renderSearchResultsBlock } from './render.js';
 
+function getUserId() {
+  let userId = localStorage.getItem("user_id");
+  if (!userId) {
+    userId = "guest-" + Math.random().toString(36).substring(2, 10);
+    localStorage.setItem("user_id", userId);
+  }
+  return userId;
+}
 
 export function initChat() {
   //console.log("✅ initChat called");
@@ -13,6 +21,7 @@ export function initChat() {
   const chatBox = $("chat-box");
   const docLimitInput = $("doc-limit");
   const submitButton = $("submit-button");
+  const clearButton = $("clear-history");
 
   // console.log("chatForm:", chatForm);
   // console.log("chatInput:", chatInput);
@@ -55,12 +64,28 @@ export function initChat() {
       console.error("Context search failed", err);
     }
 
+  clearButton.addEventListener("click", function() {
+    clearButton.disabled = true;
+
+    chatBox.innerHTML = "";
+
+    clearButton.disabled = false;
+    chatInput.focus();
+  })
 
   const persona = $("persona-text")?.value || "";
+  
+  const userId = getUserId();
+  console.log(userId);
+
   const response = await fetch("/chat-stream", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ message: msg, persona })
+    body: new URLSearchParams({
+      message: msg,
+      persona,
+      user_id: userId
+    })
   });
 
     if (!response.body) {
