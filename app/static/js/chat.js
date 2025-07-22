@@ -22,6 +22,7 @@ export function initChat() {
   const docLimitInput = $("doc-limit");
   const submitButton = $("submit-button");
   const clearButton = $("clear-history");
+  const resetLLMButton = $("reset-llm");
 
   // console.log("chatForm:", chatForm);
   // console.log("chatInput:", chatInput);
@@ -72,6 +73,34 @@ export function initChat() {
     clearButton.disabled = false;
     chatInput.focus();
   })
+
+  resetLLMButton.addEventListener("click", async function() {
+    resetLLMButton.disabled = true;
+    chatInput.disabled = true;
+    submitButton.disabled = true;
+
+    chatBox.innerHTML = `<div><strong>Assistant:</strong></div>`;
+
+    const searchResults = $("search-results");
+    if (searchResults) {
+      searchResults.innerHTML = "";
+    }
+
+    //const userId = getUserId();
+    try {
+      await fetch(`/debug/memory?user_id=${encodeURIComponent(userId)}`, {
+        method: "DELETE"
+      });
+    } catch (err) {
+      console.error("Failed to reset LLM memory:", err);
+      botMsg.innerHTML += `<em>Error resetting memory: ${escapeHtml(err.message)}</em>`;
+    }
+
+    resetLLMButton.disabled = false;
+    chatInput.disabled = false;
+    submitButton.disabled = false;
+    chatInput.focus();
+  });
 
   const persona = $("persona-text")?.value || "";
   

@@ -269,3 +269,12 @@ async def debug_memory(user_id: Optional[str] = None):
         else:
             # Return all memory (be cautious if many users)
             return user_memories
+
+@router.delete("/debug/memory")
+async def delete_memory(user_id: str):
+    with lock:
+        if user_id in user_memories:
+            del user_memories[user_id]
+            return {"status": "success", "message": f"Memory for user {user_id} cleared."}
+        else:
+            return {"status": "not_found", "message": f"No memory found for user {user_id}."}
