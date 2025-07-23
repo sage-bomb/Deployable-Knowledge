@@ -19,7 +19,7 @@ export function initChat() {
   const chatForm = $("chat-form");
   const chatInput = $("user-input");
   const chatBox = $("chat-box");
-  const docLimitInput = $("doc-limit");
+  const docLimitInput = $("top-k-select");
   const submitButton = $("submit-button");
   const clearButton = $("clear-history");
   const resetLLMButton = $("reset-llm");
@@ -54,7 +54,7 @@ export function initChat() {
 
     // === Run context search BEFORE clearing the input ===
     try {
-      const searchLimit = $("search-doc-limit")?.value || 5;
+      const searchLimit = docLimitInput.value || 5;
       const contextResponse = await fetch(`/search?q=${encodeURIComponent(msg)}&top_k=${searchLimit}`);
       const contextData = await contextResponse.json();
 
