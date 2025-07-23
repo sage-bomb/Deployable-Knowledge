@@ -32,6 +32,7 @@ install: venv
 setup-online: install
 	@if [ ! -f $(MODEL_FILE) ]; then \
 		echo "📥 Downloading model..."; \
+		mkdir -p $(MODEL_DIR); \
 		. $(VENV_NAME)/bin/activate && \
 		python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2').save('$(MODEL_DIR)')"; \
 	else \
