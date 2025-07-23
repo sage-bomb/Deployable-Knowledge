@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional, Dict
 import json, requests, markdown2, threading
 from sklearn import svm
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 import numpy as np
 
 from utility.embedding_and_storing import db
@@ -45,20 +45,12 @@ def filter_out_chunks(context_blocks, nu=0.4):
 
     scores = np.array([block["score"] for block in context_blocks])
     
-    # Invert scores: low score = good match → high inverted score = good match
-    inverted_scores = -1 * scores.reshape(-1, 1)
-    
-    # Normalize the scores
-    scaler = MinMaxScaler()
-    scores_scaled = scaler.fit_transform(inverted_scores)
-    
-    # One-Class SVM to detect outliers (bad matches = high original scores)
-    clf = svm.OneClassSVM(nu=nu, gamma="scale")
-    clf.fit(scores_scaled)
-    labels = clf.predict(scores_scaled)  # 1 = inlier, -1 = outlier
+    scaler = StandardScaler()
+    z_scores = scaler.fit_transform(scores)
+    #filtered = scores[z_scores < 1.5]  # or 2.0 if you want to be lenient
 
     # Filter context_blocks where the corresponding label == 1
-    filtered_blocks = [block for block, label in zip(context_blocks, labels) if label == 1]
+    filtered_blocks = [block for block, z in zip(context_blocks, z_scores) if z < 1.5]
     return filtered_blocks
 
     
