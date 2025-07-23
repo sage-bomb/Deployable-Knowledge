@@ -55,7 +55,7 @@ def extract_text(file_path: Path) -> str:
         return parse_pdf(str(file_path))
     elif file_path.suffix.lower() == ".txt":
         text = file_path.read_text(encoding="utf-8")
-        return [text]
+        return [{"page 1": 1, "text": text}]
     else:
         raise ValueError(f"Unsupported file type: {file_path.suffix}")
 

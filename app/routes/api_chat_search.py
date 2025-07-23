@@ -50,7 +50,7 @@ def filter_out_chunks(context_blocks, nu=0.4):
     #filtered = scores[z_scores < 1.5]  # or 2.0 if you want to be lenient
 
     # Filter context_blocks where the corresponding label == 1
-    filtered_blocks = [block for block, z in zip(context_blocks, z_scores) if z < 1.5]
+    filtered_blocks = [block for block, z in zip(context_blocks, z_scores) if z < 1]
     return filtered_blocks
 
     
