@@ -23,6 +23,8 @@ export function initChat() {
   const submitButton = $("submit-button");
   const clearButton = $("clear-history");
   const resetLLMButton = $("reset-llm");
+  const downloadButton = $("download-chat");
+  const personaButton = $("open-persona-btn");
 
   // console.log("chatForm:", chatForm);
   // console.log("chatInput:", chatInput);
@@ -37,6 +39,8 @@ export function initChat() {
     //Disabling inputs
     chatInput.disabled = true;
     submitButton.disabled = true;
+    resetLLMButton.disabled = true;
+    clearButton.disabled = true;
     submitButton.textContent = "Loading...";
 
     //Clearing input
@@ -135,6 +139,8 @@ export function initChat() {
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
+    resetLLMButton.disabled = false;
+    clearButton.disabled = false;
     chatInput.disabled = false;
     submitButton.disabled = false;
     submitButton.textContent = "Send";
