@@ -64,7 +64,7 @@ def embed_file(
     chunking_method: str = "graph",
     source_name: Optional[str] = None,
     tags: Optional[List[str]] = None,
-    filter_chunks: bool = False,
+    filter_chunks: bool = True,
 ) -> None:
     """
     Process a single file: parse, chunk, embed, store.
@@ -95,6 +95,16 @@ def embed_file(
         all_chunks_with_meta = [
             (chunk, meta) for chunk, meta in all_chunks_with_meta if not is_all_caps(chunk)
         ]
+        def has_repeated_substring(text, patterns=None):
+            chars = re.sub(r'\s+', '', text)
+            if patterns is None:
+                patterns = [r'\.{3,}', r'-{3,}', r'_{3,}']
+            return any(re.search(p, chars) for p in patterns)
+
+        all_chunks_with_meta = [
+            (chunk, meta) for chunk, meta in all_chunks_with_meta if not has_repeated_substring(chunk)
+        ]
+    
     all_chunks_with_meta = [
         (chunk, meta) for chunk, meta in all_chunks_with_meta if len(chunk.split()) >= 5
     ]
