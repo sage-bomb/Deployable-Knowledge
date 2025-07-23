@@ -42,7 +42,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const html = evt.target.result;
       chatBox.innerHTML = html;
 
-      const history = parseChatHTML(html);
+      let history = parseChatHTML(html);
+      // Trim to last 20 turns
+      if (history.length > 20) {
+        history = history.slice(-20);
+      }
       const userId = localStorage.getItem("user_id") || "guest";
       await fetch("/debug/memory", {
         method: "POST",
