@@ -43,7 +43,7 @@ def filter_out_chunks(context_blocks, nu=0.4):
     if not context_blocks:
         return []
 
-    scores = np.array([block["score"] for block in context_blocks])
+    scores = np.array([block["score"] for block in context_blocks]).reshape(-1,1)
     
     scaler = StandardScaler()
     z_scores = scaler.fit_transform(scores)
