@@ -3,6 +3,7 @@ import { initSearch } from '/static/js/search.js';
 import { initUpload } from '/static/js/upload.js';
 import { initDocuments } from '/static/js/documents.js';
 import { initPersonaModal } from '/static/js/persona_editor.js';
+import { initDownloadButton } from './download.js';
 
 function runInit() {
   //console.log("✅ runInit executing");
@@ -11,6 +12,7 @@ function runInit() {
   initSearch();
   initUpload();
   initPersonaModal();
+  initDownloadButton();
 }
 
 if (document.readyState === "loading") {
