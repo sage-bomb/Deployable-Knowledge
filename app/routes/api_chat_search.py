@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Form, Query, Request
+from fastapi import APIRouter, Form, Query, Request, Body
 from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional, Dict
 import json, requests, markdown2, threading
@@ -298,3 +298,14 @@ async def delete_memory(user_id: str):
             return {"status": "success", "message": f"Memory for user {user_id} cleared."}
         else:
             return {"status": "not_found", "message": f"No memory found for user {user_id}."}
+
+@router.post("/debug/memory")
+async def upload_memory(data: dict = Body(...)):
+    user_id = data.get("user_id", "default")
+    history = data.get("history", [])
+    with lock:
+        user_memories[user_id] = {
+            "summary": "",
+            "history": history
+        }
+    return {"status": "success", "message": f"Memory for user {user_id} uploaded.", "history_length": len(history)}
