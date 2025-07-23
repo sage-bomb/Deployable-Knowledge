@@ -316,6 +316,12 @@ li:hover {
   font-size: 0.8rem;
   padding: 0.25rem 0.5rem;
   margin-left: auto;
+  width: auto;
+  min-width: unset;
+  max-width: 2em;
+  align-self: flex-start;
+  height: auto;
+  line-height: 1;
 }
 
 .toggle-btn.btn-active {
