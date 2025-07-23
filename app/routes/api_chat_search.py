@@ -2,6 +2,9 @@ from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional, Dict
 import json, requests, markdown2, threading
+from sklearn import svm
+from sklearn.preprocessing import MinMaxScaler
+import numpy as np
 
 from utility.embedding_and_storing import db
 from config import OLLAMA_URL
@@ -36,6 +39,29 @@ def update_summary(old_summary: str, user_msg: str, assistant_msg: str) -> str:
     except Exception:
         return old_summary
     
+def filter_out_chunks(context_blocks, nu=0.4):
+    if not context_blocks:
+        return []
+
+    scores = np.array([block["score"] for block in context_blocks])
+    
+    # Invert scores: low score = good match → high inverted score = good match
+    inverted_scores = -1 * scores.reshape(-1, 1)
+    
+    # Normalize the scores
+    scaler = MinMaxScaler()
+    scores_scaled = scaler.fit_transform(inverted_scores)
+    
+    # One-Class SVM to detect outliers (bad matches = high original scores)
+    clf = svm.OneClassSVM(nu=nu, gamma="scale")
+    clf.fit(scores_scaled)
+    labels = clf.predict(scores_scaled)  # 1 = inlier, -1 = outlier
+
+    # Filter context_blocks where the corresponding label == 1
+    filtered_blocks = [block for block, label in zip(context_blocks, labels) if label == 1]
+    return filtered_blocks
+
+    
 
 
 
@@ -60,13 +86,13 @@ async def chat(
         # Embed + retrieve
         inactive_sources = set(json.loads(inactive or "[]"))
         embedding = db.embed([message])[0]
-        results = db.collection.query(query_embeddings=[embedding], n_results=10)
+        results = db.collection.query(query_embeddings=[embedding], n_results=5)
 
         documents = results.get("documents", [[]])[0]
         metadatas = results.get("metadatas", [[]])[0]
         scores = results.get("distances", [[]])[0]
 
-        context_blocks = [
+        raw_blocks = [
             {
                 "text": doc.strip().replace("\n", " "),
                 "source": meta.get("source", "unknown"),
@@ -75,6 +101,7 @@ async def chat(
             for doc, meta, score in zip(documents, metadatas, scores)
             if meta.get("source") not in inactive_sources
         ]
+        context_blocks = filter_out_chunks(raw_blocks)
         context_string = "\n\n".join(
             f"[{i+1}] {block['text']}" for i, block in enumerate(context_blocks)
         )
@@ -182,7 +209,7 @@ async def chat_stream(
         embedding = db.embed([message])[0]
         results = db.collection.query(query_embeddings=[embedding], n_results=10)
 
-        context_blocks = [
+        raw_blocks = [
             {
                 "text": doc.strip().replace("\n", " "),
                 "source": meta.get("source", "unknown"),
@@ -195,6 +222,7 @@ async def chat_stream(
             )
             if meta.get("source") not in inactive_sources
         ]
+        context_blocks = filter_out_chunks(raw_blocks)
 
         context_string = "\n\n".join(
             f"[{i+1}] {block['text']}" for i, block in enumerate(context_blocks)
