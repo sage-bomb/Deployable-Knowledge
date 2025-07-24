@@ -16,6 +16,11 @@
   --font-ui: 'Segoe UI', sans-serif;
 }
 
+pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 * {
   box-sizing: border-box;
   color: inherit;
