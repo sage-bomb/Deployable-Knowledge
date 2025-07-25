@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 
 from utility.embedding_and_storing import db
-from config import OLLAMA_URL
+from config import OLLAMA_URL, OLLAMA_MODEL
 
 router = APIRouter()
 
@@ -31,7 +31,7 @@ def update_summary(old_summary: str, user_msg: str, assistant_msg: str) -> str:
         """.strip()
     try:
         response = requests.post(OLLAMA_URL, json={
-            "model": "mistral:7b",
+            "model": OLLAMA_MODEL,
             "prompt": prompt,
             "stream": False
         })
@@ -119,7 +119,7 @@ async def chat(
             Assistant:"""
 
         # Generate response
-        response = requests.post(OLLAMA_URL, json={"model": "mistral:7b", "prompt": prompt})
+        response = requests.post(OLLAMA_URL, json={"model": OLLAMA_MODEL, "prompt": prompt})
         chatbot_response = response.json().get("response", "[Error: No response]")
 
         # Format response
@@ -244,7 +244,7 @@ async def chat_stream(
         def event_stream():
             response = requests.post(
                 OLLAMA_URL,
-                json={"model": "mistral:7b", "prompt": prompt, "stream": True},
+                json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": True},
                 stream=True
             )
 

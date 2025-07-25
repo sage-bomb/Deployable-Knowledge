@@ -21,3 +21,4 @@ CHUNKING_METHOD_OPTIONS = ["sentences", "semantics", "graph", "paragraphs", "dyn
 
 # === Ollama ===
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral:7b")
