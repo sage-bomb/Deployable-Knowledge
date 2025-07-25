@@ -86,4 +86,7 @@ Deployable-Knowledge is an offline-capable Retrieval-Augmented Generation (RAG) 
 
 3. Ensure `ollama` is running and accessible.
 
-4. Navigate to `http://localhost:8000` in your browser.
+4. *(Optional)* Set the `OLLAMA_MODEL` environment variable if you want to use a
+   different chat model than the default `mistral:7b`.
+
+5. Navigate to `http://localhost:8000` in your browser.
