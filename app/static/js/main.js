@@ -4,6 +4,7 @@ import { initUpload } from '/static/js/upload.js';
 import { initDocuments } from '/static/js/documents.js';
 import { initPersonaModal } from '/static/js/persona_editor.js';
 import { initDownloadButton } from './download.js';
+import { initLogs } from './logs.js';
 
 function runInit() {
   //console.log("✅ runInit executing");
@@ -13,6 +14,7 @@ function runInit() {
   initUpload();
   initPersonaModal();
   initDownloadButton();
+  initLogs();
 }
 
 if (document.readyState === "loading") {

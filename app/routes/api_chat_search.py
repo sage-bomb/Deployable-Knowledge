@@ -7,9 +7,11 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 
 from utility.embedding_and_storing import db
+from utility.log_manager import LogManager
 from config import OLLAMA_URL, OLLAMA_MODEL
 
 router = APIRouter()
+log_manager = LogManager()
 
 # ==============================
 # 🧠 In-memory per-user memory
@@ -66,7 +68,8 @@ async def chat(
     message: str = Form(...),
     inactive: Optional[str] = Form(None),
     persona: str = Form(""),
-    user_id: str = Form(...)
+    user_id: str = Form(...),
+    session_id: Optional[str] = Form(None)
 ):
     try:
         # Load memory
@@ -134,10 +137,17 @@ async def chat(
                 history[:] = history[-20:]
             memory["summary"] = update_summary(summary, message, chatbot_response)
 
+        # Persistent log
+        if not session_id:
+            session_id = log_manager.start_session(user_id)
+        log_manager.append_message(session_id, "user", message)
+        log_manager.append_message(session_id, "assistant", chatbot_response)
+
         return JSONResponse(content={
             "response": formatted_html,
             "context": context_blocks,
-            "chat_summary": memory["summary"]
+            "chat_summary": memory["summary"],
+            "session_id": session_id
         })
     except Exception as e:
         return JSONResponse(content={"response": f"[Error: {str(e)}]"})
@@ -175,7 +185,8 @@ async def chat_stream(
     message: str = Form(...),
     inactive: Optional[str] = Form(None),
     persona: str = Form(""),
-    user_id: str = Form(...)
+    user_id: str = Form(...),
+    session_id: Optional[str] = Form(None)
 ):
     form_data = await request.form()
     message = form_data.get("message", "")
@@ -271,6 +282,12 @@ async def chat_stream(
                 if len(history) > 20:
                     history[:] = history[-20:]
                 memory["summary"] = update_summary(summary, message, assistant_msg)
+
+            # Persistent log
+            if not session_id:
+                session_id = log_manager.start_session(user_id)
+            log_manager.append_message(session_id, "user", message)
+            log_manager.append_message(session_id, "assistant", assistant_msg)
 
         return StreamingResponse(event_stream(), media_type="text/html")
 

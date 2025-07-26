@@ -75,6 +75,16 @@ h2 {
   position: relative;
 }
 
+#log-panel-wrapper {
+  flex: 0 0 250px;
+  max-width: 250px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 100vh;
+  position: relative;
+}
+
 .container > .column.scrollable:last-child {
   flex: 1;                /* take remaining space */
   min-width: 0;           /* important to allow shrinking */
@@ -306,7 +316,18 @@ li:hover {
   max-width: 2.5rem;
 }
 
+#log-panel-wrapper.collapsed {
+  width: 2.5rem;
+  flex: 0 0 2.5rem;
+  overflow: hidden;
+  max-width: 2.5rem;
+}
+
 #doc-panel-wrapper.collapsed .column {
+  padding: 0.5rem;
+}
+
+#log-panel-wrapper.collapsed .column {
   padding: 0.5rem;
 }
 
@@ -314,6 +335,11 @@ li:hover {
 #doc-panel-wrapper.collapsed form,
 #doc-panel-wrapper.collapsed ul,
 #doc-panel-wrapper.collapsed .status-text {
+  display: none;
+}
+
+#log-panel-wrapper.collapsed h2,
+#log-panel-wrapper.collapsed ul {
   display: none;
 }
 
@@ -428,4 +454,16 @@ input:disabled, button:disabled {
 #search-panel-wrapper.collapsed ul,
 #search-panel-wrapper.collapsed .status-text {
   display: none;
+}
+
+#toggle-logs-btn {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  margin-left: auto;
+  width: auto;
+  min-width: unset;
+  max-width: 2em;
+  align-self: flex-start;
+  height: auto;
+  line-height: 1;
 }
