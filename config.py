@@ -6,6 +6,8 @@ BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / "documents"
 PDF_DIR = BASE_DIR / "pdfs"
 MODEL_DIR = BASE_DIR / "tmp_model"
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
 
 # === ChromaDB ===
 CHROMA_DB_DIR = BASE_DIR / "chroma_db"
