@@ -28,6 +28,7 @@ export async function initLogs() {
   const listEl = $('log-list');
   const wrapper = $('log-panel-wrapper');
   const toggleBtn = $('toggle-logs-btn');
+  const newBtn = $('new-chat-btn');
   const chatBox = $('chat-box');
 
   const userId = getUserId();
@@ -35,6 +36,10 @@ export async function initLogs() {
 
   toggleBtn?.addEventListener('click', () => {
     wrapper.classList.toggle('collapsed');
+  });
+
+  newBtn?.addEventListener('click', async () => {
+    await startNewSession();
   });
 
   async function loadList() {
@@ -45,15 +50,34 @@ export async function initLogs() {
       listEl.innerHTML = '<li><em>No logs found.</em></li>';
       return;
     }
+    const currentId = localStorage.getItem('session_id');
     data.sessions.forEach(s => {
       const li = document.createElement('li');
       const btn = document.createElement('button');
       const label = new Date(s.timestamp).toLocaleString();
       btn.textContent = label;
       btn.addEventListener('click', () => loadSession(s.session_id));
+      if (s.session_id === currentId) {
+        btn.classList.add('active');
+      }
       li.appendChild(btn);
       listEl.appendChild(li);
     });
+  }
+
+  async function startNewSession() {
+    const res = await fetch('/logs/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ user_id: userId })
+    });
+    const data = await res.json();
+    const sessionId = data.session_id;
+    localStorage.setItem('session_id', sessionId);
+    chatBox.innerHTML = '<div><strong>Assistant:</strong> Hello! How can I help you today?</div>';
+    await fetch(`/debug/memory?user_id=${encodeURIComponent(userId)}`, { method: 'DELETE' });
+    await loadList();
+    return sessionId;
   }
 
   async function loadSession(sessionId) {
