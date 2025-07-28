@@ -1,6 +1,3 @@
-
-
-
 from pathlib import Path
 from typing import List, Tuple, Dict, Optional
 from utility.db_manager import DBManager
@@ -27,6 +24,22 @@ from config import (
 db = DBManager(persist_dir=CHROMA_DB_DIR, collection_name=COLLECTION_NAME)
 
 def chunk_text(text: str, method: str = "graph") -> List[Tuple[str, Dict]]:
+    """
+    Chunk text based on the specified method.
+
+    Args:
+        text (str): The input text to be chunked.
+        method (str): The chunking method to use. Options include:
+            - "sentences": Split by sentences.
+            - "semantics": Split by semantic similarity.
+            - "graph": Use graph-based ranking for chunking.
+            - "paragraphs": Split by paragraphs.
+            - "dynamic": Merge sentences dynamically based on similarity.
+            - "graph-pagerank": Use PageRank algorithm for chunking.
+
+    Returns:
+        List[Tuple[str, Dict]]: A list of tuples where each tuple contains the chunked text and its metadata.
+    """
     if method == "sentences":
         return chunk_by_sentences(text, max_chars=500)
     elif method == "semantics":
@@ -44,6 +57,16 @@ def chunk_text(text: str, method: str = "graph") -> List[Tuple[str, Dict]]:
         raise ValueError(f"Unsupported chunking method: {method}")
     
 def is_all_caps(text, threshold=0.8):
+    """
+    Check if a text is predominantly uppercase, ignoring non-alphabetic characters.
+
+    Args:
+        text (str): The input text to check.
+        threshold (float): The proportion of uppercase characters to consider as "all caps".
+        
+    Returns:
+        bool: True if the text is predominantly uppercase, False otherwise.
+    """
     cleaned = re.sub(r'[\W\d_]+', '', text)
     if not cleaned:
         return False
@@ -51,6 +74,15 @@ def is_all_caps(text, threshold=0.8):
     return (upper_count / len(cleaned)) >= threshold
 
 def extract_text(file_path: Path) -> str:
+    """
+    Extract text from a file based on its type.
+
+    Args:
+        file_path (Path): Path to the file to extract text from.
+
+    Returns:
+        List[Dict]: List of dictionaries with page number and text content.
+    """
     if file_path.suffix.lower() == ".pdf":
         return parse_pdf(str(file_path))
     elif file_path.suffix.lower() == ".txt":
@@ -68,6 +100,16 @@ def embed_file(
 ) -> None:
     """
     Process a single file: parse, chunk, embed, store.
+
+    Args:
+        file_path (Path): Path to the file to be processed.
+        chunking_method (str): Method to use for chunking the text.
+        source_name (Optional[str]): Optional name for the source of the file.
+        tags (Optional[List[str]]): Optional tags to associate with the segments.
+        filter_chunks (bool): Whether to filter out all-uppercase chunks and repeated substrings.
+    
+    Returns:
+        None: The function stores the segments in the database.
     """
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
@@ -132,6 +174,19 @@ def embed_directory(
     default_tags: Optional[List[str]] = None,
     filter_chunks: bool = False,
 ):
+    """
+    Embed all supported files in a directory using the specified chunking method.
+
+    Args:
+        data_dir (str): Directory containing text files to embed.
+        chunking_method (str): Method to use for chunking the text.
+        clear_collection (bool): Whether to clear the collection before inserting new data.
+        default_tags (Optional[List[str]]): Default tags to apply to all segments.
+        filter_chunks (bool): Whether to filter out all-uppercase chunks and repeated substrings during chunking.
+    
+    Returns:
+        None: The function processes and stores the segments in the database.
+    """
     data_path = Path(data_dir)
     if not data_path.exists():
         raise FileNotFoundError(f"Data directory not found: {data_dir}")

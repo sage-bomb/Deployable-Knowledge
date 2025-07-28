@@ -48,6 +48,17 @@ db.add_segments(segments, strategy_name="top_down", source="contract_001.txt", t
     #     return self.model.encode(texts).tolist()
     
     def embed(self, docs: List[str], max_batch_tokens: int = 5120):
+        """
+        Embed a list of documents, ensuring each document is truncated to a maximum of 512 tokens.
+        This method batches the documents to avoid exceeding the maximum token limit.
+        
+        Args:
+            docs (List[str]): List of documents to embed.
+            max_batch_tokens (int): Maximum number of tokens per batch. Default is 5120.
+
+        Returns:
+            List[List[float]]: List of embeddings for the documents.
+        """
         embeddings = []
         current_batch = []
         current_tokens = 0
@@ -88,6 +99,21 @@ db.add_segments(segments, strategy_name="top_down", source="contract_001.txt", t
         start: Optional[int] = None,
         end: Optional[int] = None,
     ):
+        """
+        Build a segment entry with metadata for storage in the database.
+
+        Args:
+            segment_text (str): The text of the segment.
+            segment_index (int): The index of the segment.
+            strategy_name (str): The name of the segmentation strategy used.
+            source (str): The source file or document from which the segment was derived.
+            tags (Optional[List[str]]): Optional tags for the segment.
+            start (Optional[int]): Optional start character index for the segment.
+            end (Optional[int]): Optional end character index for the segment.
+
+        Returns:
+            tuple: A tuple containing the segment UUID, segment text, and metadata dictionary.
+        """
         segment_uuid = str(uuid.uuid4())
         metadata = {
             "uuid": segment_uuid,
@@ -111,6 +137,20 @@ db.add_segments(segments, strategy_name="top_down", source="contract_001.txt", t
         positions: Optional[List[tuple]] = None,
         page: Optional[List[Optional[int]]] = None,
     ):
+        """
+        Add segments to the database with metadata.
+
+        Args:
+            segments (List[str]): List of text segments to add.
+            strategy_name (str): Name of the segmentation strategy used.
+            source (str): Source file or document from which the segments were derived.
+            tags (Optional[List[str]]): Optional tags for the segments.
+            positions (Optional[List[tuple]]): Optional list of tuples indicating start and end positions for each segment.
+            page (Optional[List[Optional[int]]]): Optional list indicating the page number for each segment.
+        
+        Returns:
+            None
+        """
         print("tags:", tags)  # Debugging: print tags
         ids, docs, metas = [], [], []
         for i, segment in enumerate(segments):
@@ -140,6 +180,13 @@ db.add_segments(segments, strategy_name="top_down", source="contract_001.txt", t
     def delete_by_source(self, source_name: str, batch_size=500):
         """
         Delete all entries from the collection that match a given source name.
+
+        Args:
+            source_name (str): The source name to match for deletion.
+            batch_size (int): Number of entries to delete in each batch. Default is 500.
+        
+        Returns:
+            None
         """
         all_data = self.collection.get(include=["metadatas"])
         to_delete = [

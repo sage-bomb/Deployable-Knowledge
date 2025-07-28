@@ -141,6 +141,18 @@ def chunk_by_graph_rank(text, max_sentences=4):
     return all_chunks
 
 def safe_chunk_by_graph_rank(text, max_sentences=4, max_tokens_per_chunk=256, model_name="sentence-transformers/all-MiniLM-L6-v2"):
+    """
+    Chunk text using a graph-based approach with sentence transformers, ensuring each chunk is within token limits.
+    
+    Args:
+        text (str): The input text to chunk.
+        max_sentences (int): Maximum number of sentences per chunk.
+        max_tokens_per_chunk (int): Maximum number of tokens per chunk.
+        model_name (str): Name of the sentence transformer model to use.
+    
+    Returns:
+        List[Tuple[str, Dict]]: List of tuples where each tuple contains the chunk text and its metadata.
+    """
     # Load and configure spaCy pipeline
     nlp = spacy.load("en_core_web_sm")
     nlp.max_length = 2_000_000

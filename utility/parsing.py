@@ -6,6 +6,13 @@ from collections import Counter
 def remove_frequent_lines(pages, threshold=0.9):
     """
     Remove lines that appear in more than `threshold` proportion of pages.
+
+    Args:
+        pages (List[Dict]): List of dictionaries with page number and text content.
+        threshold (float): Proportion of pages a line must appear in to be removed.
+
+    Returns:
+        List[Dict]: Filtered list of pages with common lines removed.
     """
     all_lines = [line.strip() for page in pages for line in page["text"].split("\n") if line.strip()]
     line_counts = Counter(all_lines)
@@ -29,6 +36,17 @@ def parse_pdf(pdf_path, margin_top=50, margin_bottom=50, margin_left=50, margin_
     """
     Extracts clean text from a PDF, removing headers and footers based on layout.
     Adapts to portrait and landscape orientation by checking page rotation/shape.
+
+    Args:
+        pdf_path (str or Path): Path to the PDF file.
+        margin_top (int): Top margin in points to ignore.
+        margin_bottom (int): Bottom margin in points to ignore.
+        margin_left (int): Left margin in points to ignore.
+        margin_right (int): Right margin in points to ignore.
+    
+    Returns:
+        List[Dict]: List of dictionaries with page number and cleaned text content.
+        Each dictionary has keys "page" and "text".
     """
     pdf_path = Path(pdf_path)
     assert pdf_path.exists(), f"File does not exist: {pdf_path}"
@@ -70,9 +88,19 @@ def parse_pdf(pdf_path, margin_top=50, margin_bottom=50, margin_left=50, margin_
 
 def is_within_margins(word, page, is_landscape, margin_top, margin_bottom, margin_left, margin_right):
     """
-    Return True if the word is not within the margin zones.
-    - Portrait: uses top/bottom
-    - Landscape: uses x0/x1
+    Check if a word is within the specified margins of the page.
+
+    Args:
+        word (Dict): A dictionary representing a word with keys 'x0', 'top', 'bottom', etc.
+        page (pdfplumber.page.Page): The page object from which the word was extracted.
+        is_landscape (bool): Whether the page is in landscape orientation.
+        margin_top (int): Top margin in points.
+        margin_bottom (int): Bottom margin in points.
+        margin_left (int): Left margin in points.
+        margin_right (int): Right margin in points.
+    
+    Returns:
+        bool: True if the word is within the margins, False otherwise.
     """
     if is_landscape:
         return (
@@ -87,6 +115,15 @@ def is_within_margins(word, page, is_landscape, margin_top, margin_bottom, margi
 def group_words_by_line(words_with_key, is_landscape, line_tol=5):
     """
     Groups words into lines by vertical (portrait) or horizontal (landscape) proximity.
+
+    Args:
+        words_with_key (List[Tuple[float, str]]): List of tuples where each
+            tuple contains a key (x0 or top) and the word text.
+        is_landscape (bool): Whether the page is in landscape orientation.
+        line_tol (int): Tolerance in points for grouping words into lines.
+    
+    Returns:
+        List[str]: List of strings where each string is a line of text.
     """
     lines = []
     current_line = []
