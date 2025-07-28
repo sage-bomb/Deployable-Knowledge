@@ -22,10 +22,24 @@ def get_documents():
 
 @router.get("/documents")
 async def list_documents_json():
+    """
+    List all documents in the database as JSON.
+    This endpoint retrieves all documents stored in the database and returns them in JSON format.
+
+    - Returns a JSON response with a list of documents, each containing title, id, and segment count.
+    """
     return get_documents()
 
 @router.get("/", response_class=HTMLResponse)
 async def list_documents(request: Request, q: str = ""):
+    """
+    Render the main page with a list of documents.
+    This endpoint retrieves all documents and renders them in an HTML template.
+    
+    - **request**: The FastAPI request object.
+    - **q**: Optional query string to filter documents by title.
+    - Returns an HTML response with the rendered template containing the list of documents.
+    """
     all_docs = get_documents()
     filtered = [doc for doc in all_docs if q.lower() in doc["title"].lower()] if q else all_docs
     return templates.TemplateResponse("index.html", {

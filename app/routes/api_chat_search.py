@@ -68,6 +68,17 @@ async def chat(
     persona: str = Form(""),
     user_id: str = Form(...)
 ):
+    """
+    Chat with the assistant.
+    This endpoint allows users to send a message to the assistant, which retrieves relevant context from the database,
+    generates a response using the Ollama model, and updates the user's memory with the conversation history
+
+    - **message**: The user's message to the assistant.
+    - **inactive**: A JSON string of inactive sources to exclude from the context.
+    - **persona**: A string representing the user's persona to include in the prompt.
+    - **user_id**: A unique identifier for the user to maintain their conversation history.
+    - Returns a JSON response with the assistant's response, context blocks, and chat summary.
+    """
     try:
         # Load memory
         with lock:
@@ -149,6 +160,15 @@ async def chat(
 
 @router.get("/search")
 async def search_documents(q: str = Query(...), top_k: int = 5):
+    """
+    Search for documents in the database using a query string.
+    This endpoint retrieves documents that match the query string,
+    returning the top K results based on their relevance.
+
+    - **q**: The query string to search for in the documents.
+    - **top_k**: The number of top results to return.
+    - Returns a JSON response with the search results, including text, source, score, and page number.
+    """
     try:
         embedding = db.embed([q])[0]
         results = db.collection.query(query_embeddings=[embedding], n_results=top_k)
@@ -177,6 +197,19 @@ async def chat_stream(
     persona: str = Form(""),
     user_id: str = Form(...)
 ):
+    """
+    Stream chat responses from the assistant.
+    This endpoint allows users to send a message to the assistant and receive a streaming response.
+    It retrieves relevant context from the database, generates a response using the selected model,
+    and updates the user's memory with the conversation history.
+    
+    - **request**: The FastAPI request object.
+    - **message**: The user's message to the assistant.
+    - **inactive**: A JSON string of inactive sources to exclude from the context.
+    - **persona**: A string representing the user's persona to include in the prompt.
+    - **user_id**: A unique identifier for the user to maintain their conversation history.
+    - Returns a streaming response with the assistant's response.
+    """
     form_data = await request.form()
     message = form_data.get("message", "")
     user_id = form_data.get("user_id", "default")
@@ -280,6 +313,13 @@ async def chat_stream(
 
 @router.get("/debug/memory")
 async def debug_memory(user_id: Optional[str] = None):
+    """
+    Debug endpoint to view or clear user memory.
+    This endpoint allows you to view the memory of a specific user or all users.
+
+    - **user_id**: Optional user ID to filter memory. If not provided, returns all memory.
+    - Returns a JSON response with the user's memory or all memory.
+    """
     with lock:
         if user_id:
             memory = user_memories.get(user_id)
@@ -292,6 +332,13 @@ async def debug_memory(user_id: Optional[str] = None):
 
 @router.delete("/debug/memory")
 async def delete_memory(user_id: str):
+    """
+    Delete user memory.
+    This endpoint allows you to clear the memory of a specific user.
+
+    - **user_id**: The ID of the user whose memory should be cleared.
+    - Returns a JSON response indicating the success or failure of the operation.
+    """
     with lock:
         if user_id in user_memories:
             del user_memories[user_id]
@@ -301,6 +348,13 @@ async def delete_memory(user_id: str):
 
 @router.post("/debug/memory")
 async def upload_memory(data: dict = Body(...)):
+    """
+    Upload user memory.
+    This endpoint allows you to upload a user's memory, which includes a summary and conversation history.
+    
+    - **data**: A JSON object containing the user ID, summary, and conversation history.
+    - Returns a JSON response indicating the success or failure of the operation.
+    """
     user_id = data.get("user_id", "default")
     history = data.get("history", [])
     with lock:

@@ -14,6 +14,14 @@ PDF_DIR.mkdir(parents=True, exist_ok=True)
 
 @router.post("/upload")
 async def upload_files(files: list[UploadFile] = File(...)):
+    """
+    Upload files and embed them into the database.
+    This endpoint accepts multiple files, saves them to the upload directory,
+    and processes each file to extract text and embed it into the database.
+
+    - **files**: List of files to upload. Each file is processed to extract text and embed it.
+    - Returns a JSON response with the status of each file upload.
+    """
     results = []
     for file in files:
         try:
@@ -40,6 +48,12 @@ async def upload_files(files: list[UploadFile] = File(...)):
 
 @router.post("/remove")
 async def remove_document(source: str = Form(...)):
+    """
+    Remove a document from the database and delete its file.
+
+    - **source**: The source name of the document to remove.
+    - Returns a JSON response indicating the success or failure of the operation.
+    """
     try:
         db.delete_by_source(source)
         file_path = UPLOAD_DIR / source
@@ -52,6 +66,14 @@ async def remove_document(source: str = Form(...)):
 
 @router.post("/ingest")
 async def ingest_documents(background_tasks: BackgroundTasks):
+    """
+    Ingest all PDF files from the PDF_DIR, parse them, and embed the text into the database.
+    This endpoint processes all PDF files in the PDF_DIR, converts them to text,
+    and schedules the embedding of the text into the database.
+
+    - **background_tasks**: FastAPI's background tasks to handle the embedding process asynchronously.
+    - Returns a JSON response indicating the status of the ingestion process.
+    """
     pdf_dir = PDF_DIR.resolve()
     txt_dir = UPLOAD_DIR.resolve()
     for pdf_file in pdf_dir.glob("*.pdf"):
@@ -73,6 +95,12 @@ async def ingest_documents(background_tasks: BackgroundTasks):
 
 @router.post("/clear_db")
 async def clear_db():
+    """
+    Clear the ChromaDB collection.
+    This endpoint removes all documents from the ChromaDB collection.
+    
+    - Returns a JSON response indicating the success or failure of the operation.
+    """
     try:
         db.clear_collection()
         return JSONResponse({"status": "success", "message": "ChromaDB collection cleared."})
