@@ -1,6 +1,10 @@
 import { $, escapeHtml } from './dom.js';
 import { initDocuments } from './documents.js'; // to refresh doc list
 
+/**
+ * Initializes the file upload functionality.
+ * @returns {void}
+ */
 export function initUpload() {
   const uploadForm = $("upload-form");
   const fileInput = $("file-input");

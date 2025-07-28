@@ -4,7 +4,10 @@ import { $, escapeHtml } from './dom.js';
 import { getToggle } from './state.js';
 import { renderSearchResultsBlock } from './render.js';
 
-
+/**
+ * Initializes the search functionality.
+ * @returns {void}
+ */
 export function initSearch() {
   const searchForm = $("search-form");
   const searchInput = $("search-query");

@@ -2,6 +2,10 @@
 
 import { $ } from './dom.js';
 
+/**
+ * Initializes the download button for the chat log.
+ * @returns {string} userId
+ */
 export function initDownloadButton() {
   const downloadButton = $("download-chat");
   const chatBox = $("chat-box");

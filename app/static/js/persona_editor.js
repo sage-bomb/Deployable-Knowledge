@@ -1,6 +1,10 @@
 // persona_editor.js
 import { $ } from './dom.js';
 
+/**
+ * Initializes the persona modal functionality.
+ * Sets up event listeners for opening, closing, and saving the persona.
+ */
 export function initPersonaModal() {
   const modal = $("persona-modal");
   const openBtn = $("open-persona-btn");

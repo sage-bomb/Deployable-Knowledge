@@ -1,15 +1,30 @@
 // dom.js — shared DOM helpers and modal logic
 
+/**
+ * Get an element by its ID.
+ * @param {string} id 
+ * @returns {HTMLElement|null}
+ */
 export function $(id) {
   return document.getElementById(id);
 }
 
+/**
+ * Escapes HTML special characters in a string.
+ * @param {string} str 
+ * @returns {string}
+ */
 export function escapeHtml(str) {
   return str.replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;");
 }
 
+/**
+ * Shows a confirmation modal with the given message.
+ * @param {string} message 
+ * @returns {Promise<boolean>}
+ */
 export function showConfirmation(message) {
   return new Promise((resolve) => {
     const modal = $("confirm-modal");

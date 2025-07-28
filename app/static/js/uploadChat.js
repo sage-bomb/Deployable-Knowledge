@@ -1,7 +1,11 @@
 // uploadChat.js
 import { $ } from './dom.js';
 
-
+/**
+ * Parses chat content in HTML format.
+ * @param {string} content 
+ * @returns {Array<Array<string>>} - Array of [userMessage, assistantMessage] pairs
+ */
 function parseChatHTML(content) {
     const history = [];
     let lastUser = null;
@@ -22,6 +26,11 @@ function parseChatHTML(content) {
     return history;
 }
 
+/**
+ * Parses chat content in Markdown format.
+ * @param {string} content 
+ * @returns {Array<Array<string>>} - Array of [userMessage, assistantMessage] pairs
+ */
 function parseChatMarkdown(content) {
     const history = [];
     const lines = content.split(/\r?\n/);
@@ -57,6 +66,11 @@ function parseChatMarkdown(content) {
     return history;
 }
 
+/**
+ * Parses chat content in plain text format.
+ * @param {string} content 
+ * @returns {Array<Array<string>>} - Array of [userMessage, assistantMessage] pairs
+ */
 function parseChatPlainText(content) {
     const history = [];
     const lines = content.split(/\r?\n/);
@@ -92,6 +106,12 @@ function parseChatPlainText(content) {
     return history;
 }
 
+/**
+ * Parses chat content in a specific format.
+ * @param {string} content 
+ * @param {string} fileType 
+ * @returns {Array<Array<string>>} - Array of [userMessage, assistantMessage] pairs
+ */
 function parseChatHistory(content, fileType) {
     if (fileType === 'html' || fileType === 'htm') {
         return parseChatHTML(content);

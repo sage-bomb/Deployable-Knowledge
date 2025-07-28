@@ -5,6 +5,10 @@ import { initDocuments } from '/static/js/documents.js';
 import { initPersonaModal } from '/static/js/persona_editor.js';
 import { initDownloadButton } from './download.js';
 
+/**
+ * Run all initializations for the application.
+ * This function is called when the DOM is fully loaded.
+ */
 function runInit() {
   //console.log("✅ runInit executing");
   initDocuments();

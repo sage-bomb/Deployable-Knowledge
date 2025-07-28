@@ -4,6 +4,10 @@ import { $, escapeHtml } from './dom.js';
 import { getInactiveIds } from './state.js';
 import { renderSearchResultsBlock } from './render.js';
 
+/**
+ * Get the user ID from local storage or create a new one.
+ * @returns {string} userId
+ */
 function getUserId() {
   let userId = localStorage.getItem("user_id");
   if (!userId) {
@@ -13,6 +17,11 @@ function getUserId() {
   return userId;
 }
 
+
+/**
+ * Initialize the chat functionality.
+ * Sets up event listeners for the chat form, input, and buttons.
+ */
 export function initChat() {
   //console.log("✅ initChat called");
 

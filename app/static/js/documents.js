@@ -5,6 +5,10 @@ import { setToggle, getToggle, initToggleState } from './state.js';
 
 let allDocs = [];
 
+/**
+ * Initialize the document management functionality.
+ * Fetches documents, sets up filter form, and handles toggle states.
+ */
 export function initDocuments() {
   fetchDocuments();
   setupFilterForm();
@@ -18,6 +22,11 @@ export function initDocuments() {
     });
   }
 }
+
+/**
+ * Fetches the list of documents from the server.
+ * Updates the global `allDocs` variable and renders the document list.
+ */
 function fetchDocuments() {
   fetch("/documents")
     .then(res => res.json())
@@ -32,6 +41,11 @@ function fetchDocuments() {
       }
     });
 }
+
+/**
+ * Sets up the filter form for document search.
+ * @returns {Promise} Resolves when the document list is rendered.
+ */
 function setupFilterForm() {
   const form = $("filter-form");
   const input = $("filter-input");
@@ -43,7 +57,12 @@ function setupFilterForm() {
   });
 }
 
-
+/**
+ * Renders the document list with optional filtering.
+ * @param {*} docs 
+ * @param {*} filter 
+ * @returns 
+ */
 function renderDocumentList(docs, filter = "") {
   const list = $("document-list");
   if (!list) return;
