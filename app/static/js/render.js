@@ -39,6 +39,13 @@ export function renderSearchResultsBlock(results, { filterInactive = true } = {}
         <div><strong>Match Score:</strong> ${result.score != null ? result.score.toFixed(4) : "n/a"}</div>
         <div><strong>Page:</strong> ${pageDisplay}</div>
         <div style="margin-top: 0.5rem;">${escapeHtml(result.text)}</div>
+        ${
+          pageDisplay !== "N/A"
+            ? `<button onclick="goToPage('${escapeHtml(result.source)}', ${pageDisplay})" style="margin-top:0.5rem;">
+                Go to page ${pageDisplay}
+               </button>`
+            : ''
+        }
       </div>
     `;
     })
