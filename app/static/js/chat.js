@@ -3,6 +3,7 @@
 import { $, escapeHtml } from './dom.js';
 import { getInactiveIds } from './state.js';
 import { renderSearchResultsBlock } from './render.js';
+import { ensureSession } from './logs.js';
 
 /**
  * Get the user ID from local storage or create a new one.
@@ -116,9 +117,9 @@ export function initChat() {
   });
 
   const persona = $("persona-text")?.value || "";
-  
+
   const userId = getUserId();
-  console.log(userId);
+  const sessionId = await ensureSession(userId);
 
   const response = await fetch("/chat-stream", {
     method: "POST",
@@ -126,7 +127,8 @@ export function initChat() {
     body: new URLSearchParams({
       message: msg,
       persona,
-      user_id: userId
+      user_id: userId,
+      session_id: sessionId
     })
   });
 
