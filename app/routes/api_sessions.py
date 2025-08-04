@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
+from datetime import datetime
 from utility.chat_state import ChatSession
 from utility.session_store import SessionStore
 
@@ -10,36 +11,46 @@ store = SessionStore()
 
 @router.get("/sessions")
 async def list_sessions():
+    """Return lightweight metadata for all stored sessions."""
     summaries = []
     for entry in store.list_sessions():
-        session_id = entry["id"]
-        session = store.load(session_id)
-        if session:
-            summaries.append(session.to_dict())
+        summaries.append(
+            {
+                "session_id": entry["id"],
+                "created_at": datetime.fromtimestamp(entry["modified"]).isoformat(),
+            }
+        )
     return JSONResponse(content=summaries)
 
 @router.get("/sessions/{session_id}")
 async def get_session_data(session_id: str):
+    """Return the chat history for ``session_id``.
+
+    The frontend expects the history to be a list of ``[user, assistant]``
+    pairs, so we convert the stored :class:`ChatExchange` objects to that
+    structure here.
+    """
+
     session = store.load(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    # Ensure each item in history is serialized properly
-    history_serialized = []
-    for item in getattr(session, "history", []):
-        if hasattr(item, "to_dict"):
-            history_serialized.append(item.to_dict())
-        else:
-            history_serialized.append(str(item))  # fallback if no to_dict()
+    history_pairs = [[ex.user, ex.assistant] for ex in session.history]
+    path = store._session_path(session_id)  # access for timestamp metadata
+    created_at = (
+        datetime.fromtimestamp(path.stat().st_mtime).isoformat()
+        if path.exists()
+        else None
+    )
 
-    return JSONResponse(content={
-        "id": session_id,
-        "created": getattr(session, "created", None),
-        "updated": getattr(session, "updated", None),
-        "summary": getattr(session, "summary", ""),
-        "tokens": getattr(session, "token_count", 0),
-        "history": history_serialized,
-    })
+    return JSONResponse(
+        content={
+            "session_id": session.session_id,
+            "created_at": created_at,
+            "summary": session.summary,
+            "history": history_pairs,
+        }
+    )
 
 @router.get("/session")
 async def get_or_create_session(request: Request):
