@@ -1,7 +1,8 @@
 // documents.js — handles document list, toggles, filters, removal
 
 import { $, escapeHtml, showConfirmation } from './dom.js';
-import { setToggle, getToggle, initToggleState } from './state.js';
+import { toggleSource , getInactiveSources, initToggleState } from './session.js';
+
 
 let allDocs = [];
 
@@ -92,11 +93,16 @@ function renderDocumentList(docs, filter = "") {
     toggleBtn.textContent = "Deactivate";
 
     initToggleState(doc.id, true);
+    const current = !getInactiveSources().includes(source);
+    statusSpan.textContent = current ? "Active" : "Inactive";
+    toggleBtn.textContent = current ? "Deactivate" : "Activate";
 
+    toggleBtn.classList.toggle("btn-active", current);
+    toggleBtn.classList.toggle("btn-inactive", !current);
     toggleBtn.addEventListener("click", () => {
-      const current = getToggle(doc.id);
+      const current = !getInactiveSources().includes(source);
       const next = !current;
-      setToggle(doc.id, !current);
+      toggleSource(doc.id, !current);
 
       statusSpan.textContent = current ? "Inactive" : "Active";
       toggleBtn.textContent = current ? "Activate" : "Deactivate";
@@ -136,5 +142,19 @@ function renderDocumentList(docs, filter = "") {
     li.appendChild(toggleBtn);
     li.appendChild(removeBtn);
     list.appendChild(li);
+  });
+}
+
+export function loadActiveDocuments(docs) {
+  const docPanel = document.getElementById("document-panel");
+  if (!docPanel) return;
+
+  // Clear and reload content
+  docPanel.innerHTML = "";
+  docs.forEach(doc => {
+    const div = document.createElement("div");
+    div.className = "document-entry";
+    div.innerHTML = `<strong>${doc.name || "Untitled"}</strong><br/><small>${doc.source || "Unknown"}</small>`;
+    docPanel.appendChild(div);
   });
 }

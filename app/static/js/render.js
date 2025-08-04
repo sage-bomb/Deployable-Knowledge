@@ -1,5 +1,5 @@
 import { escapeHtml } from './dom.js';
-import { getToggle } from './state.js';
+import { initToggleState, toggleSource, getInactiveSources } from "./session.js";
 
 /**
  * Renders an array of RAG-style result blocks.
@@ -23,7 +23,7 @@ export function renderSearchResultsBlock(results, { filterInactive = true } = {}
       return result;
     })
     .filter(result => {
-      return !filterInactive || getToggle(result.source);
+      return !filterInactive || !getInactiveSources().includes(result.source);
     })
     .map(result => {
       // Fallback for missing page
@@ -51,13 +51,3 @@ export function renderSearchResultsBlock(results, { filterInactive = true } = {}
     })
     .join('');
 }
-
-/*
-        ${
-          pageDisplay !== "N/A"
-            ? `<button onclick="goToPage('${escapeHtml(result.source)}', ${pageDisplay})" style="margin-top:0.5rem;">
-                Go to page ${pageDisplay}
-               </button>`
-            : ''
-        }
-        */

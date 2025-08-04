@@ -1,7 +1,6 @@
 // search.js — handles semantic search bar and results rendering
 
 import { $, escapeHtml } from './dom.js';
-import { getToggle } from './state.js';
 import { renderSearchResultsBlock } from './render.js';
 
 /**

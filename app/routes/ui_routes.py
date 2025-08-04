@@ -3,11 +3,16 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from utility.embedding_and_storing import db
+from utility.chat_state import ChatSession
+from utility.session_store import SessionStore
 
 router = APIRouter()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
+
+SESSION_COOKIE_NAME = "chat_session_id"
+store = SessionStore()
 
 def get_documents():
     raw = db.collection.get(include=["metadatas"])
@@ -22,28 +27,25 @@ def get_documents():
 
 @router.get("/documents")
 async def list_documents_json():
-    """
-    List all documents in the database as JSON.
-    This endpoint retrieves all documents stored in the database and returns them in JSON format.
-
-    - Returns a JSON response with a list of documents, each containing title, id, and segment count.
-    """
     return get_documents()
 
 @router.get("/", response_class=HTMLResponse)
 async def list_documents(request: Request, q: str = ""):
-    """
-    Render the main page with a list of documents.
-    This endpoint retrieves all documents and renders them in an HTML template.
+    session_id = request.cookies.get(SESSION_COOKIE_NAME)
+
+    if session_id and store.exists(session_id):
+        session = store.load(session_id)
+    else:
+        session = ChatSession.new()
+        store.save(session)
     
-    - **request**: The FastAPI request object.
-    - **q**: Optional query string to filter documents by title.
-    - Returns an HTML response with the rendered template containing the list of documents.
-    """
     all_docs = get_documents()
     filtered = [doc for doc in all_docs if q.lower() in doc["title"].lower()] if q else all_docs
-    return templates.TemplateResponse("index.html", {
+
+    response = templates.TemplateResponse("index.html", {
         "request": request,
         "documents": filtered,
-        "query": q
+        "query": q,
+        "session_id": session_id  # Inject into template if needed
     })
+    return response

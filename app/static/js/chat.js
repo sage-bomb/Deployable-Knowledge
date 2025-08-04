@@ -1,30 +1,38 @@
 // chat.js
 
 import { $, escapeHtml } from './dom.js';
-import { getInactiveIds } from './state.js';
 import { renderSearchResultsBlock } from './render.js';
 
 /**
- * Get the user ID from local storage or create a new one.
- * @returns {string} userId
+ * Appends a chat message to the chat box.
+ * @param {string} role - 'You' or 'Assistant'
+ * @param {string} text - Text to display
  */
-function getUserId() {
-  let userId = localStorage.getItem("user_id");
-  if (!userId) {
-    userId = "guest-" + Math.random().toString(36).substring(2, 10);
-    localStorage.setItem("user_id", userId);
-  }
-  return userId;
+function appendMessage(role, text) {
+  const chatBox = $("chat-box");
+  if (!chatBox) return;
+
+  const msgDiv = document.createElement("div");
+  msgDiv.innerHTML = `<strong>${role}:</strong> ${escapeHtml(text)}`;
+  chatBox.appendChild(msgDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+/**
+ * Clears the chat box entirely.
+ */
+function resetChatUI() {
+  const chatBox = $("chat-box");
+  if (chatBox) chatBox.innerHTML = '';
+  const searchResults = $("search-results");
+  if (searchResults) searchResults.innerHTML = '';
+}
 
 /**
- * Initialize the chat functionality.
- * Sets up event listeners for the chat form, input, and buttons.
+ * Initializes the chat functionality.
+ * @param {Object} session - Session object with sessionId
  */
-export function initChat() {
-  //console.log("✅ initChat called");
-
+export function initChat(session) {
   const chatForm = $("chat-form");
   const chatInput = $("user-input");
   const chatBox = $("chat-box");
@@ -35,195 +43,110 @@ export function initChat() {
   const downloadButton = $("download-chat");
   const personaButton = $("open-persona-btn");
 
-  // console.log("chatForm:", chatForm);
-  // console.log("chatInput:", chatInput);
-  // console.log("submitButton:", submitButton)
+  if (!chatForm || !chatInput || !submitButton) return;
 
-  chatForm.addEventListener("submit", async function (e) {
-    //console.log("Chat form submitted and fired");
+  // 🔁 CHAT SUBMISSION
+  chatForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const msg = chatInput.value.trim();
     if (!msg) return;
 
-    //Disabling inputs
+    // Disable UI
     chatInput.disabled = true;
     submitButton.disabled = true;
     resetLLMButton.disabled = true;
     clearButton.disabled = true;
     submitButton.textContent = "Loading...";
 
-    //Clearing input
-    chatInput.value = '';
+    appendMessage("You", msg);
+    chatInput.value = "";
 
-    chatBox.innerHTML += `<br><div><strong>You:</strong> ${escapeHtml(msg)}</div>`;
     const botMsg = document.createElement("div");
-    botMsg.innerHTML = ``;
     chatBox.appendChild(botMsg);
-    chatBox.scrollTop = chatBox.scrollHeight;
 
-    // === Run context search BEFORE clearing the input ===
+    // 📄 CONTEXT SEARCH (RAG)
     try {
-      const searchLimit = docLimitInput.value || 5;
-      const contextResponse = await fetch(`/search?q=${encodeURIComponent(msg)}&top_k=${searchLimit}`);
-      const contextData = await contextResponse.json();
+      const topK = docLimitInput?.value || 5;
+      const contextRes = await fetch(`/search?q=${encodeURIComponent(msg)}&top_k=${topK}`);
+      const contextData = await contextRes.json();
 
       if (contextData?.results?.length) {
-        const searchResults = $("search-results");
-        searchResults.innerHTML = `
-          <h3>RAG Context Used:</h3>
-          ${renderSearchResultsBlock(contextData.results)}
-        `;
+        const resultsHTML = renderSearchResultsBlock(contextData.results);
+        $("search-results").innerHTML = `<h3>RAG Context Used:</h3>${resultsHTML}`;
       }
     } catch (err) {
       console.error("Context search failed", err);
     }
 
-  clearButton.addEventListener("click", function() {
-    clearButton.disabled = true;
-
-    chatBox.innerHTML = "";
-
-    clearButton.disabled = false;
-    chatInput.focus();
-  })
-
-  resetLLMButton.addEventListener("click", async function() {
-    resetLLMButton.disabled = true;
-    chatInput.disabled = true;
-    submitButton.disabled = true;
-
-    chatBox.innerHTML = `<div><strong>Assistant:</strong></div>`;
-
-    const searchResults = $("search-results");
-    if (searchResults) {
-      searchResults.innerHTML = "";
-    }
-
-    //const userId = getUserId();
+    // 🤖 LLM RESPONSE
     try {
-      await fetch(`/debug/memory?user_id=${encodeURIComponent(userId)}`, {
-        method: "DELETE"
+      const persona = $("persona-text")?.value || "";
+      const response = await fetch("/chat-stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          message: msg,
+          persona,
+          user_id: session.sessionId
+        })
       });
+
+      if (!response.body) {
+        botMsg.innerHTML = `<em>No response body</em>`;
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        botMsg.innerHTML = `<br>${window.marked.parse(buffer)}`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
     } catch (err) {
-      console.error("Failed to reset LLM memory:", err);
-      botMsg.innerHTML += `<em>Error resetting memory: ${escapeHtml(err.message)}</em>`;
+      botMsg.innerHTML = `<em>Error: ${escapeHtml(err.message || String(err))}</em>`;
     }
 
-    resetLLMButton.disabled = false;
+    // Restore UI
     chatInput.disabled = false;
     submitButton.disabled = false;
-    chatInput.focus();
-  });
-
-  const persona = $("persona-text")?.value || "";
-  
-  const userId = getUserId();
-  console.log(userId);
-
-  const response = await fetch("/chat-stream", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      message: msg,
-      persona,
-      user_id: userId
-    })
-  });
-
-    if (!response.body) {
-      botMsg.innerHTML += "<em>No response body</em>";
-      return;
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      botMsg.innerHTML = `<br>${window.marked.parse(buffer)}`;
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
     resetLLMButton.disabled = false;
     clearButton.disabled = false;
-    chatInput.disabled = false;
-    submitButton.disabled = false;
     submitButton.textContent = "Send";
     chatInput.focus();
   });
+
+  // 🧼 CLEAR CHAT
+  clearButton?.addEventListener("click", () => {
+    resetChatUI();
+    chatInput.focus();
+  });
+
+  // 🧠 RESET MEMORY
+  resetLLMButton?.addEventListener("click", async () => {
+    resetChatUI();
+    chatInput.disabled = true;
+    submitButton.disabled = true;
+    resetLLMButton.disabled = true;
+
+    try {
+      await fetch(`/debug/memory?user_id=${encodeURIComponent(session.sessionId)}`, {
+        method: "DELETE"
+      });
+      appendMessage("Assistant", "Memory has been cleared.");
+    } catch (err) {
+      appendMessage("Assistant", `Error resetting memory: ${escapeHtml(err.message || err)}`);
+    }
+
+    chatInput.disabled = false;
+    submitButton.disabled = false;
+    resetLLMButton.disabled = false;
+    chatInput.focus();
+  });
 }
-
-
-// export function initChat() {
-//   const chatForm = $("chat-form");
-//   const chatInput = $("user-input");
-//   const chatBox = $("chat-box");
-//   const searchResults = $("search-results");
-
-//   chatForm.addEventListener("submit", async function (e) {
-//     e.preventDefault();
-//     const msg = chatInput.value.trim();
-//     if (!msg) return;
-
-//     const inactive = getInactiveIds();
-//     chatBox.innerHTML += `<div><strong>You:</strong> ${escapeHtml(msg)}</div>`;
-
-//     const botMsg = document.createElement("div");
-//     botMsg.innerHTML = `<strong>Assistant:</strong><em> Thinking...</em>`;
-//     chatBox.appendChild(botMsg);
-//     chatBox.scrollTop = chatBox.scrollHeight;
-
-//     // === Step 1: Fetch search context ===
-//     try {
-//       const searchRes = await fetch(`/search?q=${encodeURIComponent(msg)}`);
-//       const data = await searchRes.json();
-//       if (Array.isArray(data.results)) {
-//         searchResults.innerHTML = `
-//           <h3>RAG Context Used:</h3>
-//           ${renderSearchResultsBlock(data.results)}
-//         `;
-//       }
-//     } catch (err) {
-//       console.error("Search error:", err);
-//     }
-
-//     // === Step 2: Stream response from /chat-stream ===
-//     try {
-//       const response = await fetch("/chat-stream", {
-//         method: "POST",
-//         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-//         body: new URLSearchParams({
-//           message: msg,
-//           inactive: JSON.stringify(inactive),
-//         }),
-//       });
-
-//       if (!response.ok || !response.body) {
-//         botMsg.innerHTML = `<strong>Assistant:</strong> <em>Failed to connect to server.</em>`;
-//         return;
-//       }
-
-//       const reader = response.body.getReader();
-//       const decoder = new TextDecoder("utf-8");
-//       let full = "";
-
-//       while (true) {
-//         const { done, value } = await reader.read();
-//         if (done) break;
-
-//         const chunk = decoder.decode(value, { stream: true });
-//         full += chunk;
-//         botMsg.innerHTML = full;
-//         chatBox.scrollTop = chatBox.scrollHeight;
-//       }
-//     } catch (err) {
-//       botMsg.innerHTML = `<strong>Assistant:</strong> <em>Error: ${escapeHtml(err.message || err)}</em>`;
-//     }
-
-//     chatInput.value = '';
-//   });
-// }

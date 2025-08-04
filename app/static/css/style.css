@@ -429,3 +429,94 @@ input:disabled, button:disabled {
 #search-panel-wrapper.collapsed .status-text {
   display: none;
 }
+#chat-history {
+  padding: 10px;
+  font-family: var(--font-ui);
+  color: var(--text-main);
+  background-color: var(--bg-panel);
+  border-left: 1px solid var(--border-mid);
+  overflow-y: auto;
+}
+
+#chat-history h2 {
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+  color: var(--text-main);
+}
+
+#chat-history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#chat-history-list li {
+  background: var(--bg-card);
+  margin-bottom: 8px;
+  padding: 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-mid);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#chat-history-list li:hover {
+  background: var(--bg-hover);
+}
+
+#chat-history-list .session-title {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+#chat-history-list .session-meta {
+  font-size: 0.85em;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* --- Chat History Panel --- */
+#chat-history-panel {
+  background-color: #1c1c1c;
+  border-left: 1px solid #444;
+  color: #eee;
+  padding: 10px;
+  width: 280px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+#chat-history-panel .panel-header {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 6px;
+}
+
+#chat-history-list .session-item {
+  padding: 8px;
+  margin-bottom: 6px;
+  background-color: #222;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#chat-history-list .session-item:hover {
+  background-color: #333;
+}
+
+#chat-history-list .session-timestamp {
+  font-size: 0.9em;
+  color: #aaa;
+}
+
+#chat-history-list .loading,
+#chat-history-list .error {
+  font-style: italic;
+  color: #999;
+  padding: 10px 0;
+}

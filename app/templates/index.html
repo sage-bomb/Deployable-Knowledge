@@ -5,10 +5,14 @@
     <title>Deployable Knowledge</title>
     <link rel="icon" href="/static/favicon.ico" />
     <link rel="stylesheet" href="/static/css/style.css" />
+
+    <!-- Main App -->
     <script type="module" src="/static/js/main.js"></script>
     <script type="module" src="/static/js/marked.min.js"></script>
     <script type="module" src="/static/js/uploadChat.js"></script>
+
   </head>
+
   <body>
     <div class="top-banner">Deployable Knowledge</div>
 
@@ -23,6 +27,7 @@
       </div>
     </div>
 
+    <!-- Persona Modal -->
     <div id="persona-modal" class="modal hidden">
       <div class="modal-content">
         <h2>Edit Prompt Persona</h2>
@@ -41,16 +46,18 @@
     <div class="feature-layout">
       <div class="container">
         <div id="doc-panel-wrapper" class="column-wrapper scrollable">
+
+          <!-- ✅ CHAT HISTORY PANEL -->
+          <div id="chat-history-panel">
+            <div class="panel-header">Chat History</div>
+            <div id="chat-history-list" class="loading">Loading...</div>
+          </div>
+
+          <!-- ✅ DOCUMENT LIBRARY -->
           <div class="column" id="doc-manager">
             <div class="header-row">
               <h2>Document Library</h2>
-              <button
-                id="toggle-docs-btn"
-                title="Minimize Document Library"
-                type="button"
-              >
-                «
-              </button>
+              <button id="toggle-docs-btn" title="Minimize Document Library" type="button">«</button>
             </div>
 
             <form id="upload-form" method="post" enctype="multipart/form-data">
@@ -61,11 +68,7 @@
             <div id="upload-status" class="status-text"></div>
 
             <form id="filter-form">
-              <input
-                type="text"
-                id="filter-input"
-                placeholder="Filter documents..."
-              />
+              <input type="text" id="filter-input" placeholder="Filter documents..." />
               <button type="submit">Filter</button>
             </form>
 
@@ -75,7 +78,7 @@
           </div>
         </div>
 
-        <!-- Chat + Search -->
+        <!-- CHAT + SEARCH -->
         <div class="column scrollable">
           <h2>Assistant Chat</h2>
           <div id="chat-box" class="chat-box">
@@ -83,45 +86,26 @@
               <strong>Assistant:</strong> Hello! How can I help you today?
             </div>
           </div>
+
           <form id="chat-form">
-            <input
-              type="text"
-              id="user-input"
-              placeholder="Type a message..."
-            />
+            <input type="text" id="user-input" placeholder="Type a message..." />
             <button type="submit" id="submit-button">Send</button>
           </form>
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              gap: 1em;
-              margin-bottom: 1em;
-            "
-          >
+
+          <div style="display: flex; align-items: center; gap: 1em; margin-bottom: 1em;">
             <button id="open-persona-btn">Edit Persona</button>
             <button id="clear-history" type="button">Clear Logs</button>
             <button id="reset-llm" type="button">Reset LLM</button>
             <button id="download-chat">Download Chat</button>
-            <input
-              type="file"
-              id="upload-chat-file"
-              accept=".html"
-              style="display: none"
-            />
+            <input type="file" id="upload-chat-file" accept=".html" style="display: none" />
             <button id="upload-chat-btn" type="button">Upload Chat</button>
           </div>
+
           <div id="search-panel-wrapper" class="column-wrapper">
-            <button id="toggle-search-btn" title="Minimize Search Results">
-              🡸
-            </button>
+            <button id="toggle-search-btn" title="Minimize Search Results">🡸</button>
             <h2>Search Documents</h2>
             <form id="search-form">
-              <input
-                type="text"
-                id="search-query"
-                placeholder="Enter search text..."
-              />
+              <input type="text" id="search-query" placeholder="Enter search text..." />
               <label for="top-k-select">Number of results:</label>
               <select id="top-k-select">
                 <option value="5">5</option>
