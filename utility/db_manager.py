@@ -12,15 +12,7 @@ import chromadb
 from chromadb.config import Settings
 
 class DBManager:
-    """from db_manager import ChromaDBManager
-from your_segmentation_module import TopDownSegmenter
-
-db = DBManager("chroma_db", "test_collection")
-segmenter = TopDownSegmenter()
-
-segments = segmenter.segment(text)
-db.add_segments(segments, strategy_name="top_down", source="contract_001.txt", tags=["legal"])
-"""
+    """Wrapper around ChromaDB providing embedding and storage helpers."""
     def __init__(self, persist_dir: str, collection_name: str):
         self.client = chromadb.PersistentClient(path=str(persist_dir), settings=Settings(anonymized_telemetry=False))        
         self.collection = self.client.get_or_create_collection(collection_name)
