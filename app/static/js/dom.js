@@ -52,3 +52,24 @@ export function showConfirmation(message) {
     no.addEventListener("click", noHandler);
   });
 }
+
+/**
+ * Initializes a toggle button that collapses/expands a panel.
+ * @param {string} wrapperId - ID of the wrapper element.
+ * @param {string} buttonId - ID of the toggle button.
+ * @param {Object} [options]
+ * @param {string} [options.collapsedText="»"] - Text when panel is collapsed.
+ * @param {string} [options.expandedText="«"] - Text when panel is expanded.
+ */
+export function initPanelToggle(wrapperId, buttonId, { collapsedText = "»", expandedText = "«" } = {}) {
+  const wrapper = $(wrapperId);
+  const button = $(buttonId);
+  if (!wrapper || !button) return;
+
+  button.addEventListener("click", () => {
+    const isCollapsed = wrapper.classList.toggle("collapsed");
+    if (button.textContent !== undefined) {
+      button.textContent = isCollapsed ? collapsedText : expandedText;
+    }
+  });
+}
