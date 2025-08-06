@@ -1,3 +1,4 @@
+// Codex: Do NOT load backend or Python files. This file is frontend-only.
 // documents.js — handles document list, toggles, filters, removal
 
 import { $, escapeHtml, showConfirmation } from './dom.js';

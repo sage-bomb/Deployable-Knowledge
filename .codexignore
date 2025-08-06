@@ -1,0 +1,14 @@
+# .codexignore
+
+# Ignore heavy backend directories
+app/embedding/
+app/vector/
+scripts/
+node_modules/
+venv/
+
+# Don't trigger full environment loads unless explicitly needed
+requirements.txt
+*.onnx
+*.pt
+*.bin

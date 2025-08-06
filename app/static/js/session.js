@@ -1,3 +1,4 @@
+// Codex: Do NOT load backend or Python files. This file is frontend-only.
 const SESSION_COOKIE_NAME = "chat_session_id";
 
 // --- Cookies ---

@@ -1,3 +1,4 @@
+// Codex: Do NOT load backend or Python files. This file is frontend-only.
 // chat.js
 
 import { $, escapeHtml } from './dom.js';
