@@ -3,34 +3,7 @@
 
 import { $ } from './dom.js';
 import { setSessionId } from './session.js';
-
-/**
- * Clears the chat UI.
- */
-function clearChatBox() {
-  const chatBox = $("chat-box");
-  if (chatBox) chatBox.innerHTML = '';
-  const searchResults = $("search-results");
-  if (searchResults) searchResults.innerHTML = '';
-}
-
-/**
- * Renders a single message pair to the chat box.
- * @param {string} userText 
- * @param {string} assistantText 
- */
-function renderMessagePair(userText, assistantText) {
-  const chatBox = $("chat-box");
-  if (!chatBox) return;
-
-  const userDiv = document.createElement("div");
-  userDiv.innerHTML = `<strong>You:</strong> ${userText}`;
-  chatBox.appendChild(userDiv);
-
-  const botDiv = document.createElement("div");
-  botDiv.innerHTML = `<strong>Assistant:</strong> ${assistantText}`;
-  chatBox.appendChild(botDiv);
-}
+import { renderMessagePair, clearChatUI } from './render.js';
 
 /**
  * Loads and displays messages for a specific session.
@@ -44,14 +17,14 @@ async function loadSessionMessages(sessionId) {
     const data = await res.json();
     const history = data.history;
 
-    clearChatBox();
+    clearChatUI();
 
     for (const [user, assistant] of history) {
       renderMessagePair(user, assistant);
     }
   } catch (err) {
     console.error("❌ Error loading session messages:", err);
-    clearChatBox();
+    clearChatUI();
     renderMessagePair("System", `⚠️ Failed to load session history: ${err.message}`);
   }
 }
