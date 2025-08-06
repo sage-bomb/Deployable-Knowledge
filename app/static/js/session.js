@@ -11,6 +11,10 @@ export function setCookie(name, value, days = 30) {
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
 }
 
+export function clearCookie(name) {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+}
+
 // --- App State ---
 let appState = {
   sessionId: null,
@@ -34,20 +38,13 @@ function loadSessionStorage() {
 }
 
 // --- Session Management ---
-export async function ensureSession() {
-  let sessionId = getCookie(SESSION_COOKIE_NAME);
 
-  if (!sessionId) {
-    console.log("🟡 No session cookie found — requesting new session...");
-    const res = await fetch("/session");
-    const data = await res.json();
-    sessionId = data.session_id;
+export function setSessionId(sessionId) {
+  if (sessionId) {
     setCookie(SESSION_COOKIE_NAME, sessionId);
-    console.log("🟢 New session ID set:", sessionId);
   } else {
-    console.log("✅ Using existing session:", sessionId);
+    clearCookie(SESSION_COOKIE_NAME);
   }
-
   appState.sessionId = sessionId;
   updateSessionStorage();
   return sessionId;
@@ -57,10 +54,8 @@ export async function startNewSession() {
   const res = await fetch("/session", { method: "POST" });
   const data = await res.json();
   const sessionId = data.session_id;
-  setCookie(SESSION_COOKIE_NAME, sessionId);
-  appState.sessionId = sessionId;
+  setSessionId(sessionId);
   appState.inactiveSources = [];
-  updateSessionStorage();
   return sessionId;
 }
 
@@ -74,7 +69,8 @@ export function getSessionState() {
 
 export async function initAppState() {
   loadSessionStorage();
-  appState.sessionId = await ensureSession();
+  clearCookie(SESSION_COOKIE_NAME);
+  appState.sessionId = null;
   updateSessionStorage();
 }
 

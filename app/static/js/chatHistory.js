@@ -1,7 +1,7 @@
 // chatHistory.js
 
 import { $ } from './dom.js';
-import { ensureSession } from './session.js';
+import { setSessionId } from './session.js';
 
 /**
  * Clears the chat UI.
@@ -44,7 +44,6 @@ async function loadSessionMessages(sessionId) {
     const history = data.history;
 
     clearChatBox();
-    await ensureSession();
 
     for (const [user, assistant] of history) {
       renderMessagePair(user, assistant);
@@ -89,6 +88,8 @@ export const chatHistory = {
           `;
           div.addEventListener("click", () => {
             console.log("📦 Loading session:", sessionEntry.session_id);
+            setSessionId(sessionEntry.session_id);
+            session.sessionId = sessionEntry.session_id;
             loadSessionMessages(sessionEntry.session_id);
           });
           container.appendChild(div);
