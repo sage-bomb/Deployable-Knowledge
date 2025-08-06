@@ -2,6 +2,7 @@
 // chat.js
 
 import { $, escapeHtml } from './dom.js';
+
 import { renderSearchResultsBlock, renderChatMessage, clearChatUI } from './render.js';
 import { startNewSession } from './session.js';
 import { chatHistory } from './chatHistory.js';
@@ -25,6 +26,7 @@ export function initChat(session) {
   const newChatButton = $("new-chat");
 
   if (!chatForm || !chatInput || !submitButton) return;
+
 
   clearChatUI();
 

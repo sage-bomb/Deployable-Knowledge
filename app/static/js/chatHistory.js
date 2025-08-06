@@ -1,7 +1,7 @@
 // Codex: Do NOT load backend or Python files. This file is frontend-only.
 // chatHistory.js
 
-import { $ } from './dom.js';
+import { $, initPanelToggle } from './dom.js';
 import { setSessionId } from './session.js';
 import { renderMessagePair, clearChatUI } from './render.js';
 
@@ -29,11 +29,6 @@ async function loadSessionMessages(sessionId) {
   }
 }
 
-function formatTimestamp(isoString) {
-  const date = new Date(isoString);
-  return date.toLocaleString();
-}
-
 /**
  * Renders chat history list and binds session click events.
  * @param {Object} session - Session state object
@@ -43,6 +38,8 @@ export const chatHistory = {
     const container = $("chat-history-list");
     if (!container) return;
 
+    initPanelToggle('chat-history-wrapper', 'toggle-history-btn');
+
     container.innerHTML = `<div class="loading">Loading sessions...</div>`;
 
     fetch("/sessions")
@@ -51,22 +48,11 @@ export const chatHistory = {
         return res.json();
       })
       .then(sessions => {
-        container.innerHTML = "";
-
-        sessions.forEach(sessionEntry => {
-          const div = document.createElement("div");
-          div.className = "session-item";
-          div.innerHTML = `
-            <div class="session-title"><strong>Session ID:</strong> ${sessionEntry.session_id}</div>
-            <div class="session-timestamp">${formatTimestamp(sessionEntry.created_at)}</div>
-          `;
-          div.addEventListener("click", () => {
-            console.log("📦 Loading session:", sessionEntry.session_id);
-            setSessionId(sessionEntry.session_id);
-            session.sessionId = sessionEntry.session_id;
-            loadSessionMessages(sessionEntry.session_id);
-          });
-          container.appendChild(div);
+        renderChatHistoryList(container, sessions, (sessionId) => {
+          console.log("📦 Loading session:", sessionId);
+          setSessionId(sessionId);
+          session.sessionId = sessionId;
+          loadSessionMessages(sessionId);
         });
       })
       .catch(err => {
