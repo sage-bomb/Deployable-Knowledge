@@ -48,11 +48,19 @@ export function initChat(session) {
 
   if (!chatForm || !chatInput || !submitButton) return;
 
+  resetChatUI();
+
   // 🔁 CHAT SUBMISSION
   chatForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const msg = chatInput.value.trim();
     if (!msg) return;
+
+    if (!session.sessionId) {
+      const newId = await startNewSession();
+      session.sessionId = newId;
+      chatHistory.init(session);
+    }
 
     // Disable UI
     chatInput.disabled = true;
