@@ -5,6 +5,7 @@ from pathlib import Path
 from utility.embedding_and_storing import db
 from utility.chat_state import ChatSession
 from utility.session_store import SessionStore
+from utility.validation import validate_session_id
 
 router = APIRouter()
 
@@ -32,20 +33,31 @@ async def list_documents_json():
 @router.get("/", response_class=HTMLResponse)
 async def list_documents(request: Request, q: str = ""):
     session_id = request.cookies.get(SESSION_COOKIE_NAME)
+    try:
+        session_id = validate_session_id(session_id) if session_id else None
+    except ValueError:
+        session_id = None
 
     if session_id and store.exists(session_id):
         session = store.load(session_id)
     else:
-        session = ChatSession.new()
+        session = ChatSession.new(user_id="default")
         store.save(session)
+        session_id = session.session_id
     
     all_docs = get_documents()
     filtered = [doc for doc in all_docs if q.lower() in doc["title"].lower()] if q else all_docs
 
-    response = templates.TemplateResponse("index.html", {
-        "request": request,
-        "documents": filtered,
-        "query": q,
-        "session_id": session_id  # Inject into template if needed
-    })
+    response = templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "documents": filtered,
+            "query": q,
+            "session_id": session_id,  # Inject into template if needed
+        },
+    )
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME, value=session.session_id, httponly=True
+    )
     return response

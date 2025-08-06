@@ -1,11 +1,16 @@
 import os
 from fastapi import APIRouter, UploadFile, BackgroundTasks, HTTPException, Form, File
 from fastapi.responses import JSONResponse
-from pathlib import Path
 from utility.parsing import parse_pdf
-from utility.embedding_and_storing import db, chunk_text, embed_directory, embed_file
+from utility.embedding_and_storing import db, embed_directory, embed_file
+from utility.validation import sanitize_filename
 
-from config import UPLOAD_DIR, PDF_DIR, DEFAULT_CHUNKING_METHOD
+from config import (
+    UPLOAD_DIR,
+    PDF_DIR,
+    DEFAULT_CHUNKING_METHOD,
+    ALLOWED_DOCUMENT_EXTENSIONS,
+)
 
 router = APIRouter()
 
@@ -25,24 +30,27 @@ async def upload_files(files: list[UploadFile] = File(...)):
     results = []
     for file in files:
         try:
-            destination = UPLOAD_DIR / file.filename
+            safe_name = sanitize_filename(file.filename, ALLOWED_DOCUMENT_EXTENSIONS)
+            destination = UPLOAD_DIR / safe_name
             with open(destination, "wb") as f:
                 f.write(await file.read())
 
             embed_file(
                 file_path=destination,
                 chunking_method="graph",  # Or make this dynamic
-                source_name=file.filename,
-                tags=["uploaded"]
+                source_name=safe_name,
+                tags=["uploaded"],
             )
 
-            results.append({"filename": file.filename, "status": "success"})
+            results.append({"filename": safe_name, "status": "success"})
         except Exception as e:
-            results.append({
-                "filename": file.filename,
-                "status": "error",
-                "message": str(e)
-            })
+            results.append(
+                {
+                    "filename": file.filename,
+                    "status": "error",
+                    "message": str(e),
+                }
+            )
 
     return JSONResponse({"uploads": results})
 
@@ -55,11 +63,12 @@ async def remove_document(source: str = Form(...)):
     - Returns a JSON response indicating the success or failure of the operation.
     """
     try:
-        db.delete_by_source(source)
-        file_path = UPLOAD_DIR / source
+        safe_name = sanitize_filename(source)
+        db.delete_by_source(safe_name)
+        file_path = UPLOAD_DIR / safe_name
         if file_path.exists():
             os.remove(file_path)
-        return JSONResponse({"status": "success", "message": f"{source} removed."})
+        return JSONResponse({"status": "success", "message": f"{safe_name} removed."})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
