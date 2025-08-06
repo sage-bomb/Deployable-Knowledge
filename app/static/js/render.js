@@ -88,6 +88,48 @@ export function clearChatUI() {
 }
 
 /**
+ * Renders a list of previous chat sessions.
+ * @param {HTMLElement} container - Destination element for the list.
+ * @param {Array<Object>} sessions - Array of session metadata objects.
+ * @param {Function} onSelect - Callback invoked with session ID on click.
+ */
+export function renderChatHistoryList(container, sessions, onSelect) {
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  if (!Array.isArray(sessions) || sessions.length === 0) {
+    container.innerHTML = `<div class="loading">No sessions found.</div>`;
+    return;
+  }
+
+  sessions
+    .slice()
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .forEach(sess => {
+      const sessionId = sess.session_id || sess.id || '';
+
+      const item = document.createElement('div');
+      item.className = 'session-item';
+
+      const title = document.createElement('div');
+      title.className = 'session-title';
+      title.textContent = sessionId.slice(0, 8);
+
+      const timestamp = document.createElement('div');
+      timestamp.className = 'session-timestamp';
+      if (sess.created_at) {
+        timestamp.textContent = new Date(sess.created_at).toLocaleString();
+      }
+
+      item.appendChild(title);
+      item.appendChild(timestamp);
+      item.addEventListener('click', () => onSelect?.(sessionId));
+      container.appendChild(item);
+    });
+}
+
+/**
  * Renders the document list with optional filtering.
  * @param {Array} docs
  * @param {string} [filter=""]
