@@ -1,7 +1,7 @@
 // Codex: Do NOT load backend or Python files. This file is frontend-only.
 // search.js — handles semantic search bar and results rendering
 
-import { $, escapeHtml } from './dom.js';
+import { $, escapeHtml, initPanelToggle } from './dom.js';
 import { renderSearchResultsBlock } from './render.js';
 
 /**
@@ -16,12 +16,7 @@ export function initSearch() {
 
   if (!searchForm || !searchInput || !searchResults || !topKInput) return;
 
-    const docWrapper = document.getElementById("search-panel-wrapper");
-    const toggleBtn = document.getElementById("toggle-search-btn");
-
-    toggleBtn?.addEventListener("click", () => {
-    docWrapper.classList.toggle("collapsed");
-    });
+    initPanelToggle('search-panel-wrapper', 'toggle-search-btn');
 
   searchForm.addEventListener("submit", function (e) {
     e.preventDefault();

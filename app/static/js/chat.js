@@ -1,35 +1,12 @@
 // Codex: Do NOT load backend or Python files. This file is frontend-only.
 // chat.js
 
-import { $, escapeHtml } from './dom.js';
-import { renderSearchResultsBlock } from './render.js';
+import { $, escapeHtml, initPanelToggle } from './dom.js';
+import { renderSearchResultsBlock, renderChatMessage, clearChatUI } from './render.js';
 import { startNewSession } from './session.js';
 import { chatHistory } from './chatHistory.js';
 
-/**
- * Appends a chat message to the chat box.
- * @param {string} role - 'You' or 'Assistant'
- * @param {string} text - Text to display
- */
-function appendMessage(role, text) {
-  const chatBox = $("chat-box");
-  if (!chatBox) return;
-
-  const msgDiv = document.createElement("div");
-  msgDiv.innerHTML = `<strong>${role}:</strong> ${escapeHtml(text)}`;
-  chatBox.appendChild(msgDiv);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-/**
- * Clears the chat box entirely.
- */
-function resetChatUI() {
-  const chatBox = $("chat-box");
-  if (chatBox) chatBox.innerHTML = '';
-  const searchResults = $("search-results");
-  if (searchResults) searchResults.innerHTML = '';
-}
+// Rendering helpers moved to render.js
 
 /**
  * Initializes the chat functionality.
@@ -49,7 +26,9 @@ export function initChat(session) {
 
   if (!chatForm || !chatInput || !submitButton) return;
 
-  resetChatUI();
+  initPanelToggle('chat-panel-wrapper', 'toggle-chat-btn');
+
+  clearChatUI();
 
   // 🔁 CHAT SUBMISSION
   chatForm.addEventListener("submit", async (e) => {
@@ -70,7 +49,7 @@ export function initChat(session) {
     clearButton.disabled = true;
     submitButton.textContent = "Loading...";
 
-    appendMessage("You", msg);
+    renderChatMessage("You", msg);
     chatInput.value = "";
 
     const botMsg = document.createElement("div");
@@ -136,7 +115,7 @@ export function initChat(session) {
 
   // 🧼 CLEAR CHAT
   clearButton?.addEventListener("click", () => {
-    resetChatUI();
+    clearChatUI();
     chatInput.focus();
   });
 
@@ -144,14 +123,14 @@ export function initChat(session) {
   newChatButton?.addEventListener("click", async () => {
     const newId = await startNewSession();
     session.sessionId = newId;
-    resetChatUI();
+    clearChatUI();
     chatHistory.init(session);
     chatInput.focus();
   });
 
   // 🧠 RESET MEMORY
   resetLLMButton?.addEventListener("click", async () => {
-    resetChatUI();
+    clearChatUI();
     chatInput.disabled = true;
     submitButton.disabled = true;
     resetLLMButton.disabled = true;
@@ -160,9 +139,9 @@ export function initChat(session) {
       await fetch(`/debug/memory?session_id=${encodeURIComponent(session.sessionId)}`, {
         method: "DELETE"
       });
-      appendMessage("Assistant", "Memory has been cleared.");
+      renderChatMessage("Assistant", "Memory has been cleared.");
     } catch (err) {
-      appendMessage("Assistant", `Error resetting memory: ${escapeHtml(err.message || err)}`);
+      renderChatMessage("Assistant", `Error resetting memory: ${escapeHtml(err.message || err)}`);
     }
 
     chatInput.disabled = false;
