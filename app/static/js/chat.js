@@ -2,6 +2,8 @@
 
 import { $, escapeHtml } from './dom.js';
 import { renderSearchResultsBlock } from './render.js';
+import { startNewSession } from './session.js';
+import { chatHistory } from './chatHistory.js';
 
 /**
  * Appends a chat message to the chat box.
@@ -42,6 +44,7 @@ export function initChat(session) {
   const resetLLMButton = $("reset-llm");
   const downloadButton = $("download-chat");
   const personaButton = $("open-persona-btn");
+  const newChatButton = $("new-chat");
 
   if (!chatForm || !chatInput || !submitButton) return;
 
@@ -87,7 +90,7 @@ export function initChat(session) {
         body: new URLSearchParams({
           message: msg,
           persona,
-          user_id: session.sessionId
+          session_id: session.sessionId
         })
       });
 
@@ -128,6 +131,15 @@ export function initChat(session) {
     chatInput.focus();
   });
 
+  // 🆕 START NEW CHAT SESSION
+  newChatButton?.addEventListener("click", async () => {
+    const newId = await startNewSession();
+    session.sessionId = newId;
+    resetChatUI();
+    chatHistory.init(session);
+    chatInput.focus();
+  });
+
   // 🧠 RESET MEMORY
   resetLLMButton?.addEventListener("click", async () => {
     resetChatUI();
@@ -136,7 +148,7 @@ export function initChat(session) {
     resetLLMButton.disabled = true;
 
     try {
-      await fetch(`/debug/memory?user_id=${encodeURIComponent(session.sessionId)}`, {
+      await fetch(`/debug/memory?session_id=${encodeURIComponent(session.sessionId)}`, {
         method: "DELETE"
       });
       appendMessage("Assistant", "Memory has been cleared.");

@@ -64,3 +64,17 @@ async def get_or_create_session(request: Request):
     response = JSONResponse({"session_id": session.session_id})
     response.set_cookie(key=SESSION_COOKIE_NAME, value=session.session_id, httponly=False)
     return response
+
+
+@router.post("/session")
+async def create_session():
+    """Always create and return a new chat session."""
+
+    session = ChatSession.new()
+    store.save(session)
+
+    response = JSONResponse({"session_id": session.session_id})
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME, value=session.session_id, httponly=False
+    )
+    return response
