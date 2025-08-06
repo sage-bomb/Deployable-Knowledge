@@ -1,3 +1,4 @@
+// Codex: Do NOT load backend or Python files. This file is frontend-only.
 // search.js — handles semantic search bar and results rendering
 
 import { $, escapeHtml } from './dom.js';

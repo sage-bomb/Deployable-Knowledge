@@ -90,3 +90,11 @@ Deployable-Knowledge is an offline-capable Retrieval-Augmented Generation (RAG) 
    different chat model than the default `mistral:7b`.
 
 5. Navigate to `http://localhost:8000` in your browser.
+
+---
+
+## Codex Usage Guidance
+
+- Do **not** start or load the backend when editing JavaScript files. Work on the file directly.
+- Ignore heavy backend directories such as `app/embedding/`, `app/vector/`, `scripts/`, `node_modules/`, and `venv/`.
+- Keep edits sandboxed. Do not run tests or the backend unless explicitly instructed.

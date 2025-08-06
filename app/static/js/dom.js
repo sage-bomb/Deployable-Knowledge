@@ -1,3 +1,4 @@
+// Codex: Do NOT load backend or Python files. This file is frontend-only.
 // dom.js — shared DOM helpers and modal logic
 
 /**

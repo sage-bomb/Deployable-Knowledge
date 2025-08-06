@@ -1,3 +1,4 @@
+// Codex: Do NOT load backend or Python files. This file is frontend-only.
 // persona_editor.js
 import { $ } from './dom.js';
 

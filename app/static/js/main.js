@@ -1,3 +1,4 @@
+// Codex: Do NOT load backend or Python files. This file is frontend-only.
 import { initAppState, getSessionState } from './session.js';
 import { initChat } from './chat.js';
 import { chatHistory } from './chatHistory.js';

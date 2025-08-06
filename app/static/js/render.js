@@ -1,3 +1,4 @@
+// Codex: Do NOT load backend or Python files. This file is frontend-only.
 import { escapeHtml } from './dom.js';
 import { initToggleState, toggleSource, getInactiveSources } from "./session.js";
 
