@@ -10,6 +10,8 @@ from utility import llm_prompt_engine as llm
 from utility.session_store import SessionStore
 from utility.chat_state import ChatSession
 from utility.logger import get_logger
+from utility.validation import validate_session_id, clamp_int
+from config import MIN_TOP_K, MAX_TOP_K
 
 router = APIRouter()
 store = SessionStore()
@@ -23,6 +25,7 @@ def filter_out_chunks(context_blocks, nu=0.4):
     return [block for block, z in zip(context_blocks, z_scores) if z < 1]
 
 def search_documents_by_query(query: str, top_k: int = 5, exclude_sources: Optional[set] = None) -> List[Dict]:
+    top_k = clamp_int(top_k, MIN_TOP_K, MAX_TOP_K)
     embedding = db.embed([query])[0]
     results = db.collection.query(query_embeddings=[embedding], n_results=top_k)
 
@@ -49,15 +52,18 @@ async def chat(
     session_id: str = Form(...),
     stream: bool = Form(False)
 ):
+    session_id = validate_session_id(session_id)
     session = store.load(session_id)
     if session is None:
         logger.info("Creating new chat session for %s", session_id)
-        session = ChatSession.new(session_id=session_id)
+        session = ChatSession.new(session_id=session_id, user_id="default")
         store.save(session)
 
     inactive_sources = set(json.loads(inactive)) if inactive else set()
     raw_blocks = search_documents_by_query(
-        message, top_k=10 if stream else 5, exclude_sources=inactive_sources
+        message,
+        top_k=clamp_int(10 if stream else 5, MIN_TOP_K, MAX_TOP_K),
+        exclude_sources=inactive_sources,
     )
     context_blocks = filter_out_chunks(raw_blocks)
     logger.info("Session %s queried with %d context blocks", session_id, len(context_blocks))
@@ -121,7 +127,10 @@ async def chat(
     #     return JSONResponse(content={"response": f"[Error: {str(e)}]"})
 
 @router.get("/search")
-async def search_documents(q: str = Query(...), top_k: int = 5):
+async def search_documents(
+    q: str = Query(...),
+    top_k: int = Query(5, ge=MIN_TOP_K, le=MAX_TOP_K),
+):
     try:
         results = search_documents_by_query(q, top_k=top_k)
         return {"results": results}

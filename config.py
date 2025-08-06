@@ -19,6 +19,11 @@ LOCAL_MODEL_PATH = MODEL_DIR
 DEFAULT_CHUNKING_METHOD = "graph-pagerank"
 CHUNKING_METHOD_OPTIONS = ["sentences", "semantics", "graph", "paragraphs", "dynamic", "graph-pagerank"]
 
+# === Security ===
+ALLOWED_DOCUMENT_EXTENSIONS = {".txt", ".pdf", ".md", ".html"}
+MIN_TOP_K = 1
+MAX_TOP_K = 20
+
 # === Ollama ===
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral:7b")

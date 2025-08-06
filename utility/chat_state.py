@@ -61,6 +61,7 @@ class ChatSession:
     """Container for a user's ongoing chat session."""
 
     session_id: str
+    user_id: str = "default"
     history: List[ChatExchange] = field(default_factory=list)
     summary: str = ""
     inactive_sources: List[str] = field(default_factory=list)
@@ -70,10 +71,10 @@ class ChatSession:
     # Construction helpers
     # ------------------------------------------------------------------
     @classmethod
-    def new(cls, session_id: Optional[str] = None) -> "ChatSession":
+    def new(cls, session_id: Optional[str] = None, user_id: str = "default") -> "ChatSession":
         """Create a new chat session with a random identifier."""
 
-        return cls(session_id=session_id or str(uuid.uuid4()))
+        return cls(session_id=session_id or str(uuid.uuid4()), user_id=user_id)
 
     # ------------------------------------------------------------------
     # Mutation helpers
@@ -110,6 +111,7 @@ class ChatSession:
     def to_dict(self) -> Dict:
         return {
             "session_id": self.session_id,
+            "user_id": self.user_id,
             "summary": self.summary,
             "history": [exchange.to_dict() for exchange in self.history],
             "inactive_sources": self.inactive_sources,
@@ -120,6 +122,7 @@ class ChatSession:
     def from_dict(cls, data: Dict) -> "ChatSession":
         session = cls(
             session_id=data.get("session_id", ""),
+            user_id=data.get("user_id", "default"),
             summary=data.get("summary", ""),
             inactive_sources=data.get("inactive_sources", []),
             persona=data.get("persona"),
