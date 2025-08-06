@@ -53,6 +53,17 @@ export async function ensureSession() {
   return sessionId;
 }
 
+export async function startNewSession() {
+  const res = await fetch("/session", { method: "POST" });
+  const data = await res.json();
+  const sessionId = data.session_id;
+  setCookie(SESSION_COOKIE_NAME, sessionId);
+  appState.sessionId = sessionId;
+  appState.inactiveSources = [];
+  updateSessionStorage();
+  return sessionId;
+}
+
 export function getSessionId() {
   return appState.sessionId;
 }

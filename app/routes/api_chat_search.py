@@ -46,13 +46,13 @@ async def chat(
     message: str = Form(...),
     inactive: Optional[str] = Form(None),
     persona: str = Form(""),
-    user_id: str = Form(...),
+    session_id: str = Form(...),
     stream: bool = Form(False)
 ):
-    session = store.load(user_id)
+    session = store.load(session_id)
     if session is None:
-        logger.info("Creating new chat session for %s", user_id)
-        session = ChatSession.new(session_id=user_id)
+        logger.info("Creating new chat session for %s", session_id)
+        session = ChatSession.new(session_id=session_id)
         store.save(session)
 
     inactive_sources = set(json.loads(inactive)) if inactive else set()
@@ -60,7 +60,7 @@ async def chat(
         message, top_k=10 if stream else 5, exclude_sources=inactive_sources
     )
     context_blocks = filter_out_chunks(raw_blocks)
-    logger.info("User %s queried with %d context blocks", user_id, len(context_blocks))
+    logger.info("Session %s queried with %d context blocks", session_id, len(context_blocks))
     prompt = llm.build_prompt(
         summary=session.summary,
         history=session.history,
@@ -133,6 +133,6 @@ async def legacy_chat_stream(
     message: str = Form(...),
     inactive: Optional[str] = Form(None),
     persona: str = Form(""),
-    user_id: str = Form(...)
+    session_id: str = Form(...)
 ):
-    return await chat(message, inactive, persona, user_id, stream=True)
+    return await chat(message, inactive, persona, session_id, stream=True)
