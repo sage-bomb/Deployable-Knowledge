@@ -187,29 +187,3 @@ export function loadActiveDocuments(docs) {
     docPanel.appendChild(div);
   });
 }
-
-/**
- * Renders the chat history session list.
- * @param {HTMLElement} container
- * @param {Array} sessions
- * @param {Function} onSelect
- */
-export function renderChatHistoryList(container, sessions, onSelect) {
-  if (!container) return;
-  container.innerHTML = "";
-  sessions.forEach(entry => {
-    const div = document.createElement("div");
-    div.className = "session-item";
-    div.innerHTML = `
-      <div class="session-title"><strong>Session ID:</strong> ${escapeHtml(entry.session_id)}</div>
-      <div class="session-timestamp">${formatTimestamp(entry.created_at)}</div>
-    `;
-    div.addEventListener("click", () => onSelect(entry.session_id));
-    container.appendChild(div);
-  });
-}
-
-function formatTimestamp(isoString) {
-  const date = new Date(isoString);
-  return date.toLocaleString();
-}

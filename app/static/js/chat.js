@@ -1,7 +1,8 @@
 // Codex: Do NOT load backend or Python files. This file is frontend-only.
 // chat.js
 
-import { $, escapeHtml, initPanelToggle } from './dom.js';
+import { $, escapeHtml } from './dom.js';
+
 import { renderSearchResultsBlock, renderChatMessage, clearChatUI } from './render.js';
 import { startNewSession } from './session.js';
 import { chatHistory } from './chatHistory.js';
@@ -26,7 +27,6 @@ export function initChat(session) {
 
   if (!chatForm || !chatInput || !submitButton) return;
 
-  initPanelToggle('chat-panel-wrapper', 'toggle-chat-btn');
 
   clearChatUI();
 

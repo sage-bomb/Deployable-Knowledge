@@ -3,7 +3,7 @@
 
 import { $, initPanelToggle } from './dom.js';
 import { setSessionId } from './session.js';
-import { renderMessagePair, clearChatUI, renderChatHistoryList } from './render.js';
+import { renderMessagePair, clearChatUI } from './render.js';
 
 /**
  * Loads and displays messages for a specific session.
