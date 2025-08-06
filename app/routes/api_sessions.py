@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from datetime import datetime
 from utility.chat_state import ChatSession
 from utility.session_store import SessionStore
+from utility.validation import validate_session_id
 
 SESSION_COOKIE_NAME = "chat_session_id"
 
@@ -31,6 +32,7 @@ async def get_session_data(session_id: str):
     structure here.
     """
 
+    session_id = validate_session_id(session_id)
     session = store.load(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -55,14 +57,18 @@ async def get_session_data(session_id: str):
 @router.get("/session")
 async def get_or_create_session(request: Request):
     session_id = request.cookies.get(SESSION_COOKIE_NAME)
+    try:
+        session_id = validate_session_id(session_id) if session_id else None
+    except ValueError:
+        session_id = None
     if session_id and store.exists(session_id):
         session = store.load(session_id)
     else:
-        session = ChatSession.new()
+        session = ChatSession.new(user_id="default")
         store.save(session)
 
     response = JSONResponse({"session_id": session.session_id})
-    response.set_cookie(key=SESSION_COOKIE_NAME, value=session.session_id, httponly=False)
+    response.set_cookie(key=SESSION_COOKIE_NAME, value=session.session_id, httponly=True)
     return response
 
 
@@ -70,11 +76,11 @@ async def get_or_create_session(request: Request):
 async def create_session():
     """Always create and return a new chat session."""
 
-    session = ChatSession.new()
+    session = ChatSession.new(user_id="default")
     store.save(session)
 
     response = JSONResponse({"session_id": session.session_id})
     response.set_cookie(
-        key=SESSION_COOKIE_NAME, value=session.session_id, httponly=False
+        key=SESSION_COOKIE_NAME, value=session.session_id, httponly=True
     )
     return response

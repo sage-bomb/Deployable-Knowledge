@@ -72,14 +72,15 @@ export function initChat(session) {
     // 🤖 LLM RESPONSE
     try {
       const persona = $("persona-text")?.value || "";
+      const params = new URLSearchParams();
+      params.set("message", msg);
+      params.set("persona", persona);
+      params.set("session_id", session.sessionId);
+
       const response = await fetch("/chat-stream", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          message: msg,
-          persona,
-          session_id: session.sessionId
-        })
+        body: params.toString()
       });
 
       if (!response.body) {

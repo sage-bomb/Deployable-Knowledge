@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 
 from utility.chat_state import ChatSession
 from utility.logger import get_logger
+from utility.validation import validate_session_id
 
 
 SESSION_DIR = Path("sessions")
@@ -22,7 +23,8 @@ class SessionStore:
 
     # ------------------------------------------------------------------
     def _session_path(self, session_id: str) -> Path:
-        return self.storage_path / f"{session_id}.json"
+        clean_id = validate_session_id(session_id)
+        return self.storage_path / f"{clean_id}.json"
 
     # ------------------------------------------------------------------
     def save(self, session: ChatSession) -> None:
@@ -49,14 +51,21 @@ class SessionStore:
 
     # ------------------------------------------------------------------
     def list_sessions(self) -> List[Dict]:
-        return [
-            {
-                "id": f.stem,
-                "path": str(f),
-                "modified": f.stat().st_mtime,
-            }
-            for f in self.storage_path.glob("*.json")
-        ]
+        entries = []
+        for f in self.storage_path.glob("*.json"):
+            try:
+                clean_id = validate_session_id(f.stem)
+            except ValueError:
+                logger.warning("Skipping invalid session file %s", f)
+                continue
+            entries.append(
+                {
+                    "id": clean_id,
+                    "path": str(f),
+                    "modified": f.stat().st_mtime,
+                }
+            )
+        return entries
 
     # ------------------------------------------------------------------
     def delete(self, session_id: str) -> None:
