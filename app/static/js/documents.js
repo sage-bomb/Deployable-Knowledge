@@ -93,14 +93,14 @@ function renderDocumentList(docs, filter = "") {
     toggleBtn.textContent = "Deactivate";
 
     initToggleState(doc.id, true);
-    const current = !getInactiveSources().includes(source);
+    const current = !getInactiveSources().includes(doc.id);
     statusSpan.textContent = current ? "Active" : "Inactive";
     toggleBtn.textContent = current ? "Deactivate" : "Activate";
 
     toggleBtn.classList.toggle("btn-active", current);
     toggleBtn.classList.toggle("btn-inactive", !current);
     toggleBtn.addEventListener("click", () => {
-      const current = !getInactiveSources().includes(source);
+      const current = !getInactiveSources().includes(doc.id);
       const next = !current;
       toggleSource(doc.id, !current);
 
