@@ -15,8 +15,7 @@ def build_prompt(
     persona: Optional[str] = None
 ) -> str:
     history_block = "\n".join(
-        f"User: {ex.user}\nAssistant: {getattr(ex, 'assistant', '')}"
-        for ex in history[-3:]
+        f"User: {ex.user}\nAssistant: {ex.assistant}" for ex in history[-3:]
     )
 
     context_string = "\n\n".join(

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Form, Query, Request
+from fastapi import APIRouter, Form, Query
 from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional, Dict, List
 import json
@@ -9,9 +9,11 @@ from utility.embedding_and_storing import db
 from utility import llm_prompt_engine as llm
 from utility.session_store import SessionStore
 from utility.chat_state import ChatSession
+from utility.logger import get_logger
 
 router = APIRouter()
 store = SessionStore()
+logger = get_logger(__name__)
 
 def filter_out_chunks(context_blocks, nu=0.4):
     if not context_blocks:
@@ -47,28 +49,24 @@ async def chat(
     user_id: str = Form(...),
     stream: bool = Form(False)
 ):
-    #try:
     session = store.load(user_id)
     if session is None:
+        logger.info("Creating new chat session for %s", user_id)
         session = ChatSession.new(session_id=user_id)
         store.save(session)
 
-    summary = session.summary
-    history = session.history
-
     inactive_sources = set(json.loads(inactive)) if inactive else set()
-    raw_blocks = search_documents_by_query(message, top_k=10 if stream else 5, exclude_sources=inactive_sources)
+    raw_blocks = search_documents_by_query(
+        message, top_k=10 if stream else 5, exclude_sources=inactive_sources
+    )
     context_blocks = filter_out_chunks(raw_blocks)
-    for ex in history:
-        print("Exchange in history:", vars(ex))  # or vars(ex)
-    session.history = [ex for ex in history if hasattr(ex, "assistant")]
-
+    logger.info("User %s queried with %d context blocks", user_id, len(context_blocks))
     prompt = llm.build_prompt(
-        summary=summary,
-        history=history,
+        summary=session.summary,
+        history=session.history,
         user_message=message,
         context_blocks=context_blocks,
-        persona=persona
+        persona=persona,
     )
 
     if stream:
@@ -85,14 +83,13 @@ async def chat(
                 user=message,
                 context_used=context_blocks,
                 rag_prompt=prompt,
-                llm_response=assistant_msg,
-                html_response=html_response
+                assistant=assistant_msg,
+                html_response=html_response,
             )
-
-            if len(session.history) > 20:
-                session.history = session.history[-20:]
-
-            session.summary = llm.update_summary(summary, message, assistant_msg)
+            session.trim_history(20)
+            session.summary = llm.update_summary(
+                session.summary, message, assistant_msg
+            )
             store.save(session)
 
         return StreamingResponse(event_stream(), media_type="text/html")
@@ -105,14 +102,13 @@ async def chat(
             user=message,
             context_used=context_blocks,
             rag_prompt=prompt,
-            llm_response=chatbot_response,
-            html_response=html_response
+            assistant=chatbot_response,
+            html_response=html_response,
         )
-
-        if len(session.history) > 20:
-            session.history = session.history[-20:]
-
-        session.summary = llm.update_summary(summary, message, chatbot_response)
+        session.trim_history(20)
+        session.summary = llm.update_summary(
+            session.summary, message, chatbot_response
+        )
         store.save(session)
 
         return JSONResponse(content={
