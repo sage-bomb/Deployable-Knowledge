@@ -1,7 +1,7 @@
-import requests
 import json
 from typing import List, Dict, Optional
 import markdown2
+import requests
 
 from config import OLLAMA_URL, OLLAMA_MODEL
 from utility.chat_state import ChatExchange
