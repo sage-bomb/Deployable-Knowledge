@@ -19,10 +19,6 @@ export function initChat(session) {
   const chatBox = $("chat-box");
   const docLimitInput = $("top-k-select");
   const submitButton = $("submit-button");
-  const clearButton = $("clear-history");
-  const resetLLMButton = $("reset-llm");
-  const downloadButton = $("download-chat");
-  const personaButton = $("open-persona-btn");
   const newChatButton = $("new-chat");
 
   if (!chatForm || !chatInput || !submitButton) return;
@@ -45,8 +41,6 @@ export function initChat(session) {
     // Disable UI
     chatInput.disabled = true;
     submitButton.disabled = true;
-    resetLLMButton.disabled = true;
-    clearButton.disabled = true;
     submitButton.textContent = "Loading...";
 
     renderChatMessage("You", msg);
@@ -108,15 +102,7 @@ export function initChat(session) {
     // Restore UI
     chatInput.disabled = false;
     submitButton.disabled = false;
-    resetLLMButton.disabled = false;
-    clearButton.disabled = false;
     submitButton.textContent = "Send";
-    chatInput.focus();
-  });
-
-  // 🧼 CLEAR CHAT
-  clearButton?.addEventListener("click", () => {
-    clearChatUI();
     chatInput.focus();
   });
 
@@ -129,25 +115,4 @@ export function initChat(session) {
     chatInput.focus();
   });
 
-  // 🧠 RESET MEMORY
-  resetLLMButton?.addEventListener("click", async () => {
-    clearChatUI();
-    chatInput.disabled = true;
-    submitButton.disabled = true;
-    resetLLMButton.disabled = true;
-
-    try {
-      await fetch(`/debug/memory?session_id=${encodeURIComponent(session.sessionId)}`, {
-        method: "DELETE"
-      });
-      renderChatMessage("Assistant", "Memory has been cleared.");
-    } catch (err) {
-      renderChatMessage("Assistant", `Error resetting memory: ${escapeHtml(err.message || err)}`);
-    }
-
-    chatInput.disabled = false;
-    submitButton.disabled = false;
-    resetLLMButton.disabled = false;
-    chatInput.focus();
-  });
 }

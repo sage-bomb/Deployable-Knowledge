@@ -64,6 +64,7 @@ class ChatSession:
     user_id: str = "default"
     history: List[ChatExchange] = field(default_factory=list)
     summary: str = ""
+    title: str = ""
     inactive_sources: List[str] = field(default_factory=list)
     persona: Optional[str] = None
 
@@ -113,6 +114,7 @@ class ChatSession:
             "session_id": self.session_id,
             "user_id": self.user_id,
             "summary": self.summary,
+            "title": self.title,
             "history": [exchange.to_dict() for exchange in self.history],
             "inactive_sources": self.inactive_sources,
             "persona": self.persona,
@@ -124,6 +126,7 @@ class ChatSession:
             session_id=data.get("session_id", ""),
             user_id=data.get("user_id", "default"),
             summary=data.get("summary", ""),
+            title=data.get("title", ""),
             inactive_sources=data.get("inactive_sources", []),
             persona=data.get("persona"),
         )

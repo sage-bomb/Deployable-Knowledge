@@ -13,6 +13,10 @@
 
   <body>
     <div class="top-banner">Deployable Knowledge</div>
+    <div class="top-menu">
+      <button id="open-persona-btn">Edit Persona</button>
+      <button id="new-chat" type="button">New Chat</button>
+    </div>
 
     <!-- Confirmation Modal -->
     <div id="confirm-modal" class="modal hidden">
@@ -45,82 +49,80 @@
       <div class="container">
         <div class="column scrollable">
 
-          <div id="chat-history-wrapper" class="column-wrapper">
-            <div class="header-row">
+          <div id="chat-history-wrapper" class="widget">
+            <div class="widget-header">
               <h2>Chat History</h2>
               <button id="toggle-history-btn" class="toggle-panel-btn" title="Minimize Chat History" type="button">«</button>
             </div>
-            <div id="chat-history-list" class="loading">Loading...</div>
+            <div class="widget-body">
+              <div id="chat-history-list" class="loading">Loading...</div>
+            </div>
           </div>
 
-          <div id="doc-panel-wrapper" class="column-wrapper">
-            <div class="header-row">
+          <div id="doc-panel-wrapper" class="widget">
+            <div class="widget-header">
               <h2>Document Library</h2>
               <button id="toggle-docs-btn" class="toggle-panel-btn" title="Minimize Document Library" type="button">«</button>
             </div>
+            <div class="widget-body">
+              <form id="upload-form" method="post" enctype="multipart/form-data">
+                <input type="file" name="files" id="file-input" multiple />
+                <button type="submit">Upload</button>
+              </form>
 
-            <form id="upload-form" method="post" enctype="multipart/form-data">
-              <input type="file" name="files" id="file-input" multiple />
-              <button type="submit">Upload</button>
-            </form>
+              <div id="upload-status" class="status-text"></div>
 
-            <div id="upload-status" class="status-text"></div>
+              <form id="filter-form">
+                <input type="text" id="filter-input" placeholder="Filter documents..." />
+                <button type="submit">Filter</button>
+              </form>
 
-            <form id="filter-form">
-              <input type="text" id="filter-input" placeholder="Filter documents..." />
-              <button type="submit">Filter</button>
-            </form>
-
-            <ul id="document-list">
-              <li><em>Loading documents...</em></li>
-            </ul>
+              <ul id="document-list">
+                <li><em>Loading documents...</em></li>
+              </ul>
+            </div>
           </div>
         </div>
 
         <div class="column scrollable">
 
-          <div id="chat-panel-wrapper" class="column-wrapper">
-            <div class="header-row">
+          <div id="chat-panel-wrapper" class="widget">
+            <div class="widget-header">
               <h2>Assistant Chat</h2>
               <button id="toggle-chat-btn" class="toggle-panel-btn" title="Minimize Chat" type="button">«</button>
             </div>
-            <div id="chat-box" class="chat-box">
-              <div>
-                <strong>Assistant:</strong> Hello! How can I help you today?
+            <div class="widget-body">
+              <div id="chat-box" class="chat-box">
+                <div>
+                  <strong>Assistant:</strong> Hello! How can I help you today?
+                </div>
               </div>
-            </div>
 
-            <form id="chat-form">
-              <input type="text" id="user-input" placeholder="Type a message..." />
-              <button type="submit" id="submit-button">Send</button>
-            </form>
-
-            <div style="display: flex; align-items: center; gap: 1em; margin-bottom: 1em;">
-              <button id="open-persona-btn">Edit Persona</button>
-              <button id="new-chat" type="button">New Chat</button>
-              <button id="clear-history" type="button">Clear Logs</button>
-              <button id="reset-llm" type="button">Reset LLM</button>
-              <button id="download-chat">Download Chat</button>
-              <input type="file" id="upload-chat-file" accept=".html" style="display: none" />
+              <form id="chat-form">
+                <input type="text" id="user-input" placeholder="Type a message..." />
+                <button type="submit" id="submit-button">Send</button>
+              </form>
             </div>
           </div>
 
-          <div id="search-panel-wrapper" class="column-wrapper">
-            <div class="header-row">
+          <div id="search-panel-wrapper" class="widget">
+            <div class="widget-header">
               <h2>Search Documents</h2>
               <button id="toggle-search-btn" class="toggle-panel-btn" title="Minimize Search Results" type="button">«</button>
             </div>
-            <form id="search-form">
-              <input type="text" id="search-query" placeholder="Enter search text..." />
-              <label for="top-k-select">Number of results:</label>
-              <select id="top-k-select">
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="15">15</option>
-              </select>
-              <button type="submit">Search</button>
-            </form>
-            <div id="search-results"></div>
+            <div class="widget-body">
+              <form id="search-form">
+                <input type="text" id="search-query" placeholder="Enter search text..." />
+                <label for="top-k-select">Number of results:</label>
+                <select id="top-k-select">
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="15">15</option>
+                </select>
+                <button type="submit">Search</button>
+              </form>
+              <div id="search-results"></div>
+            </div>
           </div>
 
         </div>
