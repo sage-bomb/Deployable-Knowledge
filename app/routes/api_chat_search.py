@@ -93,6 +93,10 @@ async def chat(
                 html_response=html_response,
             )
             session.trim_history(20)
+            if not session.title:
+                session.title = llm.generate_title(
+                    f"User: {message}\nAssistant: {assistant_msg}"
+                )
             session.summary = llm.update_summary(
                 session.summary, message, assistant_msg
             )
@@ -112,6 +116,10 @@ async def chat(
             html_response=html_response,
         )
         session.trim_history(20)
+        if not session.title:
+            session.title = llm.generate_title(
+                f"User: {message}\nAssistant: {chatbot_response}"
+            )
         session.summary = llm.update_summary(
             session.summary, message, chatbot_response
         )
@@ -120,7 +128,8 @@ async def chat(
         return JSONResponse(content={
             "response": html_response,
             "context": context_blocks,
-            "chat_summary": session.summary
+            "chat_summary": session.summary,
+            "chat_title": session.title,
         })
 
     # except Exception as e:

@@ -6,7 +6,6 @@ import { initDocuments } from './documents.js';
 import { initSearch } from './search.js';
 import { initUpload } from './upload.js';
 import { initPersonaModal } from './persona_editor.js';
-import { initDownloadButton } from './download.js';
 
 async function runInit() {
   await initAppState(); // ensures session and app state
@@ -18,7 +17,6 @@ async function runInit() {
   initSearch(session);
   initUpload(session);
   initPersonaModal();
-  initDownloadButton();
 }
 
 if (document.readyState === "loading") {

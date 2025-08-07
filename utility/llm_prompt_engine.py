@@ -94,3 +94,16 @@ def update_summary(old_summary: str, user_msg: str, assistant_msg: str) -> str:
         return response.json().get("response", old_summary)
     except Exception:
         return old_summary
+
+
+def generate_title(first_interaction: str) -> str:
+    """Return a short title for the chat based on the first exchange."""
+    prompt = (
+        f"{first_interaction}\n"
+        "Given this chat interaction, provide a snappy short title we can use for it."
+    )
+    try:
+        response = requests.post(OLLAMA_URL, json={"model": OLLAMA_MODEL, "prompt": prompt})
+        return response.json().get("response", "").strip()
+    except Exception:
+        return first_interaction[:60]

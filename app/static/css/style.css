@@ -287,42 +287,31 @@ li:hover {
   letter-spacing: 0.05em;
 }
 
+.top-menu {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem 2rem;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-light);
+}
+
 /* === Collapsible Panel === */
-.header-row {
+.widget {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.widget-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.column-wrapper {
-  position: relative;
-  transition: width 0.3s ease;
+.widget-body {
+  margin-top: 0.5rem;
 }
 
-#doc-panel-wrapper.collapsed,
-#chat-panel-wrapper.collapsed,
-#chat-history-wrapper.collapsed,
-#search-panel-wrapper.collapsed {
-  width: 2.5rem;
-  flex: 0 0 2.5rem;
-  overflow: hidden;
-  max-width: 2.5rem;
-}
-
-#doc-panel-wrapper.collapsed h2,
-#doc-panel-wrapper.collapsed form,
-#doc-panel-wrapper.collapsed ul,
-#doc-panel-wrapper.collapsed .status-text,
-#chat-panel-wrapper.collapsed h2,
-#chat-panel-wrapper.collapsed form,
-#chat-panel-wrapper.collapsed .chat-box,
-#chat-panel-wrapper.collapsed > div:not(.header-row),
-#chat-history-wrapper.collapsed h2,
-#chat-history-wrapper.collapsed #chat-history-list,
-#search-panel-wrapper.collapsed h2,
-#search-panel-wrapper.collapsed form,
-#search-panel-wrapper.collapsed ul,
-#search-panel-wrapper.collapsed .status-text {
+.widget.collapsed .widget-body {
   display: none;
 }
 

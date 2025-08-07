@@ -114,7 +114,8 @@ export function renderChatHistoryList(container, sessions, onSelect) {
 
       const title = document.createElement('div');
       title.className = 'session-title';
-      title.textContent = sessionId.slice(0, 8);
+      const displayTitle = sess.title || sessionId.slice(0, 8);
+      title.textContent = displayTitle;
 
       const timestamp = document.createElement('div');
       timestamp.className = 'session-timestamp';

@@ -15,9 +15,11 @@ async def list_sessions():
     """Return lightweight metadata for all stored sessions."""
     summaries = []
     for entry in store.list_sessions():
+        session = store.load(entry["id"])
         summaries.append(
             {
                 "session_id": entry["id"],
+                "title": session.title if session else "",
                 "created_at": datetime.fromtimestamp(entry["modified"]).isoformat(),
             }
         )
@@ -50,6 +52,7 @@ async def get_session_data(session_id: str):
             "session_id": session.session_id,
             "created_at": created_at,
             "summary": session.summary,
+            "title": session.title,
             "history": history_pairs,
         }
     )
