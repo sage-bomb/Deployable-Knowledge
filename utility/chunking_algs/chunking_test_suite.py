@@ -1,11 +1,12 @@
 from typing import List, Callable, Tuple
-from sentence_transformers import SentenceTransformer
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from rapidfuzz import fuzz
 import sys
 from contextlib import contextmanager
 import re
+
+from utility.model_utils import load_embedding_model
 
 class ChunkingTestSuite:
     def __init__(
@@ -34,9 +35,9 @@ class ChunkingTestSuite:
         for chunk_method_name, chunk_fn_template in chunking_methods:
             print(f"\n=== Evaluating chunking method: {chunk_method_name} ===")
 
-            for model in models:
-                print(f"\n--- Using embedding model: {model} ---")
-                self.model = SentenceTransformer(model)  # set current model
+            for _ in models:
+                print("\n--- Using embedding model: local ---")
+                self.model = load_embedding_model()
 
                 for threshold in thresholds:
                     print(f"\n>> Threshold = {threshold}")

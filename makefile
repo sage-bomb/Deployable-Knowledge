@@ -15,7 +15,7 @@ MODEL_DIR := tmp_model
 MODEL_FILE := $(MODEL_DIR)/config.json
 STAMP_FILE := $(VENV_NAME)/.installed.ok
 
-.PHONY: all venv install setup-online run run-offline clean check-network
+.PHONY: all venv install setup-online setup-offline run run-offline clean check-network
 
 # === Master Setup ===
 all: venv install
@@ -30,15 +30,24 @@ install: venv
 
 # === Online Setup ===
 setup-online: install
-	@if [ ! -f $(MODEL_FILE) ]; then \
-		echo "📥 Downloading model..."; \
-		mkdir -p $(MODEL_DIR); \
-		. $(VENV_NAME)/bin/activate && \
-		python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2').save('$(MODEL_DIR)')"; \
-	else \
-		echo "🗂️  Model already exists at $(MODEL_FILE). Skipping download."; \
-	fi
-	@. $(VENV_NAME)/bin/activate && python -m spacy download en_core_web_sm
+        @if [ ! -f $(MODEL_FILE) ]; then \
+                echo "📥 Downloading model..."; \
+                mkdir -p $(MODEL_DIR); \
+                . $(VENV_NAME)/bin/activate && \
+                python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2').save('$(MODEL_DIR)')"; \
+        else \
+                echo "🗂️  Model already exists at $(MODEL_FILE). Skipping download."; \
+        fi
+        @. $(VENV_NAME)/bin/activate && python -m spacy download en_core_web_sm
+
+# === Offline Setup ===
+setup-offline: install
+        @if [ ! -f $(MODEL_FILE) ]; then \
+                echo "⚠️  Model not found in $(MODEL_DIR). Please run make setup-online first."; \
+                exit 1; \
+        else \
+                echo "✅ Using existing model in $(MODEL_DIR)."; \
+        fi
 
 # === Run Logic ===
 run:
