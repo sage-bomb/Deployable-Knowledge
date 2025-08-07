@@ -1,7 +1,7 @@
 // Codex: Do NOT load backend or Python files. This file is frontend-only.
 // chat.js
 
-import { $, escapeHtml } from './dom.js';
+import { $, escapeHtml, initPanelToggle } from './dom.js';
 
 import { renderSearchResultsBlock, renderChatMessage, clearChatUI } from './render.js';
 import { startNewSession } from './session.js';
@@ -23,12 +23,15 @@ export function initChat(session) {
 
   if (!chatForm || !chatInput || !submitButton) return;
 
+  // Enable collapse/expand of the chat widget
+  initPanelToggle('chat-panel-wrapper', 'toggle-chat-btn');
 
   clearChatUI();
 
   // 🔁 CHAT SUBMISSION
   chatForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (!chatInput || !submitButton) return;
     const msg = chatInput.value.trim();
     if (!msg) return;
 
