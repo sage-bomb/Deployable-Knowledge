@@ -1,6 +1,8 @@
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
 import spacy
 import pytextrank
+
+from utility.model_utils import load_embedding_model
 
 
 import re
@@ -39,8 +41,8 @@ def chunk_by_sentences(text, max_chars=500):
     return chunks
 
 
-def chunk_by_semantic_similarity(text, model_name="all-MiniLM-L6-v2", threshold=0.6):
-    model = SentenceTransformer(model_name)
+def chunk_by_semantic_similarity(text, model=None, threshold=0.6):
+    model = model or load_embedding_model()
     sentences = safe_sent_tokenize(text)
     embeddings = model.encode(sentences, convert_to_tensor=True)
 
@@ -140,7 +142,7 @@ def chunk_by_graph_rank(text, max_sentences=4):
 
     return all_chunks
 
-def safe_chunk_by_graph_rank(text, max_sentences=4, max_tokens_per_chunk=256, model_name="sentence-transformers/all-MiniLM-L6-v2"):
+def safe_chunk_by_graph_rank(text, max_sentences=4, max_tokens_per_chunk=256, model=None):
     """
     Chunk text using a graph-based approach with sentence transformers, ensuring each chunk is within token limits.
     
@@ -157,7 +159,8 @@ def safe_chunk_by_graph_rank(text, max_sentences=4, max_tokens_per_chunk=256, mo
     nlp = spacy.load("en_core_web_sm")
     nlp.max_length = 2_000_000
     nlp.add_pipe("textrank", last=True)
-    tokenizer = SentenceTransformer(model_name).tokenizer
+    model = model or load_embedding_model()
+    tokenizer = model.tokenizer
 
     # Optional: break very large input into subchunks to keep memory/token safe
     def split_text_by_length(text, max_tokens=2000):
@@ -226,8 +229,8 @@ def safe_chunk_by_graph_rank(text, max_sentences=4, max_tokens_per_chunk=256, mo
 
     return all_chunks
 
-def chunk_by_paragraphs(text, model_name="all-MiniLM-L6-v2", threshold=0.7):
-    model = SentenceTransformer(model_name)
+def chunk_by_paragraphs(text, model=None, threshold=0.7):
+    model = model or load_embedding_model()
     paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
     embeddings = model.encode(paragraphs, convert_to_tensor=True)
 

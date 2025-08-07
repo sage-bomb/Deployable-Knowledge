@@ -1,20 +1,26 @@
 import networkx as nx
 from sklearn.metrics.pairwise import cosine_similarity
-from sentence_transformers import SentenceTransformer
 import numpy as np
 import re
 
-def safe_sent_tokenize(text):
+from utility.model_utils import load_embedding_model
+
+
+def safe_sent_tokenize(text: str):
     return re.split(r'(?<=[.!?]) +', text.strip())
 
-def pagerank_chunk_text(text, model_name="all-mpnet-base-v2", sim_threshold=0.5, top_k=5, expansion_threshold=0.5):
-    # ---- STEP 1: Preprocessing ----
+
+def pagerank_chunk_text(
+    text: str,
+    model=None,
+    sim_threshold: float = 0.5,
+    top_k: int = 5,
+    expansion_threshold: float = 0.5,
+):
     sentences = safe_sent_tokenize(text)
-    model = SentenceTransformer(model_name)
+    model = model or load_embedding_model()
     embeddings = model.encode(sentences, convert_to_tensor=False)
 
-
-    # Track sentence start/end positions for char_range mapping
     sentence_ranges = []
     offset = 0
     for sent in sentences:
@@ -22,58 +28,58 @@ def pagerank_chunk_text(text, model_name="all-mpnet-base-v2", sim_threshold=0.5,
         end = start + len(sent)
         sentence_ranges.append((start, end))
         offset = end
-    
-    # ---- STEP 2: Build Similarity Graph ----
+
     G = nx.Graph()
     sim_matrix = cosine_similarity(embeddings)
-
-    for i, sentence in enumerate(sentences):
-        G.add_node(i, text=sentence)
-
     for i in range(len(sentences)):
-        for j in range(i+1, len(sentences)):
+        G.add_node(i)
+    for i in range(len(sentences)):
+        for j in range(i + 1, len(sentences)):
             sim = sim_matrix[i][j]
             if sim > sim_threshold:
                 G.add_edge(i, j, weight=sim)
 
-    # ---- STEP 3: Compute PageRank ----
-    pageranks = nx.pagerank(G, weight='weight')
+    pageranks = nx.pagerank(G, weight="weight")
+    seed_indices = sorted(pageranks, key=pageranks.get, reverse=True)[:top_k]
 
-    # ---- STEP 4: Seeded Expansion ----
-    seed_indices = sorted(pageranks, key=pageranks.get, reverse=True)
     used = set()
     chunks = []
-    chunk_idx=0
-
+    chunk_idx = 0
     for idx in seed_indices:
         if idx in used:
             continue
-
         chunk = [idx]
         used.add(idx)
 
-        # Expand to the left
         i = idx - 1
-        while i >= 0 and i not in used and cosine_similarity([embeddings[i]], [embeddings[chunk[0]]])[0][0] > expansion_threshold:
+        while i >= 0 and i not in used and cosine_similarity(
+            [embeddings[i]], [embeddings[chunk[0]]]
+        )[0][0] > expansion_threshold:
             chunk.insert(0, i)
             used.add(i)
             i -= 1
 
-        # Expand to the right
         i = idx + 1
-        while i < len(sentences) and i not in used and cosine_similarity([embeddings[i]], [embeddings[chunk[-1]]])[0][0] > expansion_threshold:
+        while i < len(sentences) and i not in used and cosine_similarity(
+            [embeddings[i]], [embeddings[chunk[-1]]]
+        )[0][0] > expansion_threshold:
             chunk.append(i)
             used.add(i)
             i += 1
 
-        new_chunk=" ".join([sentences[i] for i in chunk])
-        first_idx=chunk[0]
-        start_char, _ = sentence_ranges[first_idx]
-        chunks.append(new_chunk, {
-            "chunk_idx": chunk_idx,
-            "num_sentences": len(chunk)
-        })
-        chunk_idx=chunk_idx+1
-
+        chunk_text = " ".join(sentences[i] for i in chunk)
+        start_char = sentence_ranges[chunk[0]][0]
+        end_char = sentence_ranges[chunk[-1]][1]
+        chunks.append(
+            (
+                chunk_text,
+                {
+                    "chunk_idx": chunk_idx,
+                    "char_range": (start_char, end_char),
+                    "num_sentences": len(chunk),
+                },
+            )
+        )
+        chunk_idx += 1
 
     return chunks

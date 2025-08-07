@@ -12,8 +12,8 @@ CHROMA_DB_DIR = BASE_DIR / "chroma_db"
 COLLECTION_NAME = "default_collection"
 
 # === Embedding Model ===
-EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L12-v2")
-LOCAL_MODEL_PATH = MODEL_DIR
+# Always point to a local directory for offline model loading
+EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL", str(MODEL_DIR))
 
 # === Chunking ===
 DEFAULT_CHUNKING_METHOD = "graph-pagerank"

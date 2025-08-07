@@ -1,27 +1,30 @@
 from pathlib import Path
 from typing import List, Tuple, Dict, Optional
-from utility.db_manager import DBManager
-from utility.parsing import parse_pdf  
 import re
 
-# Import chunkers
+from utility.db_manager import DBManager
+from utility.parsing import parse_pdf
 from utility.chunking_algs.chunker import (
     chunk_by_sentences,
     chunk_by_semantic_similarity,
     safe_chunk_by_graph_rank,
-    chunk_by_paragraphs
+    chunk_by_paragraphs,
 )
 from utility.chunking_algs.dynamic_bottom_to_top_chunking import merge_sentences_bottom_up
 from utility.chunking_algs.graph_pagerank_chunking import pagerank_chunk_text
+from utility.model_utils import load_embedding_model
 
 # === Config ===
 from config import (
-    CHROMA_DB_DIR, COLLECTION_NAME, EMBEDDING_MODEL_NAME,
-    DEFAULT_CHUNKING_METHOD, CHUNKING_METHOD_OPTIONS
+    CHROMA_DB_DIR,
+    COLLECTION_NAME,
+    DEFAULT_CHUNKING_METHOD,
+    CHUNKING_METHOD_OPTIONS,
 )
 
 # === DB Setup ===
-db = DBManager(persist_dir=CHROMA_DB_DIR, collection_name=COLLECTION_NAME)
+embedding_model = load_embedding_model()
+db = DBManager(persist_dir=CHROMA_DB_DIR, collection_name=COLLECTION_NAME, model=embedding_model)
 
 def chunk_text(text: str, method: str = "graph") -> List[Tuple[str, Dict]]:
     """
@@ -43,16 +46,15 @@ def chunk_text(text: str, method: str = "graph") -> List[Tuple[str, Dict]]:
     if method == "sentences":
         return chunk_by_sentences(text, max_chars=500)
     elif method == "semantics":
-        return chunk_by_semantic_similarity(text, model_name=EMBEDDING_MODEL_NAME, threshold=0.6)
+        return chunk_by_semantic_similarity(text, model=embedding_model, threshold=0.6)
     elif method == "graph":
-        return safe_chunk_by_graph_rank(text, max_sentences=4, model_name=EMBEDDING_MODEL_NAME)
-        #return chunk_by_graph_rank(text, max_sentences=4)
+        return safe_chunk_by_graph_rank(text, max_sentences=4, model=embedding_model)
     elif method == "paragraphs":
-        return chunk_by_paragraphs(text, model_name=EMBEDDING_MODEL_NAME, threshold=0.7)
+        return chunk_by_paragraphs(text, model=embedding_model, threshold=0.7)
     elif method == "dynamic":
-        return merge_sentences_bottom_up(text, similarity_threshold=0.7, model=EMBEDDING_MODEL_NAME)
+        return merge_sentences_bottom_up(text, similarity_threshold=0.7, model=embedding_model)
     elif method == "graph-pagerank":
-        return pagerank_chunk_text(text, model_name=EMBEDDING_MODEL_NAME, sim_threshold=0.7)
+        return pagerank_chunk_text(text, model=embedding_model, sim_threshold=0.7)
     else:
         raise ValueError(f"Unsupported chunking method: {method}")
     
