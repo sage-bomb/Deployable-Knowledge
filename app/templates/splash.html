@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Deployable Knowledge — Sign In</title>
+  <link rel="icon" href="/static/favicon.ico" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="top-banner">Deployable Knowledge</div>
+
+  <div class="container" style="justify-content:center; align-items:center;">
+    <div class="column" style="max-width:560px; width:100%; height:auto; padding:2rem;">
+      <div class="widget">
+        <div class="widget-header">
+          <h2>Welcome</h2>
+        </div>
+        <div class="widget-body">
+          <p class="status-text">
+            This is the access gateway. In production, SSO/CAC would be here.
+            For local use, click <strong>Welcome</strong> to continue.
+          </p>
+
+          <!-- SSO placeholders (disabled for now) -->
+          <div style="display:flex; flex-direction:column; gap:0.75rem; margin:1rem 0 1.5rem;">
+            <button type="button" disabled title="Coming soon">Sign in with CAC (PKI)</button>
+            <button type="button" disabled title="Coming soon">Sign in with DoD SSO (SAML / OIDC)</button>
+          </div>
+
+          <!-- Local welcome path: GET /begin should issue session & redirect -->
+          <form method="get" action="/begin" style="margin:0;">
+            <button type="submit" style="width:100%; padding:0.75rem; font-weight:600;">
+              Welcome
+            </button>
+          </form>
+
+          <hr style="border:0; border-top:1px solid var(--border-light); margin:1.5rem 0;" />
+
+          <div class="status-text" style="line-height:1.4;">
+            <strong>Notice:</strong> This system is for authorized use. Activity may be monitored and audited.
+            By proceeding you acknowledge appropriate use in accordance with policy.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
