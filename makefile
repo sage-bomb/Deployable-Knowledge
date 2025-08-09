@@ -1,83 +1,57 @@
-# Makefile for Deployable-Knowledge
-
-# === Environment Variables ===
+# === Offline-friendly env ===
 export CHROMA_TELEMETRY_ENABLED=false
 export TRANSFORMERS_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
 
-# === Config ===
-VENV_NAME := venv
-PYTHON := python3
-PIP := $(VENV_NAME)/bin/pip
-UVICORN := $(VENV_NAME)/bin/uvicorn
-APP_MODULE := app.main:app
-MODEL_DIR := tmp_model
-MODEL_FILE := $(MODEL_DIR)/config.json
-STAMP_FILE := $(VENV_NAME)/.installed.ok
+# === Config (override with: make VAR=...) ===
+VENV_NAME ?= venv
+PYTHON    ?= python3
+PIP       := $(VENV_NAME)/bin/pip
+PY        := $(VENV_NAME)/bin/python
+UVICORN   := $(VENV_NAME)/bin/uvicorn
+APP_MODULE?= app.main:app
+MODEL_ID  ?= sentence-transformers/all-MiniLM-L6-v2
 
-.PHONY: all venv install setup-online setup-offline run run-offline clean check-network
+.PHONY: setup venv install fetch-model verify-offline run embed-dir clean
 
-# === Master Setup ===
-all: venv install
+# ---------- ONLINE SETUP ----------
+setup: venv install fetch-model
 
-# === Virtual Environment ===
 venv:
 	$(PYTHON) -m venv $(VENV_NAME)
+	$(PIP) install --upgrade pip setuptools wheel
 
-# === Dependency Installation ===
-install: venv
-	$(PIP) install -r requirements.txt && touch $(STAMP_FILE)
+install:
+	$(PIP) install -r requirements.txt
 
-# === Online Setup ===
-setup-online: install
-        @if [ ! -f $(MODEL_FILE) ]; then \
-                echo "📥 Downloading model..."; \
-                mkdir -p $(MODEL_DIR); \
-                . $(VENV_NAME)/bin/activate && \
-                python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2').save('$(MODEL_DIR)')"; \
-        else \
-                echo "🗂️  Model already exists at $(MODEL_FILE). Skipping download."; \
-        fi
-        @. $(VENV_NAME)/bin/activate && python -m spacy download en_core_web_sm
+# Cache the embedding model into config.MODEL_DIR
+fetch-model:
+	@echo "📥 Caching embedding model ($(MODEL_ID))..."
+	@PYTHONPATH=. $(PY) -c "from utility.model_utils import load_embedding_model; load_embedding_model(True); print('✓ cached via model_utils')" || \
+	( echo 'model_utils failed; falling back to huggingface_hub…' && \
+	  PYTHONPATH=. $(PYTHON) -c "from huggingface_hub import snapshot_download; from config import MODEL_DIR as MD; snapshot_download(repo_id='$(MODEL_ID)', local_dir=str(MD), local_dir_use_symlinks=False); print('✓ cached under', MD)" )
 
-# === Offline Setup ===
-setup-offline: install
-        @if [ ! -f $(MODEL_FILE) ]; then \
-                echo "⚠️  Model not found in $(MODEL_DIR). Please run make setup-online first."; \
-                exit 1; \
-        else \
-                echo "✅ Using existing model in $(MODEL_DIR)."; \
-        fi
+# ---------- OFFLINE CHECK ----------
+verify-offline:
+	@if [ -x "$(PY)" ]; then PYBIN="$(PY)"; else echo "⚠️  $(PY) missing; falling back to $(PYTHON)"; PYBIN="$(PYTHON)"; fi; \
+	PYTHONPATH=. $$PYBIN -c "from utility.model_utils import load_embedding_model as L; m=L(); print('offline OK:', m.get_sentence_embedding_dimension())" || \
+	PYTHONPATH=. $$PYBIN -c "from sentence_transformers import SentenceTransformer; from config import MODEL_DIR as MD; SentenceTransformer(str(MD)); print('offline OK via direct local model path ✓')"
 
-# === Run Logic ===
-run:
-	@if ping -c 1 -W 1 1.1.1.1 >/dev/null 2>&1; then \
-		echo "🌐 Network detected."; \
-		NEEDS_SETUP=0; \
-		if [ ! -f $(STAMP_FILE) ]; then \
-			echo "📦 Missing Python dependencies."; NEEDS_SETUP=1; \
-		fi; \
-		if [ ! -f $(MODEL_FILE) ]; then \
-			echo "📁 Missing model files."; NEEDS_SETUP=1; \
-		fi; \
-		if [ $$NEEDS_SETUP -eq 1 ]; then \
-			echo "⚙️  Running full setup..."; \
-			$(MAKE) setup-online; \
-		else \
-			echo "✅ All requirements and model found. Skipping setup."; \
-		fi; \
+# ---------- RUN ----------
+run: verify-offline
+	@if [ -x "$(UVICORN)" ]; then \
+	  $(UVICORN) $(APP_MODULE) --host 127.0.0.1 --port 8000 --reload; \
 	else \
-		echo "🚫 No network. Running in offline mode..."; \
-	fi; \
-	$(MAKE) run-offline
+	  echo "❌ $(UVICORN) not found. Run 'make setup' (online) first."; \
+	  exit 127; \
+	fi
 
-# === Run Without Setup ===
-run-offline:
-	PYTHONPATH=. $(UVICORN) $(APP_MODULE) --reload
+# ---------- OPTIONAL: batch embed without API ----------
+embed-dir:
+	@echo "Embedding from documents/ (override with: make embed-dir DATA_DIR=path)"
+	@PYTHONPATH=. $(PY) embedding_and_storing.py --data_dir "$${DATA_DIR:-documents}"
 
-# === Cleanup ===
+# ---------- housekeeping ----------
 clean:
 	rm -rf $(VENV_NAME)
 	rm -rf chroma/
-	rm -rf $(MODEL_DIR)
-

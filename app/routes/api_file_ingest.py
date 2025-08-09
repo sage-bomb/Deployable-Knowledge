@@ -8,7 +8,6 @@ from utility.validation import sanitize_filename
 from config import (
     UPLOAD_DIR,
     PDF_DIR,
-    DEFAULT_CHUNKING_METHOD,
     ALLOWED_DOCUMENT_EXTENSIONS,
 )
 
@@ -37,7 +36,6 @@ async def upload_files(files: list[UploadFile] = File(...)):
 
             embed_file(
                 file_path=destination,
-                chunking_method="graph",  # Or make this dynamic
                 source_name=safe_name,
                 tags=["uploaded"],
             )
@@ -85,17 +83,22 @@ async def ingest_documents(background_tasks: BackgroundTasks):
     """
     pdf_dir = PDF_DIR.resolve()
     txt_dir = UPLOAD_DIR.resolve()
+    # api_file_ingest.py (inside ingest_documents)
     for pdf_file in pdf_dir.glob("*.pdf"):
         txt_file = txt_dir / f"{pdf_file.stem}.txt"
         try:
-            parsed_text = parse_pdf(pdf_file)
+            parsed = parse_pdf(str(pdf_file))
+            if isinstance(parsed, list):
+                parsed_text = "\n\n".join([p.get("text", "") for p in parsed])
+            else:
+                parsed_text = parsed
             txt_file.write_text(parsed_text, encoding="utf-8")
         except Exception as e:
             print(f"Failed to parse {pdf_file.name}: {e}")
+
     background_tasks.add_task(
         embed_directory,
         data_dir=str(txt_dir),
-        chunking_method=DEFAULT_CHUNKING_METHOD,
         clear_collection=False,
         default_tags=["auto_ingested"]
     )

@@ -15,10 +15,6 @@ COLLECTION_NAME = "default_collection"
 # Always point to a local directory for offline model loading
 EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL", str(MODEL_DIR))
 
-# === Chunking ===
-DEFAULT_CHUNKING_METHOD = "graph-pagerank"
-CHUNKING_METHOD_OPTIONS = ["sentences", "semantics", "graph", "paragraphs", "dynamic", "graph-pagerank"]
-
 # === Security ===
 ALLOWED_DOCUMENT_EXTENSIONS = {".txt", ".pdf", ".md", ".html"}
 MIN_TOP_K = 1

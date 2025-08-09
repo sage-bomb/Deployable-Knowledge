@@ -58,7 +58,6 @@ class DBManager:
         self,
         segment_text: str,
         segment_index: int,
-        strategy_name: str,
         source: str,
         tags: Optional[List[str]] = None,
         start: Optional[int] = None,
@@ -69,7 +68,6 @@ class DBManager:
         metadata = {
             "uuid": segment_uuid,
             "source": source,
-            "parsing_method": strategy_name,
             "metadata_tags": ", ".join(tags) if tags else "Placeholder",
             "segment_index": segment_index,
         }
@@ -81,7 +79,6 @@ class DBManager:
     def add_segments(
         self,
         segments: List[str],
-        strategy_name: str,
         source: str,
         tags: Optional[List[str]] = None,
         positions: Optional[List[tuple]] = None,
@@ -95,7 +92,7 @@ class DBManager:
         for i, segment in enumerate(segments):
             start, end = (positions[i] if positions else (-1, -1))
             p = page[i] if page else None
-            _id, doc, meta = self.build_entry(segment, i, strategy_name, source, tags, start, end)
+            _id, doc, meta = self.build_entry(segment, i, source, tags, start, end)
             if p is not None:
                 meta["page"] = p
             ids.append(_id)
