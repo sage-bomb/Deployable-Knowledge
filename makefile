@@ -2,6 +2,7 @@
 export CHROMA_TELEMETRY_ENABLED=false
 export TRANSFORMERS_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
+export HF_HUB_OFFLINE=1
 
 # === Config (override with: make VAR=...) ===
 VENV_NAME ?= venv
@@ -12,9 +13,13 @@ UVICORN   := $(VENV_NAME)/bin/uvicorn
 APP_MODULE?= app.main:app
 MODEL_ID  ?= sentence-transformers/all-MiniLM-L6-v2
 
+
 .PHONY: setup venv install fetch-model verify-offline run embed-dir clean
 
 # ---------- ONLINE SETUP ----------
+setup: export TRANSFORMERS_OFFLINE=0
+setup: export HF_DATASETS_OFFLINE=0
+setup: export HF_HUB_OFFLINE=0
 setup: venv install fetch-model
 
 venv:
