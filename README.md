@@ -49,18 +49,8 @@ Deployable-Knowledge is an offline-capable Retrieval-Augmented Generation (RAG) 
 │   └── templates/
 │       └── index.html
 │
-├── utility/                           # Backend document + embedding logic
-│   ├── chunking_algs/
-│   │   ├── chunker.py
-│   │   ├── chunking_test_suite.py
-│   │   ├── dynamic_bottom_to_top_chunking.py
-│   │   ├── dynamic_top_to_bottom_chunking.py
-│   │   ├── graph_pagerank_chunking.py
-│   │   └── semantic_recursive_chunking.py
-│   ├── db_manager.py
-│   ├── embedding_and_storing.py
-│   └── parsing.py
-│
+├── core/                              # Headless RAG + LLM pipeline
+├── api/                               # FastAPI routers
 ├── config.py                          # Central config values
 ├── requirements.txt                   # Python dependencies
 ├── makefile                           # Common dev commands

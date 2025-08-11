@@ -1,5 +1,5 @@
 // ui/controllers/docs.js — document list: refresh + upload + actions
-import * as api from "../api.js";
+import { dkClient as api } from "../sdk/sdk.js";
 import { getComponent, bus } from "../../components.js";
 import { Store } from "../store.js";
 import { qs } from "../../dom.js";

@@ -1,5 +1,5 @@
-// ui/controllers/search.js — semantic search (conflict-resolved)
-import * as api from "../api.js";
+// ui/controllers/search.js — semantic search
+import { dkClient as api } from "../sdk/sdk.js";
 import { escapeHtml } from "../render.js";
 
 export async function runSearch(query, winId = "win_search") {
@@ -19,7 +19,7 @@ export async function runSearch(query, winId = "win_search") {
   results.innerHTML = `<div class="li-subtle">Searching…</div>`;
 
   try {
-    const data = await api.searchDocuments(qtext, topK);
+    const data = await api.search(qtext, topK);
     const arr = (data && data.results) || [];
 
     results.innerHTML = "";

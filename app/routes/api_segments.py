@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from utility.embedding_and_storing import db
+from core.rag.retriever import db
 
 router = APIRouter()
 

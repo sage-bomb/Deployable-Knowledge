@@ -1,0 +1,61 @@
+from __future__ import annotations
+from typing import Iterator, List
+import json
+
+from .models import ChatRequest, ChatResponse, ChatChunk, Source
+from .prompts import renderer
+from .rag import retriever
+
+
+def _to_sources(blocks: List[dict]) -> List[Source]:
+    out: List[Source] = []
+    for i, b in enumerate(blocks):
+        out.append(
+            Source(
+                id=str(i),
+                title=b.get("source"),
+                filepath=b.get("source"),
+                page=b.get("page"),
+                score=b.get("score"),
+            )
+        )
+    return out
+
+
+def chat_once(req: ChatRequest) -> ChatResponse:
+    context = retriever.search(
+        req.message,
+        top_k=req.top_k,
+        exclude_sources=set(req.inactive_sources or []),
+    )
+    prompt = renderer.build_prompt(
+        summary="",
+        history=[],
+        user_message=req.message,
+        context_blocks=context,
+        persona=req.persona,
+        template_id=req.template_id,
+    )
+    text = renderer.ask_llm(prompt, user_id=req.user_id)
+    return ChatResponse(text=text, sources=_to_sources(context), usage={})
+
+
+def chat_stream(req: ChatRequest) -> Iterator[ChatChunk]:
+    context = retriever.search(
+        req.message,
+        top_k=req.top_k,
+        exclude_sources=set(req.inactive_sources or []),
+    )
+    prompt = renderer.build_prompt(
+        summary="",
+        history=[],
+        user_message=req.message,
+        context_blocks=context,
+        persona=req.persona,
+        template_id=req.template_id,
+    )
+    meta = json.dumps({"top_k": req.top_k, "template": req.template_id})
+    yield ChatChunk(type="meta", text=meta)
+    for token in renderer.stream_llm(prompt, user_id=req.user_id):
+        yield ChatChunk(type="delta", text=token)
+    yield ChatChunk(type="done", sources=_to_sources(context), usage={})
