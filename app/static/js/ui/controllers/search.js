@@ -4,6 +4,10 @@ import * as api from "../api.js";
 export function initSearchController(winId="win_search") {
   const win = document.getElementById(winId);
   if (!win) return;
+  const controller = new AbortController();
+  win.addEventListener("DOMNodeRemoved", (e) => {
+    if (e.target === win) controller.abort();
+  }, { once: true });
   const q = win.querySelector("#search_q");
   const k = win.querySelector("#search_k");
   const go = win.querySelector(".search-bar .btn");
@@ -20,5 +24,5 @@ export function initSearchController(winId="win_search") {
         <span>Score: ${Number(r.score).toFixed(3)} • Page: ${r.page ?? "?"}</span></div>`;
       results.appendChild(card);
     });
-  });
+  }, { signal: controller.signal });
 }
