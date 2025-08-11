@@ -125,6 +125,11 @@ export class DKClient {
     return asJsonSafe(res);
   }
 
+  async getSegment(id) {
+    const res = await ok(await fetch(`/segments/${encodeURIComponent(id)}`, { headers: JSON_HEADERS, credentials: "same-origin" }));
+    return asJsonSafe(res);
+  }
+
   async removeSegment(id) {
     const res = await ok(await fetch(`/segments/${encodeURIComponent(id)}`, { method: "DELETE", headers: JSON_HEADERS, credentials: "same-origin" }));
     return asJsonSafe(res);
@@ -170,6 +175,21 @@ export class DKClient {
 
   async listPromptTemplates() {
     const res = await ok(await fetch(`/api/prompt-templates`, { headers: JSON_HEADERS, credentials: "same-origin" }));
+    return asJsonSafe(res);
+  }
+
+  async getPromptTemplate(id) {
+    const res = await ok(await fetch(`/api/prompt-templates/${encodeURIComponent(id)}`, { headers: JSON_HEADERS, credentials: "same-origin" }));
+    return asJsonSafe(res);
+  }
+
+  async savePromptTemplate(id, payload) {
+    const res = await ok(await fetch(`/api/prompt-templates/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      headers: { ...JSON_HEADERS, "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify(payload)
+    }));
     return asJsonSafe(res);
   }
 }

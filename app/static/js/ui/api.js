@@ -46,6 +46,11 @@ export async function listSegments() {
   return asJsonSafe(res);
 }
 
+export async function getSegment(id) {
+  const res = await ok(await fetch(`/segments/${encodeURIComponent(id)}`, { headers: JSON_HEADERS, credentials: "same-origin" }));
+  return asJsonSafe(res);
+}
+
 export async function removeDocument(source) {
   const fd = new FormData();
   fd.append("source", source);
@@ -92,6 +97,21 @@ export async function patchSettings(userId, payload) {
 
 export async function listPromptTemplates() {
   const res = await ok(await fetch(`/api/prompt-templates`, { headers: JSON_HEADERS, credentials: "same-origin" }));
+  return asJsonSafe(res);
+}
+
+export async function getPromptTemplate(id) {
+  const res = await ok(await fetch(`/api/prompt-templates/${encodeURIComponent(id)}`, { headers: JSON_HEADERS, credentials: "same-origin" }));
+  return asJsonSafe(res);
+}
+
+export async function savePromptTemplate(id, payload) {
+  const res = await ok(await fetch(`/api/prompt-templates/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { ...JSON_HEADERS, "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify(payload)
+  }));
   return asJsonSafe(res);
 }
 

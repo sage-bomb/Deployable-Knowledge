@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
+import json, time, shutil
+from pathlib import Path
 
 from core.settings import (
     UserSettings,
@@ -32,3 +34,22 @@ def get_prompt(tid: str):
     if not p:
         raise HTTPException(status_code=404, detail="template not found")
     return p.model_dump()
+
+@router.put("/prompt-templates/{tid}")
+def put_prompt(tid: str, payload: Dict[str, Any]):
+    for f in ["id", "name", "user_format", "system"]:
+        if f not in payload:
+            raise HTTPException(status_code=400, detail=f"missing {f}")
+    if payload["id"] != tid:
+        raise HTTPException(status_code=400, detail="id mismatch")
+    prompts_dir = Path("prompts")
+    prompts_dir.mkdir(exist_ok=True)
+    backup_dir = prompts_dir / ".backup"
+    backup_dir.mkdir(exist_ok=True)
+    target = prompts_dir / f"{tid}.json"
+    tmp = prompts_dir / f"{tid}.json.tmp"
+    tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    if target.exists():
+        shutil.copy(target, backup_dir / f"{tid}.{int(time.time())}.json")
+    tmp.replace(target)
+    return {"status": "ok"}

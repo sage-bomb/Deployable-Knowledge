@@ -27,3 +27,14 @@ async def delete_segment(seg_id: str):
         return {"status": "ok"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/segments/{seg_id}")
+async def get_segment(seg_id: str):
+    data = db.collection.get(ids=[seg_id], include=["documents", "metadatas"])
+    docs = data.get("documents") or []
+    metas = data.get("metadatas") or []
+    if not docs:
+        raise HTTPException(status_code=404, detail="segment not found")
+    doc = docs[0]
+    meta = metas[0] if metas else {}
+    return {"id": seg_id, "text": doc, **meta}
