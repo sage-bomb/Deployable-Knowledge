@@ -14,7 +14,7 @@ export function calcDragPosition(winStart, pointerStart, e) {
   };
 }
 
-export function handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDropColumnAt) {
+export function handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDropColumnAt, dropMarker) {
   if (!isModalDrag) {
     const targetCol = getDropColumnAt(e.clientX, e.clientY);
     cols.forEach(c => c.classList.remove("drop-candidate"));
@@ -28,19 +28,10 @@ export function handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDrop
     draggingWin.style.width = "";
     draggingWin.style.pointerEvents = "";
 
+    if (dropMarker.parentNode) dropMarker.parentNode.removeChild(dropMarker);
+
     if (targetCol) {
-      // Determine insertion point within the column based on pointer Y
-      const siblings = [...targetCol.querySelectorAll('.miniwin')].filter(w => w !== draggingWin);
-      let inserted = false;
-      for (const sib of siblings) {
-        const rect = sib.getBoundingClientRect();
-        if (e.clientY < rect.top + rect.height / 2) {
-          targetCol.insertBefore(draggingWin, sib);
-          inserted = true;
-          break;
-        }
-      }
-      if (!inserted) targetCol.appendChild(draggingWin);
+      targetCol.insertBefore(draggingWin, dropMarker);
       draggingWin.focus({ preventScroll: true });
     }
   } else {
@@ -52,6 +43,9 @@ export function handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDrop
 export function initWindowDnD() {
   const columnsEl = document.getElementById("columns");
   const cols = [...document.querySelectorAll(".col")];
+
+  const dropMarker = document.createElement("div");
+  dropMarker.className = "drop-marker";
 
   let draggingWin = null;
   let isModalDrag = false;
@@ -95,14 +89,29 @@ export function initWindowDnD() {
     if (!isModalDrag) {
       cols.forEach(c => c.classList.remove("drop-candidate"));
       const over = getDropColumnAt(e.clientX, e.clientY);
-      if (over) over.classList.add("drop-candidate");
+      if (over) {
+        over.classList.add("drop-candidate");
+        const siblings = [...over.querySelectorAll('.miniwin')].filter(w => w !== draggingWin);
+        let inserted = false;
+        for (const sib of siblings) {
+          const rect = sib.getBoundingClientRect();
+          if (e.clientY < rect.top + rect.height / 2) {
+            over.insertBefore(dropMarker, sib);
+            inserted = true;
+            break;
+          }
+        }
+        if (!inserted) over.appendChild(dropMarker);
+      } else if (dropMarker.parentNode) {
+        dropMarker.parentNode.removeChild(dropMarker);
+      }
     }
   };
 
   const onUp = (e) => {
     if (!draggingWin) return;
 
-    handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDropColumnAt);
+    handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDropColumnAt, dropMarker);
 
     document.removeEventListener("pointermove", onMove);
     draggingWin = null;
@@ -114,15 +123,18 @@ export function initWindowDnD() {
     if (!btn) return;
     const win = btn.closest(".miniwin");
     if (!win) return;
-    const collapsed = win.classList.toggle("collapsed");
-    btn.setAttribute("aria-pressed", String(collapsed));
-    if (collapsed) {
-      // Remember current height so it can be restored when expanded
+    if (!win.classList.contains("collapsed")) {
       win.dataset.prevHeight = win.style.height;
       win.style.height = '';
-    } else if (win.dataset.prevHeight) {
-      win.style.height = win.dataset.prevHeight;
-      delete win.dataset.prevHeight;
+      win.classList.add("collapsed");
+      btn.setAttribute("aria-pressed", "true");
+    } else {
+      win.classList.remove("collapsed");
+      btn.setAttribute("aria-pressed", "false");
+      if (win.dataset.prevHeight) {
+        win.style.height = win.dataset.prevHeight;
+        delete win.dataset.prevHeight;
+      }
     }
   });
 

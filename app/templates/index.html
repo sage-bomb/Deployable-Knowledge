@@ -11,24 +11,37 @@
 <body>
   <div class="app">
     <div class="app-header">
-      <div class="brand"><strong>Deployable Knowledge v0.1 ᚼᚢᚴᛁᚾ:ᚬᚴ:ᛘᚢᚾᛁᚾ</strong></div>
-      <div class="menu">
-        <button id="menu-trigger" class="menu-trigger" aria-haspopup="true" aria-expanded="false">Menu ▾</button>
-        <div id="menu-dropdown" class="menu-dropdown" role="menu" aria-hidden="true">
-          <button class="menu-item" data-action="new-chat" role="menuitem">New Chat</button>
-          <button class="menu-item" data-action="edit-persona" role="menuitem">Persona…</button>
-          <button class="menu-item" data-action="toggle-search" role="menuitem">Context</button>
-          <div class="menu-sep"></div>
-          <button class="menu-item" data-action="prompt-templates" role="menuitem">Prompt Templates</button>
-          <button class="menu-item" data-action="settings" role="menuitem">Settings…</button>
+      <div class="left">
+        <div class="menu">
+          <button id="menu-trigger" class="menu-trigger" aria-haspopup="true" aria-expanded="false">Menu ▾</button>
+          <div id="menu-dropdown" class="menu-dropdown" role="menu" aria-hidden="true">
+            <button class="menu-item" data-action="new-chat" role="menuitem">New Chat</button>
+            <button class="menu-item" data-action="edit-persona" role="menuitem">Persona…</button>
+            <button class="menu-item" data-action="toggle-search" role="menuitem">Context</button>
+            <div class="menu-sep"></div>
+            <button class="menu-item" data-action="prompt-templates" role="menuitem">Prompt Templates</button>
+            <button class="menu-item" data-action="settings" role="menuitem">Settings…</button>
+          </div>
+        </div>
+        <div class="menu tools-menu">
+          <button id="tools-menu-trigger" class="menu-trigger" aria-haspopup="true" aria-expanded="false">Tools ▾</button>
+          <div id="tools-menu-dropdown" class="menu-dropdown" role="menu" aria-hidden="true">
+            <button class="menu-item" data-action="tool-chat" role="menuitem">Chat Assistant</button>
+            <button class="menu-item" data-action="tool-docs" role="menuitem">Documents Library</button>
+            <button class="menu-item" data-action="tool-sessions" role="menuitem">Chat History</button>
+            <button class="menu-item" data-action="tool-segments" role="menuitem">DB Segments</button>
+          </div>
         </div>
       </div>
-      <div class="fill"></div>
-      <div class="menu user-menu">
-        <button id="user-menu-trigger" class="menu-trigger" aria-haspopup="true" aria-expanded="false">User ▾</button>
-        <div id="user-menu-dropdown" class="menu-dropdown" role="menu" aria-hidden="true">
-          <button class="menu-item" data-action="logout" role="menuitem">Log Out</button>
+      <div class="brand"><strong>Deployable Knowledge v0.1</strong></div>
+      <div class="right">
+        <div class="menu user-menu">
+          <button id="user-menu-trigger" class="menu-trigger" aria-haspopup="true" aria-expanded="false">User ▾</button>
+          <div id="user-menu-dropdown" class="menu-dropdown" role="menu" aria-hidden="true">
+            <button class="menu-item" data-action="logout" role="menuitem">Log Out</button>
+          </div>
         </div>
+        <div class="runes">ᚼᚢᚴᛁᚾ:ᚬᚴ:ᛘᚢᚾᛁᚾ</div>
       </div>
     </div>
 
