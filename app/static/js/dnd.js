@@ -1,4 +1,43 @@
 // dnd.js — drag and drop between columns, minimize + close behavior
+
+export function findDraggableWin(e) {
+  const titlebar = e.target.closest(".titlebar");
+  if (!titlebar) return null;
+  if (e.target.closest(".actions") || e.target.closest(".icon-btn")) return null;
+  return titlebar.closest(".miniwin");
+}
+
+export function calcDragPosition(winStart, pointerStart, e) {
+  return {
+    left: winStart.x + (e.clientX - pointerStart.x),
+    top: winStart.y + (e.clientY - pointerStart.y),
+  };
+}
+
+export function handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDropColumnAt) {
+  if (!isModalDrag) {
+    const targetCol = getDropColumnAt(e.clientX, e.clientY);
+    cols.forEach(c => c.classList.remove("drop-candidate"));
+    columnsEl.classList.remove("dragging");
+
+    draggingWin.classList.remove("dragging");
+    draggingWin.style.left = "";
+    draggingWin.style.top = "";
+    draggingWin.style.removeProperty("--drag-w");
+    draggingWin.style.position = "";
+    draggingWin.style.width = "";
+    draggingWin.style.pointerEvents = "";
+
+    if (targetCol) {
+      targetCol.appendChild(draggingWin);
+      draggingWin.focus({ preventScroll: true });
+    }
+  } else {
+    draggingWin.classList.remove("dragging");
+    draggingWin.style.removeProperty("--drag-w");
+  }
+}
+
 export function initWindowDnD() {
   const columnsEl = document.getElementById("columns");
   const cols = [...document.querySelectorAll(".col")];
@@ -15,12 +54,7 @@ export function initWindowDnD() {
   };
 
   const onTitlebarDown = (e) => {
-    const titlebar = e.target.closest(".titlebar");
-    if (!titlebar) return;
-
-    if (e.target.closest(".actions") || e.target.closest(".icon-btn")) return;
-
-    const win = titlebar.closest(".miniwin");
+    const win = findDraggableWin(e);
     if (!win) return;
 
     draggingWin = win;
@@ -43,10 +77,9 @@ export function initWindowDnD() {
 
   const onMove = (e) => {
     if (!draggingWin) return;
-    const dx = e.clientX - pointerStart.x;
-    const dy = e.clientY - pointerStart.y;
-    draggingWin.style.left = `${winStart.x + dx}px`;
-    draggingWin.style.top = `${winStart.y + dy}px`;
+    const pos = calcDragPosition(winStart, pointerStart, e);
+    draggingWin.style.left = `${pos.left}px`;
+    draggingWin.style.top = `${pos.top}px`;
 
     if (!isModalDrag) {
       cols.forEach(c => c.classList.remove("drop-candidate"));
@@ -58,27 +91,7 @@ export function initWindowDnD() {
   const onUp = (e) => {
     if (!draggingWin) return;
 
-    if (!isModalDrag) {
-      const targetCol = getDropColumnAt(e.clientX, e.clientY);
-      cols.forEach(c => c.classList.remove("drop-candidate"));
-      columnsEl.classList.remove("dragging");
-
-      draggingWin.classList.remove("dragging");
-      draggingWin.style.left = "";
-      draggingWin.style.top = "";
-      draggingWin.style.removeProperty("--drag-w");
-      draggingWin.style.position = "";
-      draggingWin.style.width = "";
-      draggingWin.style.pointerEvents = "";
-
-      if (targetCol) {
-        targetCol.appendChild(draggingWin);
-        draggingWin.focus({ preventScroll: true });
-      }
-    } else {
-      draggingWin.classList.remove("dragging");
-      draggingWin.style.removeProperty("--drag-w");
-    }
+    handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDropColumnAt);
 
     document.removeEventListener("pointermove", onMove);
     draggingWin = null;
