@@ -6,6 +6,10 @@ import { md, escapeHtml } from "../render.js";
 export function initChatController() {
   const chatWin = document.getElementById("win_chat");
   if (!chatWin) return;
+  const controller = new AbortController();
+  chatWin.addEventListener("DOMNodeRemoved", (e) => {
+    if (e.target === chatWin) controller.abort();
+  }, { once: true });
   const log = chatWin.querySelector("#chat_log");
   const input = chatWin.querySelector("#chat_input");
   const sendBtn = chatWin.querySelector(".chat-input .btn");
@@ -63,6 +67,6 @@ export function initChatController() {
     }
   };
 
-  sendBtn.addEventListener("click", send);
-  input.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+  sendBtn.addEventListener("click", send, { signal: controller.signal });
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); }, { signal: controller.signal });
 }

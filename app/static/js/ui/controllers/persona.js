@@ -11,6 +11,10 @@ export function openPersonaModal() {
     value: Store.persona || ""
   };
   const win = createMiniWindowFromConfig(cfg);
+  const controller = new AbortController();
+  win.addEventListener("DOMNodeRemoved", (e) => {
+    if (e.target === win) controller.abort();
+  }, { once: true });
 
   const wrap = document.createElement("div");
   wrap.className = "modal-wrap";
@@ -24,5 +28,5 @@ export function openPersonaModal() {
   saveBtn?.addEventListener("click", () => {
     Store.persona = textarea?.value || "";
     wrap.remove();
-  });
+  }, { signal: controller.signal });
 }
