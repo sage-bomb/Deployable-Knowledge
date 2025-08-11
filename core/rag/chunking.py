@@ -6,6 +6,8 @@ import re
 
 
 def safe_sent_tokenize(text: str):
+    """Lightweight sentence tokenizer based on punctuation."""
+
     return re.split(r"(?<=[.!?]) +", text.strip())
 
 
@@ -16,6 +18,8 @@ def pagerank_chunk_text(
     top_k: int = 5,
     expansion_threshold: float = 0.5,
 ):
+    """Chunk text using PageRank to select representative sentences."""
+
     from sklearn.metrics.pairwise import cosine_similarity
     import networkx as nx
     import numpy as np

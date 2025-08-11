@@ -17,10 +17,14 @@ EMBEDDINGS_OFFLINE_ONLY = os.getenv("EMBEDDINGS_OFFLINE_ONLY", "0") == "1"
 
 
 def _local_model_present(model_dir: Path) -> bool:
+    """Return ``True`` if ``model_dir`` appears to contain a model."""
+
     return model_dir.exists() and any(model_dir.iterdir())
 
 
 def fetch_model_if_needed(model_id: str = EMBEDDING_MODEL_ID, model_dir: Path = MODEL_DIR) -> Path:
+    """Ensure the embedding model exists locally and return its directory."""
+
     if _local_model_present(model_dir):
         return model_dir
     if EMBEDDINGS_OFFLINE_ONLY:
@@ -39,6 +43,8 @@ def fetch_model_if_needed(model_id: str = EMBEDDING_MODEL_ID, model_dir: Path = 
 
 @lru_cache(maxsize=1)
 def load_embedding_model(force_fetch: bool = False) -> SentenceTransformer:
+    """Load the sentence-transformer embedding model, caching the instance."""
+
     model_dir = Path(MODEL_DIR)
     if force_fetch:
         fetch_model_if_needed()

@@ -1,6 +1,6 @@
 # Architecture Overview
 
-The project is organized into three layers:
+The project is organised into three layers:
 
 1. **core/** – Headless library that owns retrieval, prompt rendering, LLM providers and the chat pipeline.  It exposes
    Pydantic models (`ChatRequest`, `ChatResponse`, etc.) and helpers to build prompts or stream responses.
@@ -18,3 +18,9 @@ import { DKClient } from "./static/js/ui/sdk/sdk.js";
 const dk = new DKClient();
 const resp = await dk.chat({ message: "hello" });
 ```
+
+```text
+Browser UI ──HTTP──► api/ routers ──calls──► core/ pipeline ──► LLM & ChromaDB
+```
+
+Return to [README](../README.md) or browse the [API reference](API_REFERENCE.md).

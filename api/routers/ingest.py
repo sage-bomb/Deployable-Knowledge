@@ -15,6 +15,18 @@ PDF_DIR.mkdir(parents=True, exist_ok=True)
 
 @router.post("/upload")
 async def upload_files(files: List[UploadFile] = File(...)):
+    """Persist and embed uploaded documents.
+
+    Parameters
+    ----------
+    files:
+        One or more files supplied via multipart upload.
+
+    Returns
+    -------
+    JSONResponse
+        Status information for each uploaded file.
+    """
     results = []
     for file in files:
         try:
@@ -30,6 +42,7 @@ async def upload_files(files: List[UploadFile] = File(...)):
 
 @router.post("/remove")
 async def remove_document(source: str = Form(...)):
+    """Remove a document and its embeddings from the store."""
     try:
         safe_name = sanitize_filename(source)
         db.delete_by_source(safe_name)
@@ -42,6 +55,7 @@ async def remove_document(source: str = Form(...)):
 
 @router.post("/ingest")
 async def ingest_documents(background_tasks: BackgroundTasks):
+    """Parse any PDFs in :data:`PDF_DIR` and schedule embedding."""
     pdf_dir = PDF_DIR.resolve()
     txt_dir = UPLOAD_DIR.resolve()
     for pdf_file in pdf_dir.glob("*.pdf"):
@@ -65,6 +79,7 @@ async def ingest_documents(background_tasks: BackgroundTasks):
 
 @router.post("/clear_db")
 async def clear_db():
+    """Delete all vectors from the backing ChromaDB collection."""
     try:
         db.clear_collection()
         return JSONResponse({"status": "success", "message": "ChromaDB collection cleared."})

@@ -19,9 +19,13 @@ class UserSettings(BaseModel):
     max_tokens: int = 512
 
 def _user_path(user_id: str) -> Path:
+    """Location of the settings file for ``user_id``."""
+
     return USERS_DIR / f"{user_id}.json"
 
 def load_settings(user_id: str) -> UserSettings:
+    """Load settings for ``user_id`` creating defaults if necessary."""
+
     p = _user_path(user_id)
     if not p.exists():
         s = UserSettings(user_id=user_id)
@@ -31,10 +35,14 @@ def load_settings(user_id: str) -> UserSettings:
     return UserSettings(**data)
 
 def save_settings(s: UserSettings) -> None:
+    """Persist ``s`` to its JSON file."""
+
     p = _user_path(s.user_id)
     p.write_text(s.model_dump_json(indent=2), encoding="utf-8")
 
 def update_settings(user_id: str, patch: Dict[str, Any]) -> UserSettings:
+    """Apply ``patch`` to a user's settings and persist the result."""
+
     s = load_settings(user_id)
     s = s.model_copy(update=patch)
     save_settings(s)
@@ -56,6 +64,8 @@ class PromptTemplate(BaseModel):
     meta: Dict[str, Any] = Field(default_factory=dict)
 
 def list_prompt_templates() -> List[PromptTemplate]:
+    """Return all prompt templates available on disk."""
+
     templates = []
     for data in prompt_loader.list_templates():
         try:
@@ -65,6 +75,8 @@ def list_prompt_templates() -> List[PromptTemplate]:
     return templates
 
 def get_prompt_template(tid: str) -> Optional[PromptTemplate]:
+    """Return a single prompt template by ``tid`` if present."""
+
     data = prompt_loader.load_template(tid)
     if not data:
         return None

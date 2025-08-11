@@ -6,6 +6,7 @@ router = APIRouter()
 
 @router.get("/segments")
 async def list_segments():
+    """Return brief information about all stored text segments."""
     data = db.collection.get(include=["documents", "metadatas"])
     segments = []
     docs = data.get("documents", [])
@@ -22,6 +23,7 @@ async def list_segments():
 
 @router.delete("/segments/{seg_id}")
 async def delete_segment(seg_id: str):
+    """Remove a single segment by identifier."""
     try:
         db.collection.delete(ids=[seg_id])
         return {"status": "ok"}
@@ -30,6 +32,7 @@ async def delete_segment(seg_id: str):
 
 @router.get("/segments/{seg_id}")
 async def get_segment(seg_id: str):
+    """Fetch the full text and metadata for ``seg_id``."""
     data = db.collection.get(ids=[seg_id], include=["documents", "metadatas"])
     docs = data.get("documents") or []
     metas = data.get("metadatas") or []
