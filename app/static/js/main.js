@@ -1,7 +1,7 @@
 // main.js — tiny glue after refactor
 import { initWindowDnD } from "./dnd.js";
 import { initSplitter } from "./splitter.js";
-import { createMiniWindowFromConfig } from "./window.js";
+import { createMiniWindowFromConfig, initWindowResize } from "./window.js";
 import { windows } from "./ui/windows.js";
 import { initMenu } from "./menu.js";
 
@@ -13,12 +13,14 @@ import { initSearchController, runSearch }   from "./ui/controllers/search.js";
 import { initSegmentsController } from "./ui/controllers/segments.js";
 import { openPersonaModal }       from "./ui/controllers/persona.js";
 import { openSettingsModal }      from "./ui/controllers/settings.js";
+import { openPromptEditor }       from "./ui/controllers/prompt_editor.js";
 
 import { dkClient as api } from "./ui/sdk/sdk.js";
 import { Store } from "./ui/store.js";
 
 initSplitter();
 initWindowDnD();
+initWindowResize();
 
 // mount initial windows
 for (const w of windows) {
@@ -63,6 +65,9 @@ initMenu(async (action) => {
   }
   if (action === "settings") {
     openSettingsModal();
+  }
+  if (action === "prompt-templates") {
+    openPromptEditor();
   }
 });
 

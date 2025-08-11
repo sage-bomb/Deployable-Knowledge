@@ -1,6 +1,7 @@
 // ui/controllers/segments.js — list database segments
 import { dkClient as api } from "../sdk/sdk.js";
 import { getComponent, bus } from "../../components.js";
+import { openSegmentView } from "./segment_view.js";
 
 export async function initSegmentsController(winId="win_segments") {
   const refresh = async () => {
@@ -15,6 +16,9 @@ export async function initSegmentsController(winId="win_segments") {
     if (srcWin !== winId || elementId !== "segment_list") return;
     if (action === "remove") {
       try { await api.removeSegment(item.id); } finally { await refresh(); }
+    }
+    if (action === "open") {
+      openSegmentView(item.id);
     }
   });
 }

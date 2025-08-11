@@ -169,7 +169,33 @@ html, body {
   display: grid; grid-template-rows: 1fr;
 }
 .miniwin.collapsed .content { grid-template-rows: 0fr; padding-top: 0; padding-bottom: 0; opacity: .0; }
-.miniwin .content-inner { overflow: hidden; }
+.miniwin .content-inner { overflow: auto; }
+
+.win-resizer-y {
+  height: 8px;
+  cursor: ns-resize;
+  user-select: none;
+  background: hsl(var(--h) var(--sat) var(--l-panel));
+}
+.win-resizer-y:hover { background: hsl(var(--h) var(--sat) calc(var(--l-panel) + 4%)); }
+
+.toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity .3s ease;
+  z-index: 2000;
+}
+.toast.show { opacity: 1; }
+
+.splash-body { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px; }
+.splash-card { width: 100%; max-width: 520px; }
 
 /* ===== Forms & Controls ===== */
 .form { display: grid; gap: 12px; }
@@ -204,10 +230,30 @@ html, body {
   padding: 10px 12px; border: 1px solid var(--border);
   border-radius: 12px; background: hsl(var(--h) var(--sat) var(--l-panel));
 }
+.list-item > div:first-child { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; }
+.li-meta { grid-column: 2; justify-self: end; color: var(--muted); font-size: 12px; align-self: center; }
+.list-item > div:first-child .li-subtle { grid-column: 1 / span 2; }
 .list-item:hover { border-color: hsl(var(--h) var(--sat) calc(var(--l-border) + 8%)); }
 .li-title { font-weight: 600; }
+.li-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 .li-subtle { color: var(--muted); font-size: 12px; }
-.li-right { justify-self: end; color: var(--muted); font-size: 12px; }
+.li-right { justify-self: end; color: var(--muted); font-size: 12px; align-self: center; }
+
+.result-meta { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.result-meta span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.result-meta span:last-child { justify-self: end; }
 .li-actions { display: flex; gap: 8px; }
 
 /* Selected row */
@@ -236,7 +282,6 @@ html, body {
 /* ===== Search ===== */
 .search-bar { display: grid; grid-template-columns: 1fr 130px auto; gap: 8px; align-items: center; }
 .result-card { border: 1px solid var(--border); background: hsl(var(--h) var(--sat) var(--l-panel)); border-radius: 12px; padding: 10px 12px; }
-.result-meta { font-size: 12px; color: var(--muted); margin-top: 6px; display: flex; justify-content: space-between; }
 .result-actions { margin-top: 6px; }
 
 /* ===== DnD Helpers ===== */

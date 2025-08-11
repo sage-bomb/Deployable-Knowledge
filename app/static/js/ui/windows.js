@@ -5,3 +5,8 @@ export const windows = [
   { id: "win_chat",     window_type: "window_chat_ui",   title: "Assistant Chat",   col: "right" },
   { id: "win_segments", window_type: "window_segments",  title: "DB Segments",      col: "right" }
 ];
+
+export const windowTypes = {
+  segmentView: "window_segment_view",
+  promptEditor: "window_prompt_editor",
+};
