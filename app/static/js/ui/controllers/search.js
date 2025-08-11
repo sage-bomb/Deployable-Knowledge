@@ -1,13 +1,14 @@
 // ui/controllers/search.js — semantic search
 import * as api from "../api.js";
+import { qs } from "../../dom.js";
 
 export function initSearchController(winId="win_search") {
-  const win = document.getElementById(winId);
+  const win = qs(`#${winId}`);
   if (!win) return;
-  const q = win.querySelector("#search_q");
-  const k = win.querySelector("#search_k");
-  const go = win.querySelector(".search-bar .btn");
-  const results = win.querySelector("#search_results");
+  const q = qs(`#${winId} #search_q`);
+  const k = qs(`#${winId} #search_k`);
+  const go = qs(`#${winId} .search-bar .btn`);
+  const results = qs(`#${winId} #search_results`);
 
   go.addEventListener("click", async () => {
     const data = await api.searchDocuments(q.value, Number(k.value || 5));

@@ -2,13 +2,14 @@
 import * as api from "../api.js";
 import { Store } from "../store.js";
 import { md, escapeHtml } from "../render.js";
+import { qs } from "../../dom.js";
 
 export function initChatController() {
-  const chatWin = document.getElementById("win_chat");
+  const chatWin = qs("#win_chat");
   if (!chatWin) return;
-  const log = chatWin.querySelector("#chat_log");
-  const input = chatWin.querySelector("#chat_input");
-  const sendBtn = chatWin.querySelector(".chat-input .btn");
+  const log = qs("#win_chat #chat_log");
+  const input = qs("#win_chat #chat_input");
+  const sendBtn = qs("#win_chat .chat-input .btn");
 
   const pushUser = (text) => {
     const div = document.createElement("div");

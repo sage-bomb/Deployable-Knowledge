@@ -2,6 +2,7 @@
 import * as api from "../api.js";
 import { getComponent, bus } from "../../components.js";
 import { Store } from "../store.js";
+import { qs } from "../../dom.js";
 
 export async function initDocsController(winId="win_docs") {
   const refresh = async () => {
@@ -18,7 +19,7 @@ export async function initDocsController(winId="win_docs") {
     if (action === "remove")        { try { await api.removeDocument(item.id); } finally { await refresh(); } }
   });
 
-  const win = document.getElementById(winId);
+  const win = qs(`#${winId}`);
   const input = win?.querySelector(`#${winId}-upload`);
   const btn   = win?.querySelector(`#${winId}-upload-btn`);
   btn?.addEventListener("click", async () => {
