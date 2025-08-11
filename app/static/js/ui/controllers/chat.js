@@ -59,6 +59,7 @@ export function initChatController() {
         bubble.innerHTML = md(res.response ?? "(no response)");
       } catch (e2) {
         bubble.innerHTML = `<em>Error:</em> ${e2.message}`;
+        api.handleApiError(e2);
       }
     }
   };

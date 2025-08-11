@@ -19,6 +19,16 @@ async function ok(res) {
   return res;
 }
 
+export function handleApiError(e) {
+  console.error(e);
+  const msg = e?.message || "An unexpected error occurred";
+  if (typeof window !== "undefined" && window.toast) {
+    window.toast(msg);
+  } else {
+    alert(msg);
+  }
+}
+
 export async function getOrCreateChatSession() {
   try {
     const res = await fetch("/session", { method: "POST", headers: JSON_HEADERS, credentials: "same-origin" });

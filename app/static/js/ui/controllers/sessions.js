@@ -9,7 +9,10 @@ let selectedIdx = null;
 
 export async function initSessionsController(winId="win_sessions") {
   const comp = getComponent(winId, "session_list");
-  if (comp) comp.render(await api.listSessions());
+  if (comp) {
+    try { comp.render(await api.listSessions()); }
+    catch (e) { api.handleApiError(e); }
+  }
 
   bus.addEventListener("ui:list-select", async (ev) => {
     const { winId: srcWin, elementId, item, index } = ev.detail || {};
@@ -26,8 +29,12 @@ export async function initSessionsController(winId="win_sessions") {
 
     // load history
     Store.sessionId = item.session_id;
-    const data = await api.getSession(Store.sessionId);
-    const log = document.querySelector("#win_chat #chat_log");
-    if (log) renderChatLog(data.history || [], log);
+    try {
+      const data = await api.getSession(Store.sessionId);
+      const log = document.querySelector("#win_chat #chat_log");
+      if (log) renderChatLog(data.history || [], log);
+    } catch (e) {
+      api.handleApiError(e);
+    }
   });
 }
