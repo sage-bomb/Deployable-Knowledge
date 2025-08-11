@@ -70,7 +70,7 @@ const WindowTypes = {
   },
 
   "window_chat_ui": (config, winId) => {
-    const wrap = el("div", { class: "form" });
+    const wrap = el("div", { class: "chat-window" });
     const log = el("div", { class: "chat-log", id: "chat_log" });
     const input = Field.create({ type: "text_field", id: "chat_input", placeholder: "Type a message..." });
     const send = el("button", { class: "btn", type: "button" }, ["Send"]);
