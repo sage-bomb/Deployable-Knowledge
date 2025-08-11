@@ -50,6 +50,29 @@ html, body {
 
 .app { display: flex; flex-direction: column; height: 100%; }
 
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: -100;
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 8px;
+  z-index: 1000;
+}
+
 /* ===== Header & Menu ===== */
 .app-header {
   padding: 8px 12px;

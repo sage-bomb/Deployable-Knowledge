@@ -186,10 +186,13 @@ export function createMiniWindowFromConfig(config) {
     }
     return id;
   })();
-  const win = el("div", { class: "miniwin", tabindex: "0", "data-id": winId, id: winId });
+  const titleId = `${winId}-title`;
+  const winAttrs = { class: "miniwin", tabindex: "0", "data-id": winId, id: winId, role: "dialog", "aria-labelledby": titleId };
+  if (config.modal) winAttrs["aria-modal"] = "true";
+  const win = el("div", winAttrs);
 
   const titlebar = el("div", { class: "titlebar" }, [
-    el("div", { class: "title" }, [config.title || "Untitled"]),
+    el("div", { class: "title", id: titleId }, [config.title || "Untitled"]),
     el("div", { class: "actions" }, [
       el("button", { class: "icon-btn js-min", title: "Minimize", "aria-label": "Minimize", "data-win": winId }, ["—"]),
       el("button", { class: "icon-btn js-close", title: "Close", "aria-label": "Close", "data-win": winId }, ["✕"])
@@ -234,6 +237,22 @@ export function mountModal(win) {
   const backdrop = el("div", { class: "modal-backdrop" });
   wrap.append(backdrop, win);
   document.body.appendChild(wrap);
+
+  const focusable = wrap.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])");
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  wrap.addEventListener("keydown", (e) => {
+    if (e.key === "Tab") {
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
+  if (first) first.focus();
   return wrap;
 }
 
@@ -268,5 +287,28 @@ export function initWindowResize() {
     startH = rect.height;
     document.addEventListener("pointermove", onMove);
     document.addEventListener("pointerup", onUp, { once: true });
+  });
+}
+
+export function initWindowKeyboard() {
+  document.addEventListener("keydown", (e) => {
+    const activeWin = document.activeElement?.closest?.(".miniwin");
+    if (e.key === "Escape" && activeWin) {
+      const btn = activeWin.querySelector(".js-close");
+      if (btn) btn.click();
+    }
+    if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"].includes(e.key) && activeWin) {
+      const wins = Array.from(document.querySelectorAll(".miniwin"));
+      if (wins.length === 0) return;
+      const idx = wins.indexOf(activeWin);
+      let nextIdx = idx;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        nextIdx = (idx + 1) % wins.length;
+      } else {
+        nextIdx = (idx - 1 + wins.length) % wins.length;
+      }
+      wins[nextIdx].focus();
+      e.preventDefault();
+    }
   });
 }
