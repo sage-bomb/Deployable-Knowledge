@@ -142,6 +142,8 @@ html, body {
   overflow: hidden;
   margin: 8px 0 18px;
   outline: none;
+  display: flex;
+  flex-direction: column;
 }
 .miniwin .titlebar {
   display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px;
@@ -167,15 +169,18 @@ html, body {
   padding: 14px;
   transition: grid-template-rows .2s ease, padding .2s ease, opacity .2s ease;
   display: grid; grid-template-rows: 1fr;
+  flex: 1;
+  min-height: 0;
 }
 .miniwin.collapsed .content { grid-template-rows: 0fr; padding-top: 0; padding-bottom: 0; opacity: .0; }
-.miniwin .content-inner { overflow: auto; }
+.miniwin .content-inner { overflow: auto; min-height: 0; }
 
 .win-resizer-y {
   height: 8px;
   cursor: ns-resize;
   user-select: none;
   background: hsl(var(--h) var(--sat) var(--l-panel));
+  flex: 0 0 8px;
 }
 .win-resizer-y:hover { background: hsl(var(--h) var(--sat) calc(var(--l-panel) + 4%)); }
 

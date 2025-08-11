@@ -2,7 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Literal
 import json
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from .prompts import loader as prompt_loader
 
@@ -45,6 +45,8 @@ PROMPTS_DIR = Path("prompts")
 PROMPTS_DIR.mkdir(parents=True, exist_ok=True)
 
 class PromptTemplate(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     id: str
     name: str
     description: Optional[str] = None
