@@ -1,5 +1,6 @@
 // ui/controllers/search.js — semantic search
 import * as api from "../api.js";
+import { escapeHtml } from "../render.js";
 
 export function initSearchController(winId="win_search") {
   const win = document.getElementById(winId);
@@ -15,9 +16,12 @@ export function initSearchController(winId="win_search") {
     (data.results || []).forEach(r => {
       const card = document.createElement("div");
       card.className = "result-card";
-      card.innerHTML = `<div>${r.text}</div>
-        <div class="result-meta"><span>Source: ${r.source}</span>
-        <span>Score: ${Number(r.score).toFixed(3)} • Page: ${r.page ?? "?"}</span></div>`;
+      const text = escapeHtml(r.text ?? "");
+      const source = escapeHtml(r.source ?? "");
+      const page = escapeHtml(String(r.page ?? "?"));
+      card.innerHTML = `<div>${text}</div>
+        <div class="result-meta"><span>Source: ${source}</span>
+        <span>Score: ${Number(r.score).toFixed(3)} • Page: ${page}</span></div>`;
       results.appendChild(card);
     });
   });
