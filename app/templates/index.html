@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Deployable Knowledge v0.1</title>
+  <link rel="stylesheet" href="/static/css/theme.css" />
   <link rel="stylesheet" href="/static/css/style.css" />
   <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231b2130'/%3E%3Cpath d='M16 40 L32 16 L48 40' stroke='%236aa8ff' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
 </head>
@@ -39,6 +40,10 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script type="module">
+    import { applyThemeSettings } from "/static/js/theme.js";
+    applyThemeSettings();
+  </script>
   <script type="module" src="/static/js/main.js"></script>
 </body>
 </html>
