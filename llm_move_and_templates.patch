@@ -1,0 +1,325 @@
+
+--- /mnt/data/project/Deployable-Knowledge-ui-reskin-rollup/app/services/llm_factory.py
++++ /mnt/data/project/Deployable-Knowledge-ui-reskin-rollup/app/services/llm_factory.py
+@@
+from typing import Optional
+from utility.llm.base import BaseLLM
+from utility.llm.ollama_llm import OllamaLLM
+from utility.llm.openai_llm import OpenAILLM
+
+def make_llm(provider: str, model: Optional[str]) -> BaseLLM:
+    if provider == "ollama":
+        return OllamaLLM(model=model)
+    if provider == "openai":
+        return OpenAILLM(model=model)
+    # Fallback to ollama
+    return OllamaLLM(model=model)
+
+
+--- /mnt/data/project/Deployable-Knowledge-ui-reskin-rollup/config.py
++++ /mnt/data/project/Deployable-Knowledge-ui-reskin-rollup/config.py
+@@
+from pathlib import Path
+import os
+
+# === Base Paths ===
+BASE_DIR = Path(__file__).resolve().parent
+UPLOAD_DIR = BASE_DIR / "documents"
+PDF_DIR = BASE_DIR / "pdfs"
+MODEL_DIR = BASE_DIR / "tmp_model"
+
+# === ChromaDB ===
+CHROMA_DB_DIR = BASE_DIR / "chroma_db"
+COLLECTION_NAME = "default_collection"
+
+# === Embedding Model ===
+# Always point to a local directory for offline model loading
+EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL", str(MODEL_DIR))
+
+# === Security ===
+ALLOWED_DOCUMENT_EXTENSIONS = {".txt", ".pdf", ".md", ".html"}
+MIN_TOP_K = 1
+MAX_TOP_K = 20
+
+# === Ollama ===
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
+# Backwards compatibility for legacy code expecting OLLAMA_URL
+OLLAMA_URL = f"{OLLAMA_BASE_URL}/api/generate"
+
+# === Prompt Templates ===
+PROMPTS_DIR = BASE_DIR / "prompts"
+
+
+--- /mnt/data/project/Deployable-Knowledge-ui-reskin-rollup/utility/llm_prompt_engine.py
++++ /mnt/data/project/Deployable-Knowledge-ui-reskin-rollup/utility/llm_prompt_engine.py
+@@
+from typing import List, Dict, Optional, Iterable
+from dataclasses import dataclass
+import json
+
+from config import PROMPTS_DIR
+from utility.chat_state import ChatExchange
+from app.services.user_settings import get_prompt_template, load_settings
+from app.services.llm_factory import make_llm
+
+# --- Template loading ---
+
+@dataclass
+class Template:
+    id: str
+    name: str
+    system: str
+    user_format: str
+    context_item_format: str = "- {chunk}"
+    context_header: str = "Relevant context:"
+    context_join: str = "\n"
+    persona_format: str = "Persona: {persona}"
+    history_separator: str = "\n"
+    include_history: bool = True
+
+def _load_template(tid: Optional[str]) -> Template:
+    # prefer explicit id; fallback to 'rag_chat' if missing
+    tid = tid or "rag_chat"
+    tmpl = get_prompt_template(tid)
+    if tmpl is None:
+        # fallback: read from disk if user_settings not aware
+        f = (PROMPTS_DIR / f"{tid}.json")
+        if f.exists():
+            data = json.loads(f.read_text(encoding="utf-8"))
+        else:
+            # minimal default
+            data = {
+                "id": "rag_chat",
+                "name": "RAG Chat (default)",
+                "system": "You are a concise, technical assistant. Answer using only the provided context when possible.",
+                "user_format": "{{user}}",
+                "context_item_format": "- {{chunk}} (source: {{source|unknown}})",
+                "context_header": "Context:",
+                "context_join": "\n",
+                "persona_format": "Persona: {{persona}}",
+                "history_separator": "\n",
+                "include_history": True
+            }
+    else:
+        # map PromptTemplate (pydantic) into our structure
+        data = {
+            "id": tmpl.id,
+            "name": tmpl.name,
+            "system": tmpl.system or "",
+            "user_format": tmpl.user_format or "{{user}}",
+            "context_item_format": tmpl.context_item_format or "- {{chunk}}",
+            "context_header": tmpl.context_header or "Context:",
+            "context_join": tmpl.context_join or "\n",
+            "persona_format": tmpl.persona_format or "Persona: {{persona}}",
+            "history_separator": tmpl.history_separator or "\n",
+            "include_history": bool(getattr(tmpl, "include_history", True)),
+        }
+    return Template(**data)
+
+def _fmt(template_str: str, **kwargs) -> str:
+    # very small template formatter with {var} and {var|default}
+    out = template_str
+    for k, v in kwargs.items():
+        out = out.replace(f"{{requests}}", str(v))
+    # handle defaults like {var|default}
+    import re
+    def repl(m):
+        name, default = m.group(1), m.group(2)
+        return str(kwargs.get(name, default))
+    out = re.sub(r"\{\{([a-zA-Z0-9_]+)\|([^}]+)\}\}", repl, out)
+    return out
+
+def _render_context(t: Template, context_blocks: List[Dict]) -> str:
+    if not context_blocks:
+        return ""
+    parts = []
+    for b in context_blocks:
+        parts.append(_fmt(
+            t.context_item_format,
+            chunk=b.get("text", b.get("chunk", "")),
+            source=b.get("source", b.get("doc", "")),
+            score=b.get("score", "")
+        ))
+    return t.context_header + "\n" + t.context_join.join(parts)
+
+def _render_history(t: Template, history: List[ChatExchange]) -> str:
+    if not t.include_history or not history:
+        return ""
+    lines = []
+    for h in history:
+        lines.append(f"User: {h.user}")
+        if getattr(h, "assistant", None):
+            lines.append(f"Assistant: {h.assistant}")
+    return t.history_separator.join(lines)
+
+# --- Public API (compat with existing callers) ---
+
+def build_prompt(
+    summary: str,
+    history: List[ChatExchange],
+    user_message: str,
+    context_blocks: List[Dict],
+    persona: Optional[str] = None,
+    template_id: Optional[str] = None,
+) -> str:
+    """Build a single text prompt by rendering a template with context.
+    This preserves the text-based prompt contract for routes that already expect a string.
+    """
+    t = _load_template(template_id)
+    ctx = _render_context(t, context_blocks)
+    hist = _render_history(t, history)
+    persona_str = _fmt(t.persona_format, persona=persona) if persona else ""
+    user_str = _fmt(t.user_format, user=user_message)
+
+    blocks = [t.system]
+    if persona_str:
+        blocks.append(persona_str)
+    if summary:
+        blocks.append(f"Summary so far: {summary}")
+    if hist:
+        blocks.append(hist)
+    if ctx:
+        blocks.append(ctx)
+    blocks.append(user_str)
+
+    return "\n\n".join([b for b in blocks if b])
+
+def stream_llm(prompt: str, user_id: Optional[str]=None) -> Iterable[str]:
+    """Stream tokens from the selected LLM (provider+model from user settings if available)."""
+    settings = None
+    if user_id:
+        try:
+            settings = load_settings(user_id)
+        except Exception:
+            settings = None
+    if settings is None:
+        try:
+            settings = load_settings("default")
+        except Exception:
+            settings = None
+
+    provider = getattr(settings, "llm_provider", "ollama")
+    model = getattr(settings, "llm_model", "")
+
+    llm = make_llm(provider, model or None)
+    # both backends implement stream_text(prompt: str) -> Iterator[str]
+    return llm.stream_text(prompt)
+
+def ask_llm(prompt: str, user_id: Optional[str]=None) -> str:
+    settings = None
+    if user_id:
+        try:
+            settings = load_settings(user_id)
+        except Exception:
+            settings = None
+    if settings is None:
+        try:
+            settings = load_settings("default")
+        except Exception:
+            settings = None
+
+    provider = getattr(settings, "llm_provider", "ollama")
+    model = getattr(settings, "llm_model", "")
+
+    llm = make_llm(provider, model or None)
+    return llm.generate_text(prompt)
+
+def update_summary(old_summary: str, last_user: str, last_assistant: str, user_id: Optional[str]=None) -> str:
+    instr = (
+        "Update the running summary of this conversation. Keep it concise and factual.\n"
+        f"Old summary: {old_summary}\n"
+        f"Last user: {last_user}\n"
+        f"Last assistant: {last_assistant}\n"
+        "New concise summary:"
+    )
+    return ask_llm(instr, user_id=user_id)
+
+def generate_title(first_interaction: str, user_id: Optional[str]=None) -> str:
+    prompt = (
+        f"{first_interaction}\n"
+        "Given this chat interaction, provide a snappy short title we can use for it."
+    )
+    try:
+        return ask_llm(prompt, user_id=user_id)[:80].strip()
+    except Exception:
+        return first_interaction[:60]
+
+
+--- /mnt/data/project/Deployable-Knowledge-ui-reskin-rollup/utility/llm/base.py
++++ /mnt/data/project/Deployable-Knowledge-ui-reskin-rollup/utility/llm/base.py
+@@
+from typing import Any, Iterator
+
+class BaseLLM:
+    """Minimal LLM interface the app expects."""
+    def __init__(self, model: str | None = None, **kwargs: Any) -> None:
+        self.model = model
+
+    def generate_text(self, prompt: str, **kwargs: Any) -> str:
+        """Return a full string completion."""
+        raise NotImplementedError
+
+    def stream_text(self, prompt: str, **kwargs: Any) -> Iterator[str]:
+        """Yield chunks of text for streaming UIs."""
+        raise NotImplementedError
+
+
+--- /mnt/data/project/Deployable-Knowledge-ui-reskin-rollup/utility/llm/ollama_llm.py
++++ /mnt/data/project/Deployable-Knowledge-ui-reskin-rollup/utility/llm/ollama_llm.py
+@@
+from typing import Any, Iterator
+import requests, json
+from config import OLLAMA_BASE_URL, OLLAMA_MODEL
+
+from .base import BaseLLM
+
+GENERATE_URL = f"{OLLAMA_BASE_URL}/api/generate"
+
+class OllamaLLM(BaseLLM):
+    def __init__(self, model: str | None = None, **kwargs: Any) -> None:
+        super().__init__(model or OLLAMA_MODEL)
+
+    def generate_text(self, prompt: str, **kwargs: Any) -> str:
+        payload = {"model": self.model, "prompt": prompt, "stream": False}
+        resp = requests.post(GENERATE_URL, json=payload, timeout=kwargs.get("timeout", 120))
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("response", "")
+
+    def stream_text(self, prompt: str, **kwargs: Any) -> Iterator[str]:
+        payload = {"model": self.model, "prompt": prompt, "stream": True}
+        with requests.post(GENERATE_URL, json=payload, stream=True, timeout=kwargs.get("timeout", 0) or None) as r:
+            r.raise_for_status()
+            for line in r.iter_lines(decode_unicode=True):
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                    chunk = obj.get("response", "")
+                    if chunk:
+                        yield chunk
+                except Exception:
+                    yield line
+
+
+--- /mnt/data/project/Deployable-Knowledge-ui-reskin-rollup/utility/llm/openai_llm.py
++++ /mnt/data/project/Deployable-Knowledge-ui-reskin-rollup/utility/llm/openai_llm.py
+@@
+from typing import Any, Iterator
+from .base import BaseLLM
+
+class OpenAILLM(BaseLLM):
+    """Placeholder OpenAI backend. Wire the OpenAI SDK as needed."""
+    def __init__(self, model: str | None = None, **kwargs: Any) -> None:
+        super().__init__(model or "gpt-4o-mini")  # sensible default placeholder
+
+    def generate_text(self, prompt: str, **kwargs: Any) -> str:
+        # Implement with OpenAI Chat Completions if desired.
+        # For now, keep a safe placeholder so the app does not crash.
+        return "[OpenAI LLM not configured]"
+
+    def stream_text(self, prompt: str, **kwargs: Any) -> Iterator[str]:
+        # No streaming without SDK; yield once
+        yield self.generate_text(prompt, **kwargs)
+

@@ -6,7 +6,7 @@ router = APIRouter()
 
 @router.get("/segments")
 async def list_segments():
-    data = db.collection.get(include=["documents", "metadatas", "ids"])
+    data = db.collection.get(include=["documents", "metadatas"])
     segments = []
     docs = data.get("documents", [])
     metas = data.get("metadatas", [])
