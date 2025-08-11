@@ -118,7 +118,13 @@ const WindowTypes = {
 };
 
 export function createMiniWindowFromConfig(config) {
-  const winId = config.id || `mw-${crypto.randomUUID()}`;
+  const winId = (() => {
+    let id = config.id || `mw-${crypto.randomUUID()}`;
+    while (document.getElementById(id)) {
+      id = `mw-${crypto.randomUUID()}`;
+    }
+    return id;
+  })();
   const win = el("div", { class: "miniwin", tabindex: "0", "data-id": winId, id: winId });
 
   const titlebar = el("div", { class: "titlebar" }, [
