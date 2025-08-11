@@ -1,10 +1,13 @@
 // ui/store.js — central app state
 const storedPersona = localStorage.getItem("persona") || "";
 const storedDocs = localStorage.getItem("inactiveDocs");
+const storedSettings = JSON.parse(localStorage.getItem("settings") || "{}");
 const state = {
   sessionId: null,
   persona: storedPersona,
-  inactiveDocs: new Set(storedDocs ? JSON.parse(storedDocs) : [])
+  inactiveDocs: new Set(storedDocs ? JSON.parse(storedDocs) : []),
+  llmTargetAddress: storedSettings.llm_target_address || "",
+  llmToken: storedSettings.llm_token || ""
 };
 export const Store = {
   get sessionId() { return state.sessionId; },
@@ -19,5 +22,22 @@ export const Store = {
     state.inactiveDocs.has(id) ? state.inactiveDocs.delete(id) : state.inactiveDocs.add(id);
     localStorage.setItem("inactiveDocs", JSON.stringify(Array.from(state.inactiveDocs)));
   },
-  inactiveList() { return Array.from(state.inactiveDocs); }
+  inactiveList() { return Array.from(state.inactiveDocs); },
+  get llmTargetAddress() { return state.llmTargetAddress; },
+  set llmTargetAddress(v) {
+    state.llmTargetAddress = v;
+    saveSettings();
+  },
+  get llmToken() { return state.llmToken; },
+  set llmToken(v) {
+    state.llmToken = v;
+    saveSettings();
+  }
 };
+
+function saveSettings() {
+  localStorage.setItem("settings", JSON.stringify({
+    llm_target_address: state.llmTargetAddress,
+    llm_token: state.llmToken
+  }));
+}

@@ -41,6 +41,11 @@ export async function listDocuments() {
   return asJsonSafe(res);
 }
 
+export async function listSegments() {
+  const res = await ok(await fetch("/segments", { headers: JSON_HEADERS, credentials: "same-origin" }));
+  return asJsonSafe(res);
+}
+
 export async function removeDocument(source) {
   const fd = new FormData();
   fd.append("source", source);
@@ -48,10 +53,20 @@ export async function removeDocument(source) {
   return asJsonSafe(res);
 }
 
+export async function removeSegment(id) {
+  const res = await ok(await fetch(`/segments/${encodeURIComponent(id)}`, { method: "DELETE", headers: JSON_HEADERS, credentials: "same-origin" }));
+  return asJsonSafe(res);
+}
+
 export async function uploadDocuments(files) {
   const fd = new FormData();
   for (const f of files) fd.append("files", f);
   const res = await ok(await fetch("/upload", { method: "POST", body: fd, credentials: "same-origin" }));
+  return asJsonSafe(res);
+}
+
+export async function getUser() {
+  const res = await ok(await fetch("/user", { headers: JSON_HEADERS, credentials: "same-origin" }));
   return asJsonSafe(res);
 }
 

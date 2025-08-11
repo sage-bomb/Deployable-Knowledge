@@ -91,6 +91,23 @@ const WindowTypes = {
     return wrap;
   },
 
+  "window_segments": (config, winId) => {
+    const layout = el("div", { class: "form" });
+    const listEl = createItemList(config.id || winId, {
+      id: "segment_list",
+      item_template: {
+        elements: [
+          { type: "text", bind: "source", class: "li-title" },
+          { type: "text", bind: "preview", class: "li-subtle" },
+          { type: "text", bind: "priority", class: "li-right" },
+          { type: "button", label: "Remove", action: "remove", variant: "danger" }
+        ]
+      }
+    });
+    layout.appendChild(listEl);
+    return layout;
+  },
+
   "window_persona": (config, winId) => {
   const wrap = el("div", { class: "form" });
 
