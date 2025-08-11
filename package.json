@@ -1,0 +1,19 @@
+{
+  "name": "deployable-knowledge",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "lint:js": "eslint \"**/*.{js,jsx,ts,tsx}\"",
+    "lint:css": "stylelint \"**/*.{css,scss}\" --allow-empty-input",
+    "lint": "npm run lint:js && npm run lint:css",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "husky": "^8.0.3",
+    "stylelint": "^15.11.0",
+    "vite": "^4.5.0"
+  }
+}

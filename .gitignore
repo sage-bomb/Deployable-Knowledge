@@ -14,6 +14,7 @@ build/
 env/
 venv/
 ENV/
+node_modules/
 *.env
 *.env.*
 
@@ -40,6 +41,7 @@ parsed_texts/
 # --- Query result data ---
 *.json
 !prompts/*.json
+!package.json
 
 # --- Model cache or sentence-transformers ---
 cache/
