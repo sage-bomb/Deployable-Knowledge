@@ -1,132 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Deployable Knowledge</title>
-    <link rel="icon" href="/static/favicon.ico" />
-    <link rel="stylesheet" href="/static/css/style.css" />
-
-    <!-- Main App -->
-    <script type="module" src="/static/js/main.js"></script>
-    <script type="module" src="/static/js/marked.min.js"></script>
-  </head>
-
-  <body>
-    <div class="top-banner">Deployable Knowledge</div>
-    <div class="top-menu">
-      <button id="open-persona-btn">Edit Persona</button>
-      <button id="new-chat" type="button">New Chat</button>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <div id="confirm-modal" class="modal hidden">
-      <div class="modal-content">
-        <p id="confirm-message">Are you sure?</p>
-        <div class="modal-actions">
-          <button id="confirm-yes">Yes</button>
-          <button id="confirm-no">Cancel</button>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Deployable Knowledge v0.1</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231b2130'/%3E%3Cpath d='M16 40 L32 16 L48 40' stroke='%236aa8ff' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="app">
+    <div class="app-header">
+      <div class="brand"><strong>Deployable Knowledge v0.1 ᚼᚢᚴᛁᚾ:ᚬᚴ:ᛘᚢᚾᛁᚾ</strong></div>
+      <div class="menu">
+        <button id="menu-trigger" class="menu-trigger" aria-haspopup="true" aria-expanded="false">Menu ▾</button>
+        <div id="menu-dropdown" class="menu-dropdown" role="menu" aria-hidden="true">
+          <button class="menu-item" data-action="new-chat" role="menuitem">New Chat</button>
+          <button class="menu-item" data-action="edit-persona" role="menuitem">Persona…</button>
         </div>
       </div>
+      <div class="fill"></div>
     </div>
 
-    <!-- Persona Modal -->
-    <div id="persona-modal" class="modal hidden">
-      <div class="modal-content">
-        <h2>Edit Prompt Persona</h2>
-        <textarea
-          id="persona-text"
-          rows="10"
-          placeholder="Enter system prompt here... (Default: You are a helpful assistant with access to the following content:)"
-        ></textarea>
-        <div class="modal-actions">
-          <button id="save-persona-btn">Save</button>
-          <button id="close-persona-btn">Cancel</button>
-        </div>
-      </div>
+    <div class="columns" id="columns">
+      <div class="col" id="col-left"></div>
+      <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" aria-label="Resize Columns"></div>
+      <div class="col" id="col-right"></div>
     </div>
+  </div>
 
-    <div class="feature-layout">
-      <div class="container">
-        <div class="column scrollable">
-
-          <div id="chat-history-wrapper" class="widget">
-            <div class="widget-header">
-              <h2>Chat History</h2>
-              <button id="toggle-history-btn" class="toggle-panel-btn" title="Minimize Chat History" type="button">«</button>
-            </div>
-            <div class="widget-body">
-              <div id="chat-history-list" class="loading">Loading...</div>
-            </div>
-          </div>
-
-          <div id="doc-panel-wrapper" class="widget">
-            <div class="widget-header">
-              <h2>Document Library</h2>
-              <button id="toggle-docs-btn" class="toggle-panel-btn" title="Minimize Document Library" type="button">«</button>
-            </div>
-            <div class="widget-body">
-              <form id="upload-form" method="post" enctype="multipart/form-data">
-                <input type="file" name="files" id="file-input" multiple />
-                <button type="submit">Upload</button>
-              </form>
-
-              <div id="upload-status" class="status-text"></div>
-
-              <form id="filter-form">
-                <input type="text" id="filter-input" placeholder="Filter documents..." />
-                <button type="submit">Filter</button>
-              </form>
-
-              <ul id="document-list">
-                <li><em>Loading documents...</em></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <div class="column scrollable">
-
-          <div id="chat-panel-wrapper" class="widget">
-            <div class="widget-header">
-              <h2>Assistant Chat</h2>
-              <button id="toggle-chat-btn" class="toggle-panel-btn" title="Minimize Chat" type="button">«</button>
-            </div>
-            <div class="widget-body">
-              <div id="chat-box" class="chat-box">
-                <div>
-                  <strong>Assistant:</strong> Hello! How can I help you today?
-                </div>
-              </div>
-
-              <form id="chat-form">
-                <input type="text" id="user-input" placeholder="Type a message..." />
-                <button type="submit" id="submit-button">Send</button>
-              </form>
-            </div>
-          </div>
-
-          <div id="search-panel-wrapper" class="widget">
-            <div class="widget-header">
-              <h2>Search Documents</h2>
-              <button id="toggle-search-btn" class="toggle-panel-btn" title="Minimize Search Results" type="button">«</button>
-            </div>
-            <div class="widget-body">
-              <form id="search-form">
-                <input type="text" id="search-query" placeholder="Enter search text..." />
-                <label for="top-k-select">Number of results:</label>
-                <select id="top-k-select">
-                  <option value="5">5</option>
-                  <option value="10">10</option>
-                  <option value="15">15</option>
-                </select>
-                <button type="submit">Search</button>
-              </form>
-              <div id="search-results"></div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  </body>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script type="module" src="/static/js/main.js"></script>
+</body>
 </html>
