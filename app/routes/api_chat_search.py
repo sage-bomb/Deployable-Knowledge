@@ -105,7 +105,7 @@ async def chat(
         return StreamingResponse(event_stream(), media_type="text/html")
 
     else:
-        chatbot_response = llm.call_llm(prompt)
+        chatbot_response = llm.ask_llm(prompt)
         html_response = llm.render_response_html(chatbot_response)
 
         session.add_exchange(

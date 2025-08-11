@@ -155,3 +155,35 @@ def generate_title(first_interaction: str, user_id: Optional[str]=None) -> str:
         "Given this chat interaction, provide a snappy short title we can use for it."
     )
     return (ask_llm(prompt, user_id=user_id) or "").strip()[:80]
+
+# --- Back-compat helpers ---
+# Some routes still call `call_llm()` and `render_response_html()`
+
+def call_llm(prompt: str, user_id: str | None = None) -> str:
+    return ask_llm(prompt, user_id=user_id)
+
+# HTML renderer for non-stream replies (markdown -> HTML), with safe fallback
+try:
+    import markdown2  # already in requirements.txt
+except Exception:
+    markdown2 = None
+import html as _html
+
+def render_response_html(text: str) -> str:
+    if markdown2:
+        try:
+            return markdown2.markdown(
+                text,
+                extras=[
+                    "fenced-code-blocks",
+                    "tables",
+                    "strike",
+                    "break-on-newline",
+                    "code-friendly",
+                    "cuddled-lists",
+                ],
+            )
+        except Exception:
+            pass
+    # plain fallback
+    return "<div>" + _html.escape(text).replace("\n", "<br>") + "</div>"
