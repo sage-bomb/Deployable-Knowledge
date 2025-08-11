@@ -1,8 +1,13 @@
-from typing import Any
+from typing import Any, Iterator
 from .base import BaseLLM
 
 class OpenAILLM(BaseLLM):
-    def generate(self, prompt: str, **kwargs: Any) -> str:
-        # Intentionally empty skeleton. Wire OpenAI SDK later.
-        # Return a placeholder so the app doesn't crash if misconfigured.
+    """Placeholder OpenAI backend. Wire the SDK when ready."""
+    def __init__(self, model: str | None = None, **kwargs: Any) -> None:
+        super().__init__(model or "gpt-4o-mini")
+
+    def generate_text(self, prompt: str, **kwargs: Any) -> str:
         return "[OpenAI LLM not configured]"
+
+    def stream_text(self, prompt: str, **kwargs: Any) -> Iterator[str]:
+        yield self.generate_text(prompt, **kwargs)

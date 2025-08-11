@@ -1,0 +1,12 @@
+{
+  "id": "title_summarizer",
+  "name": "Short Chat Title",
+  "system": "You write short, informative chat titles.",
+  "user_format": "{user}",
+  "context_item_format": "- {chunk}",
+  "context_header": "Context:",
+  "context_join": "\n",
+  "persona_format": "Persona: {persona}",
+  "history_separator": "\n",
+  "include_history": false
+}
