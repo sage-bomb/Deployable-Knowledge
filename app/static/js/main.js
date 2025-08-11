@@ -9,12 +9,12 @@ import { initMenu } from "./menu.js";
 import { initDocsController }     from "./ui/controllers/docs.js";
 import { initSessionsController } from "./ui/controllers/sessions.js";
 import { initChatController }     from "./ui/controllers/chat.js";
-import { initSearchController }   from "./ui/controllers/search.js";
+import { initSearchController, runSearch }   from "./ui/controllers/search.js";
 import { initSegmentsController } from "./ui/controllers/segments.js";
 import { openPersonaModal }       from "./ui/controllers/persona.js";
 import { openSettingsModal }      from "./ui/controllers/settings.js";
 
-import * as api from "./ui/api.js";
+import { dkClient as api } from "./ui/sdk/sdk.js";
 import { Store } from "./ui/store.js";
 
 initSplitter();
@@ -30,7 +30,6 @@ for (const w of windows) {
 initDocsController("win_docs");
 initSessionsController("win_sessions");
 initChatController();
-initSearchController("win_search");
 initSegmentsController("win_segments");
 
 // ensure we have a session at boot
@@ -46,6 +45,18 @@ initMenu(async (action) => {
     Store.sessionId = await api.startNewSession();
     // refresh sessions list
     initSessionsController("win_sessions");
+  }
+  if (action === "toggle-search") {
+    const existing = document.getElementById("win_search");
+    if (existing) {
+      existing.remove();
+    } else {
+      const cfg = { id: "win_search", window_type: "window_search", title: "Search Documents", col: "right" };
+      const node = createMiniWindowFromConfig(cfg);
+      document.getElementById("col-right").appendChild(node);
+      initSearchController("win_search");
+      if (Store.lastQuery) runSearch(Store.lastQuery);
+    }
   }
   if (action === "edit-persona") {
     openPersonaModal();

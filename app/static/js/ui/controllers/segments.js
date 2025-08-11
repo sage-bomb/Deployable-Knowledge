@@ -1,5 +1,5 @@
 // ui/controllers/segments.js — list database segments
-import * as api from "../api.js";
+import { dkClient as api } from "../sdk/sdk.js";
 import { getComponent, bus } from "../../components.js";
 
 export async function initSegmentsController(winId="win_segments") {

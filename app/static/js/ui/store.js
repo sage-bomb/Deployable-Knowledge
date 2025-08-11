@@ -7,7 +7,8 @@ const state = {
   persona: storedPersona,
   inactiveDocs: new Set(storedDocs ? JSON.parse(storedDocs) : []),
   llmTargetAddress: storedSettings.llm_target_address || "",
-  llmToken: storedSettings.llm_token || ""
+  llmToken: storedSettings.llm_token || "",
+  lastQuery: "",
 };
 export const Store = {
   get sessionId() { return state.sessionId; },
@@ -32,7 +33,9 @@ export const Store = {
   set llmToken(v) {
     state.llmToken = v;
     saveSettings();
-  }
+  },
+  get lastQuery() { return state.lastQuery; },
+  set lastQuery(v) { state.lastQuery = v; },
 };
 
 function saveSettings() {

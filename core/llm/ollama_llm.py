@@ -29,5 +29,4 @@ class OllamaLLM(BaseLLM):
                     if chunk:
                         yield chunk
                 except Exception:
-                    # Older ollama may emit plain text lines
                     yield line

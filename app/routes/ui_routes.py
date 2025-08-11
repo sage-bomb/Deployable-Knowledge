@@ -3,10 +3,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
-from utility.embedding_and_storing import db
-from utility.chat_state import ChatSession
-from utility.session_store import SessionStore
-from utility.validation import validate_session_id
+from core.rag.retriever import db
+from core.sessions import ChatSession, SessionStore
+from api.utils import validate_session_id
 
 router = APIRouter()
 

@@ -1,6 +1,6 @@
 // ui/controllers/settings.js — settings modal
 import { createMiniWindowFromConfig, mountModal } from "../../window.js";
-import * as api from "../api.js";
+import { dkClient as api } from "../sdk/sdk.js";
 
 export async function openSettingsModal() {
   const user = await api.getUser();

@@ -1,5 +1,5 @@
 // ui/controllers/sessions.js — sessions list + load history
-import * as api from "../api.js";
+import { dkClient as api } from "../sdk/sdk.js";
 import { renderChatLog } from "../render.js";
 import { getComponent, bus } from "../../components.js";
 import { Store } from "../store.js";

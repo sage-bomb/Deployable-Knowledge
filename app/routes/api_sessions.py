@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
 from datetime import datetime
-from utility.chat_state import ChatSession
-from utility.session_store import SessionStore
-from utility.validation import validate_session_id
+from core.sessions import ChatSession, SessionStore
+from api.utils import validate_session_id
 
 SESSION_COOKIE_NAME = "chat_session_id"
 

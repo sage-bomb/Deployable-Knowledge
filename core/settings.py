@@ -1,19 +1,19 @@
+from __future__ import annotations
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Literal
-from pydantic import BaseModel, Field
 import json
+from pydantic import BaseModel, Field
+
+from .prompts import loader as prompt_loader
 
 USERS_DIR = Path("users")
 USERS_DIR.mkdir(parents=True, exist_ok=True)
 
 class UserSettings(BaseModel):
     user_id: str
-    # LLM configuration
     llm_provider: Literal["ollama", "openai"] = "ollama"
-    llm_model: str = ""  # if empty, use provider default from config.py
-    # Prompting
+    llm_model: str = ""
     prompt_template_id: Optional[str] = None
-    # Optional knobs
     temperature: float = 0.2
     top_p: float = 0.95
     max_tokens: int = 512
@@ -24,7 +24,6 @@ def _user_path(user_id: str) -> Path:
 def load_settings(user_id: str) -> UserSettings:
     p = _user_path(user_id)
     if not p.exists():
-        # initialize with defaults
         s = UserSettings(user_id=user_id)
         save_settings(s)
         return s
@@ -41,7 +40,7 @@ def update_settings(user_id: str, patch: Dict[str, Any]) -> UserSettings:
     save_settings(s)
     return s
 
-# Prompt templates
+# Prompt template helpers
 PROMPTS_DIR = Path("prompts")
 PROMPTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -49,25 +48,22 @@ class PromptTemplate(BaseModel):
     id: str
     name: str
     description: Optional[str] = None
-    # One of these fields may exist depending on style; keep flexible
     system: Optional[str] = None
     content: Optional[str] = None
-    # Optional inputs schema (names the vars the template expects)
     inputs: List[str] = Field(default_factory=list)
     meta: Dict[str, Any] = Field(default_factory=dict)
 
 def list_prompt_templates() -> List[PromptTemplate]:
-    out: List[PromptTemplate] = []
-    for f in PROMPTS_DIR.glob("*.json"):
+    templates = []
+    for data in prompt_loader.list_templates():
         try:
-            data = json.loads(f.read_text(encoding="utf-8"))
-            out.append(PromptTemplate(**data))
+            templates.append(PromptTemplate(**data))
         except Exception:
             continue
-    return out
+    return templates
 
 def get_prompt_template(tid: str) -> Optional[PromptTemplate]:
-    f = PROMPTS_DIR / f"{tid}.json"
-    if not f.exists():
+    data = prompt_loader.load_template(tid)
+    if not data:
         return None
-    return PromptTemplate(**json.loads(f.read_text(encoding="utf-8")))
+    return PromptTemplate(**data)

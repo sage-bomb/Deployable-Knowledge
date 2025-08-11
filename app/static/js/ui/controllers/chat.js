@@ -1,9 +1,8 @@
 // ui/controllers/chat.js — chat send + stream
-import * as api from "../api.js";
+import { dkClient as api } from "../sdk/sdk.js";
 import { Store } from "../store.js";
 import { md, escapeHtml } from "../render.js";
 import { qs } from "../../dom.js";
-import { runSearch } from "./search.js";
 
 export function initChatController() {
   const chatWin = qs("#win_chat");
@@ -28,40 +27,47 @@ export function initChatController() {
     return div;
   };
 
+  let aborter = null;
   const send = async () => {
     const text = input.value.trim();
     if (!text) return;
     input.value = "";
+    Store.lastQuery = text;
     pushUser(text);
-    runSearch(text);
     const bubble = pushAssistantBubble();
 
+    aborter?.abort();
+    aborter = new AbortController();
+    let buf = "";
     try {
-      const { reader, decoder } = await api.chatStream({
-        message: text,
-        session_id: Store.sessionId,
-        inactive: Store.inactiveList(),
-        persona: Store.persona
-      });
-      let buf = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        bubble.innerHTML = md(buf);
-        log.scrollTop = log.scrollHeight;
-      }
+      await api.streamChat(
+        {
+          message: text,
+          session_id: Store.sessionId,
+          inactive: Store.inactiveList(),
+          persona: Store.persona,
+        },
+        {
+          signal: aborter.signal,
+          onDelta(delta) {
+            buf += delta;
+            bubble.innerHTML = md(buf);
+            log.scrollTop = log.scrollHeight;
+          },
+        }
+      );
     } catch (e) {
+      if (e.name === "AbortError") return;
       try {
         const res = await api.chat({
           message: text,
           session_id: Store.sessionId,
           inactive: Store.inactiveList(),
-          persona: Store.persona
+          persona: Store.persona,
         });
         bubble.innerHTML = md(res.response ?? "(no response)");
       } catch (e2) {
-        bubble.innerHTML = `<em>Error:</em> ${e2.message}`;
+        bubble.innerHTML = `<em>Error:</em> ${escapeHtml(e2.message)}`;
       }
     }
   };
