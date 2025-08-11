@@ -3,7 +3,10 @@ export function escapeHtml(s="") {
   return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 }
 export function md(str="") {
-  return (window.marked?.parse) ? window.marked.parse(str) : escapeHtml(str).replaceAll("\n","<br>");
+  const html = (window.marked?.parse)
+    ? window.marked.parse(str)
+    : escapeHtml(str).replaceAll("\n", "<br>");
+  return (window.DOMPurify?.sanitize) ? window.DOMPurify.sanitize(html) : html;
 }
 export function renderChatLog(history, logEl) {
   logEl.innerHTML = "";
