@@ -16,6 +16,7 @@ SESSION_COOKIE_NAME = "chat_session_id"
 store = SessionStore()
 
 def get_documents():
+    """Return a summary of ingested documents and segment counts."""
     raw = db.collection.get(include=["metadatas"])
     doc_map = {}
     for meta in raw.get("metadatas", []):
@@ -28,6 +29,7 @@ def get_documents():
 
 @router.get("/documents")
 async def list_documents_json():
+    """Expose :func:`get_documents` via a JSON API."""
     return get_documents()
 
 @router.get("/", response_class=HTMLResponse)

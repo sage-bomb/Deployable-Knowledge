@@ -61,6 +61,7 @@ async def get_session_data(session_id: str):
 
 @router.get("/session")
 async def get_or_create_session(request: Request):
+    """Return an existing session or create a new one if none is found."""
     store.prune_empty()
     session_id = request.cookies.get(SESSION_COOKIE_NAME)
     try:
@@ -97,5 +98,6 @@ async def create_session():
 
 @router.get("/user")
 async def get_user(request: Request):
+    """Return the authenticated user's identifier."""
     user = getattr(request.state, "user_id", "user")
     return {"user": user}

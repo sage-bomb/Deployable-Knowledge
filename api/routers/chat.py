@@ -24,6 +24,33 @@ async def chat(
     top_k: int = Form(8),
     stream: bool = Query(False),
 ):
+    """Handle a single chat interaction.
+
+    Parameters
+    ----------
+    message:
+        User supplied message content.
+    session_id:
+        Identifier for the chat session.  A new session is created if the
+        provided ID does not exist.
+    persona:
+        Optional persona string to bias responses.
+    inactive:
+        JSON encoded list of source IDs to exclude from retrieval.
+    template_id:
+        Prompt template identifier to use when building the request.
+    top_k:
+        Number of context chunks to retrieve.
+    stream:
+        If ``True`` results are returned as a Server‑Sent Events stream.
+
+    Returns
+    -------
+    JSONResponse or StreamingResponse
+        Depending on ``stream`` either a JSON payload containing the chat
+        response or an SSE stream of incremental tokens.
+    """
+
     session_id = validate_session_id(session_id)
     session = store.load(session_id) or ChatSession.new(session_id=session_id, user_id="default")
     if inactive:
@@ -108,6 +135,8 @@ async def chat_stream(
     template_id: str = Form("rag_chat"),
     top_k: int = Form(8),
 ):
+    """Convenience wrapper that forces streaming mode."""
+
     return await chat(
         message=message,
         session_id=session_id,

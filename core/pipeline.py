@@ -8,6 +8,8 @@ from .rag import retriever
 
 
 def _to_sources(blocks: List[dict]) -> List[Source]:
+    """Convert raw retrieval blocks into :class:`Source` objects."""
+
     out: List[Source] = []
     for i, b in enumerate(blocks):
         out.append(
@@ -23,6 +25,8 @@ def _to_sources(blocks: List[dict]) -> List[Source]:
 
 
 def chat_once(req: ChatRequest) -> ChatResponse:
+    """Execute a full chat turn and return the complete response."""
+
     context = retriever.search(
         req.message,
         top_k=req.top_k,
@@ -41,6 +45,8 @@ def chat_once(req: ChatRequest) -> ChatResponse:
 
 
 def chat_stream(req: ChatRequest) -> Iterator[ChatChunk]:
+    """Yield chat response chunks as they are produced by the LLM."""
+
     context = retriever.search(
         req.message,
         top_k=req.top_k,

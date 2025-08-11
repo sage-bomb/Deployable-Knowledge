@@ -14,12 +14,16 @@ from chromadb.config import Settings
 import uuid
 
 class DBManager:
+    """Minimal wrapper around ChromaDB providing embedding utilities."""
+
     def __init__(self, persist_dir: str, collection_name: str, model=None):
         self.client = chromadb.PersistentClient(path=str(persist_dir), settings=Settings(anonymized_telemetry=False))
         self.collection = self.client.get_or_create_collection(collection_name)
         self.model = model or load_embedding_model()
 
     def clear_collection(self, batch_size: int = 500) -> None:
+        """Remove all records from the collection in batches."""
+
         all_ids = self.collection.get()["ids"]
         total = len(all_ids)
         for i in range(0, total, batch_size):
@@ -27,6 +31,8 @@ class DBManager:
             self.collection.delete(ids=batch)
 
     def embed(self, docs: List[str], max_batch_tokens: int = 5120):
+        """Embed ``docs`` using the stored sentence-transformer model."""
+
         embeddings: List[List[float]] = []
         current_batch: List[str] = []
         current_tokens = 0
@@ -50,6 +56,8 @@ class DBManager:
         return embeddings
 
     def build_entry(self, segment_text: str, segment_index: int, source: str, tags: Optional[List[str]] = None, start: Optional[int] = None, end: Optional[int] = None):
+        """Build the ID, document and metadata tuple for a segment."""
+
         segment_uuid = str(uuid.uuid4())
         metadata = {
             "uuid": segment_uuid,
@@ -64,6 +72,8 @@ class DBManager:
         return segment_uuid, segment_text, metadata
 
     def add_segments(self, segments: List[str], source: str, tags: Optional[List[str]] = None, positions: Optional[List[tuple]] = None, page: Optional[List[Optional[int]]] = None) -> None:
+        """Add many text ``segments`` to the collection."""
+
         ids: List[str] = []
         docs: List[str] = []
         metas: List[dict] = []
@@ -85,6 +95,8 @@ class DBManager:
             self.collection.add(ids=batch_ids, documents=batch_docs, metadatas=batch_metas, embeddings=batch_embeddings)
 
     def delete_by_source(self, source_name: str, batch_size: int = 500) -> None:
+        """Remove all segments originating from ``source_name``."""
+
         all_data = self.collection.get(include=["metadatas"])
         to_delete = [id_ for id_, meta in zip(all_data["ids"], all_data["metadatas"]) if meta.get("source") == source_name]
         for i in range(0, len(to_delete), batch_size):
@@ -95,6 +107,8 @@ class DBManager:
 _db: Optional[DBManager] = None
 
 def get_db() -> DBManager:
+    """Return a singleton instance of :class:`DBManager`."""
+
     global _db
     if _db is None:
         model = load_embedding_model()
@@ -102,6 +116,8 @@ def get_db() -> DBManager:
     return _db
 
 class LazyDB:
+    """Proxy object lazily instantiating :class:`DBManager` on access."""
+
     def __getattr__(self, name):
         return getattr(get_db(), name)
 
@@ -110,9 +126,13 @@ db = LazyDB()
 # --- Chunking helpers from embedding_and_storing ---
 
 def chunk_text(text: str) -> List[Any]:
+    """Split ``text`` into ranked chunks for ingestion."""
+
     return pagerank_chunk_text(text, model=get_db().model, sim_threshold=0.7)
 
 def is_all_caps(text: str, threshold: float = 0.8) -> bool:
+    """Heuristic to filter shouty text segments."""
+
     cleaned = re.sub(r'[\W\d_]+', '', text)
     if not cleaned:
         return False
@@ -120,11 +140,15 @@ def is_all_caps(text: str, threshold: float = 0.8) -> bool:
     return (upper_count / len(cleaned)) >= threshold
 
 def has_repeated_substring(text: str, patterns: Optional[List[str]] = None) -> bool:
+    """Detect visually noisy substrings such as ellipses or dashes."""
+
     chars = re.sub(r'\s+', '', text)
     patterns = patterns or [r'\.{3,}', r'-{3,}', r'_{3,}']
     return any(re.search(p, chars) for p in patterns)
 
 def extract_text(file_path: Path) -> List[Dict[str, Any]]:
+    """Extract raw text and page numbers from ``file_path``."""
+
     suffix = file_path.suffix.lower()
     if suffix == ".pdf":
         parsed = parse_pdf(str(file_path))
@@ -140,6 +164,8 @@ def extract_text(file_path: Path) -> List[Dict[str, Any]]:
     raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
 def _db_add_segments_compat(db_obj: DBManager, segments: List[str], source: str, tags: List[str], positions: List[Any], pages: List[Optional[int]], metadata: List[Dict[str, Any]]):
+    """Invoke ``db_obj.add_segments`` handling legacy signatures."""
+
     sig = inspect.signature(db_obj.add_segments)
     params = sig.parameters
     kwargs = dict(segments=segments, source=source, tags=tags)
@@ -155,6 +181,8 @@ def _db_add_segments_compat(db_obj: DBManager, segments: List[str], source: str,
     return db_obj.add_segments(**kwargs)
 
 def embed_file(file_path: Path, source_name: Optional[str] = None, tags: Optional[List[str]] = None, filter_chunks: bool = True) -> None:
+    """Embed a single file into the vector store."""
+
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
     pages_dicts = extract_text(file_path)
@@ -192,6 +220,8 @@ def embed_file(file_path: Path, source_name: Optional[str] = None, tags: Optiona
     )
 
 def embed_directory(data_dir: str, clear_collection: bool = False, default_tags: Optional[List[str]] = None, filter_chunks: bool = False) -> None:
+    """Embed all supported files under ``data_dir``."""
+
     data_path = Path(data_dir)
     if not data_path.exists():
         raise FileNotFoundError(f"Data directory not found: {data_dir}")
@@ -203,6 +233,8 @@ def embed_directory(data_dir: str, clear_collection: bool = False, default_tags:
         embed_file(file_path=file_path, source_name=file_path.name, tags=default_tags or ["embedded"], filter_chunks=filter_chunks)
 
 def search(query: str, top_k: int = 5, exclude_sources: Optional[set] = None) -> List[Dict]:
+    """Perform a vector similarity search over embedded segments."""
+
     if top_k <= 0:
         return []
     embedding = get_db().embed([query])[0]

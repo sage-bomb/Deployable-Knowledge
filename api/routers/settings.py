@@ -15,10 +15,12 @@ router = APIRouter(prefix="/api", tags=["settings"])
 
 @router.get("/settings/{user_id}", response_model=UserSettings)
 def get_settings(user_id: str):
+    """Fetch persisted settings for ``user_id``."""
     return load_settings(user_id)
 
 @router.patch("/settings/{user_id}", response_model=UserSettings)
 def patch_settings(user_id: str, patch: Dict[str, Any]):
+    """Apply a partial update to a user's settings."""
     try:
         return update_settings(user_id, patch)
     except Exception as e:
@@ -26,10 +28,12 @@ def patch_settings(user_id: str, patch: Dict[str, Any]):
 
 @router.get("/prompt-templates")
 def list_prompts():
+    """Return metadata for all available prompt templates."""
     return [p.model_dump() for p in list_prompt_templates()]
 
 @router.get("/prompt-templates/{tid}")
 def get_prompt(tid: str):
+    """Return a single prompt template by identifier."""
     p = get_prompt_template(tid)
     if not p:
         raise HTTPException(status_code=404, detail="template not found")
@@ -37,6 +41,7 @@ def get_prompt(tid: str):
 
 @router.put("/prompt-templates/{tid}")
 def put_prompt(tid: str, payload: Dict[str, Any]):
+    """Create or replace a prompt template on disk."""
     for f in ["id", "name", "user_format", "system"]:
         if f not in payload:
             raise HTTPException(status_code=400, detail=f"missing {f}")

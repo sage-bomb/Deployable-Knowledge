@@ -21,6 +21,8 @@ class Template:
     include_history: bool = True
 
 def _load_template(tid: Optional[str]) -> Template:
+    """Resolve ``tid`` to a :class:`Template` instance."""
+
     tid = tid or "rag_chat"
     tmpl = get_prompt_template(tid)
     if tmpl is None:
@@ -56,27 +58,36 @@ def _load_template(tid: Optional[str]) -> Template:
     return Template(**data)
 
 def _fmt_defaults(s: str, **kwargs) -> str:
+    """Format ``s`` replacing ``{name|default}`` tokens with values."""
+
     def repl(m):
         name = m.group(1)
         default = m.group(2) if m.group(2) is not None else ""
         return str(kwargs.get(name, default))
+
     s = re.sub(r"\{([a-zA-Z0-9_]+)\|([^}]+)\}", repl, s)
     return s.format(**{k: kwargs.get(k, "") for k in kwargs})
 
 def _render_context(t: Template, context_blocks: List[Dict]) -> str:
+    """Render retrieved context blocks using the template's format."""
+
     if not context_blocks:
         return ""
     lines = []
     for b in context_blocks:
-        lines.append(_fmt_defaults(
-            t.context_item_format,
-            chunk=b.get("text", b.get("chunk", "")),
-            source=b.get("source", b.get("doc", "unknown")),
-            score=b.get("score", ""),
-        ))
+        lines.append(
+            _fmt_defaults(
+                t.context_item_format,
+                chunk=b.get("text", b.get("chunk", "")),
+                source=b.get("source", b.get("doc", "unknown")),
+                score=b.get("score", ""),
+            )
+        )
     return t.context_header + "\n" + t.context_join.join(lines)
 
 def _render_history(t: Template, history: List[ChatExchange]) -> str:
+    """Render the chat history portion of the prompt."""
+
     if not t.include_history or not history:
         return ""
     lines = []
@@ -95,6 +106,8 @@ def build_prompt(
     persona: Optional[str] = None,
     template_id: Optional[str] = None,
 ) -> str:
+    """Construct the final prompt string for the LLM."""
+
     t = _load_template(template_id)
     ctx = _render_context(t, context_blocks)
     hist = _render_history(t, history)
@@ -113,6 +126,8 @@ def build_prompt(
     return "\n\n".join([b for b in blocks if b])
 
 def _resolve_settings(user_id: Optional[str]):
+    """Best-effort lookup of user settings falling back to defaults."""
+
     s = None
     if user_id:
         try:
@@ -127,6 +142,8 @@ def _resolve_settings(user_id: Optional[str]):
     return s
 
 def stream_llm(prompt: str, user_id: Optional[str] = None) -> Iterable[str]:
+    """Stream tokens from the configured LLM provider."""
+
     s = _resolve_settings(user_id)
     provider = getattr(s, "llm_provider", "ollama")
     model = getattr(s, "llm_model", "") or None
@@ -134,6 +151,8 @@ def stream_llm(prompt: str, user_id: Optional[str] = None) -> Iterable[str]:
     return llm.stream_text(prompt)
 
 def ask_llm(prompt: str, user_id: Optional[str] = None) -> str:
+    """Return a complete text response from the LLM."""
+
     s = _resolve_settings(user_id)
     provider = getattr(s, "llm_provider", "ollama")
     model = getattr(s, "llm_model", "") or None
@@ -141,6 +160,8 @@ def ask_llm(prompt: str, user_id: Optional[str] = None) -> str:
     return llm.generate_text(prompt)
 
 def update_summary(old_summary: str, last_user: str, last_assistant: str, user_id: Optional[str]=None) -> str:
+    """Use the LLM to generate an updated conversation summary."""
+
     instr = (
         "Update the running summary of this conversation. Keep it concise and factual.\n"
         f"Old summary: {old_summary}\n"
@@ -151,6 +172,8 @@ def update_summary(old_summary: str, last_user: str, last_assistant: str, user_i
     return ask_llm(instr, user_id=user_id)
 
 def generate_title(first_interaction: str, user_id: Optional[str]=None) -> str:
+    """Produce a short title summarising the chat session."""
+
     prompt = (
         f"{first_interaction}\n"
         "Given this chat interaction, provide a snappy short title we can use for it."
