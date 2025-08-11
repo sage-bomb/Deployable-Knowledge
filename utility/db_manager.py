@@ -70,6 +70,7 @@ class DBManager:
             "source": source,
             "metadata_tags": ", ".join(tags) if tags else "Placeholder",
             "segment_index": segment_index,
+            "priority": "medium",
         }
         if start is not None and end is not None:
             metadata["start_char"] = start

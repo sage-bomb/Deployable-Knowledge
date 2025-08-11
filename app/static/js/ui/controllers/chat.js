@@ -32,6 +32,16 @@ export function initChatController() {
     if (!text) return;
     input.value = "";
     pushUser(text);
+    try {
+      const search = await api.searchDocuments(text);
+      const results = search.results || [];
+      if (results.length) {
+        const ctx = document.createElement("div");
+        ctx.className = "msg context";
+        ctx.innerHTML = `<em>Context:</em> ` + results.map(r => `${escapeHtml(r.source)}: ${escapeHtml(r.text)}`).join("<br>");
+        log.appendChild(ctx); log.scrollTop = log.scrollHeight;
+      }
+    } catch {}
     const bubble = pushAssistantBubble();
 
     try {

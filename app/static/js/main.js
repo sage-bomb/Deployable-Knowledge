@@ -10,7 +10,9 @@ import { initDocsController }     from "./ui/controllers/docs.js";
 import { initSessionsController } from "./ui/controllers/sessions.js";
 import { initChatController }     from "./ui/controllers/chat.js";
 import { initSearchController }   from "./ui/controllers/search.js";
+import { initSegmentsController } from "./ui/controllers/segments.js";
 import { openPersonaModal }       from "./ui/controllers/persona.js";
+import { openSettingsModal }      from "./ui/controllers/settings.js";
 
 import * as api from "./ui/api.js";
 import { Store } from "./ui/store.js";
@@ -29,9 +31,14 @@ initDocsController("win_docs");
 initSessionsController("win_sessions");
 initChatController();
 initSearchController("win_search");
+initSegmentsController("win_segments");
 
 // ensure we have a session at boot
 api.getOrCreateChatSession().then(id => Store.sessionId = id);
+api.getUser().then(u => {
+  const btn = document.getElementById("user-menu-trigger");
+  if (btn && u?.user) btn.textContent = `${u.user} ▾`;
+});
 
 // header menu
 initMenu(async (action) => {
@@ -43,4 +50,12 @@ initMenu(async (action) => {
   if (action === "edit-persona") {
     openPersonaModal();
   }
+  if (action === "settings") {
+    openSettingsModal();
+  }
 });
+
+// user menu
+initMenu((action) => {
+  if (action === "logout") window.location.href = "/logout";
+}, "user-menu-trigger", "user-menu-dropdown");

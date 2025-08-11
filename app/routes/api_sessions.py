@@ -13,9 +13,12 @@ store = SessionStore()
 @router.get("/sessions")
 async def list_sessions():
     """Return lightweight metadata for all stored sessions."""
+    store.prune_empty()
     summaries = []
     for entry in store.list_sessions():
         session = store.load(entry["id"])
+        if not session or not session.history:
+            continue
         summaries.append(
             {
                 "session_id": entry["id"],
@@ -59,6 +62,7 @@ async def get_session_data(session_id: str):
 
 @router.get("/session")
 async def get_or_create_session(request: Request):
+    store.prune_empty()
     session_id = request.cookies.get(SESSION_COOKIE_NAME)
     try:
         session_id = validate_session_id(session_id) if session_id else None
@@ -66,6 +70,9 @@ async def get_or_create_session(request: Request):
         session_id = None
     if session_id and store.exists(session_id):
         session = store.load(session_id)
+        if not session or not session.history:
+            session = ChatSession.new(user_id="default")
+            store.save(session)
     else:
         session = ChatSession.new(user_id="default")
         store.save(session)
@@ -87,3 +94,9 @@ async def create_session():
         key=SESSION_COOKIE_NAME, value=session.session_id, httponly=True
     )
     return response
+
+
+@router.get("/user")
+async def get_user(request: Request):
+    user = getattr(request.state, "user_id", "user")
+    return {"user": user}

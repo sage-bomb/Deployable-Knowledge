@@ -55,7 +55,7 @@ html, body {
   padding: 8px 12px;
   background: linear-gradient(180deg, hsl(var(--h) var(--sat) calc(var(--l-panel) + 2%)), hsl(var(--h) var(--sat) var(--l-panel)));
   border-bottom: 1px solid var(--border);
-  display: grid; grid-template-columns: auto auto 1fr;
+  display: grid; grid-template-columns: auto auto 1fr auto;
   align-items: center; gap: 10px;
 }
 .brand { font-size: 14px; color: var(--muted); letter-spacing: .3px; }
@@ -228,6 +228,7 @@ html, body {
 .msg { padding: 8px 10px; border-radius: 10px; background: hsl(var(--h) var(--sat) var(--l-panel)); border: 1px solid var(--border); }
 .msg.you { background: hsl(var(--h) var(--sat) calc(var(--l-panel) + 3%)); }
 .msg.assistant { background: hsl(var(--h) var(--sat) calc(var(--l-panel) + 1%)); }
+.msg.context { background: hsl(var(--h) var(--sat) calc(var(--l-panel) + 2%)); font-size: 12px; color: var(--muted); }
 
 .chat-input { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
 .chat-input .input { width: 100%; }

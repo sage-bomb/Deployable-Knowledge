@@ -1,7 +1,7 @@
 // menu.js — simple dropdown menu
-export function initMenu(onAction) {
-  const trigger = document.getElementById("menu-trigger");
-  const dropdown = document.getElementById("menu-dropdown");
+export function initMenu(onAction, triggerId="menu-trigger", dropdownId="menu-dropdown") {
+  const trigger = document.getElementById(triggerId);
+  const dropdown = document.getElementById(dropdownId);
   if (!trigger || !dropdown) return;
 
   function open() {

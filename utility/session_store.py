@@ -76,3 +76,11 @@ class SessionStore:
     # ------------------------------------------------------------------
     def exists(self, session_id: str) -> bool:
         return self._session_path(session_id).exists()
+
+    # ------------------------------------------------------------------
+    def prune_empty(self) -> None:
+        """Remove sessions with no history."""
+        for entry in list(self.list_sessions()):
+            session = self.load(entry["id"])
+            if session and not session.history:
+                self.delete(entry["id"])
