@@ -21,5 +21,7 @@ MIN_TOP_K = 1
 MAX_TOP_K = 20
 
 # === Ollama ===
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral:7b")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
+# Backwards compatibility for legacy code expecting OLLAMA_URL
+OLLAMA_URL = f"{OLLAMA_BASE_URL}/api/generate"

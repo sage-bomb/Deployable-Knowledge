@@ -1,0 +1,7 @@
+{
+  "id": "default",
+  "name": "Plain Relay",
+  "description": "Minimal pass-through of the user's message.",
+  "content": "{message}",
+  "inputs": ["message"]
+}

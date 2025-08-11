@@ -37,6 +37,15 @@ export const Field = {
       if (value) textarea.value = value;
       return textarea;
     },
+    "select": ({ id, name, options = [], value = "" }) => {
+      const sel = el("select", { id, name: name || id, class: "input" });
+      for (const opt of options) {
+        const o = el("option", { value: opt.value }, [opt.label || opt.value]);
+        if (opt.value === value) o.selected = true;
+        sel.appendChild(o);
+      }
+      return sel;
+    },
     "text": ({ text = "", className = "" }) => {
       const s = el("span", {}, [String(text)]);
       if (className) s.className = className;
