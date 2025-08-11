@@ -1,181 +1,25 @@
-// window.js — window types + modal helper
-import { el, Field, fieldRow } from "./ui.js";
-import { createItemList } from "./components.js";
-import { md } from "./ui/render.js";
+// window.js — registry + modal/resize helpers
+import { el } from "./ui.js";
+import { render as renderGeneric } from "./windows/window_generic.js";
+import { render as renderDocuments } from "./windows/window_documents.js";
+import { render as renderSessions } from "./windows/window_sessions.js";
+import { render as renderChatUI } from "./windows/window_chat_ui.js";
+import { render as renderSearch } from "./windows/window_search.js";
+import { render as renderSegments } from "./windows/window_segments.js";
+import { render as renderPersona } from "./windows/window_persona.js";
+import { render as renderSegmentView } from "./windows/window_segment_view.js";
+import { render as renderPromptEditor } from "./windows/window_prompt_editor.js";
 
 const WindowTypes = {
-  "window_generic": (config, winId) => {
-    const form = el("form", { class: "form", autocomplete: "off" });
-    (config.Elements || []).forEach((e, idx) => {
-      const baseId = e.id || (e.name ? e.name.toLowerCase().replace(/\s+/g, "_") : `field_${idx+1}`);
-      const id = `${baseId}`;
-      const label = e.label || e.name || baseId;
-
-      if (e.type === "item_list") {
-        const listEl = createItemList(config.id || winId, { ...e, id });
-        const row = el("div", { class: "row" }, [
-          el("label", {}, [label]),
-          listEl
-        ]);
-        form.appendChild(row);
-        return;
-      }
-
-      const input = Field.create({ ...e, id });
-      form.appendChild(fieldRow(id, label, input));
-    });
-    return form;
-  },
-
-  "window_documents": (config, winId) => {
-    const layout = el("div", { class: "form" });
-
-    // Upload bar
-    const id = config.id || winId;
-    const upWrap = el("div", { class: "row" });
-    const upInput = el("input", { type: "file", multiple: true, id: `${id}-upload`, style: { maxWidth: "100%" } });
-    const upBtn = el("button", { class: "btn", type: "button", id: `${id}-upload-btn` }, ["Upload"]);
-    upWrap.append(el("label", {}, ["Upload Documents"]), upInput, upBtn);
-    layout.appendChild(upWrap);
-
-    // Documents list
-    const listEl = createItemList(id, {
-      id: "doc_list",
-      item_template: {
-        elements: [
-          { type: "text", bind: "title", class: "li-title" },
-          { type: "text", bind: "segments", class: "li-meta" },
-          { type: "button", toggle: { prop: "active", on: "Deactivate", off: "Activate", action: "toggle_active" } },
-          { type: "button", label: "Remove", action: "remove", variant: "danger" }
-        ]
-      }
-    });
-    layout.appendChild(listEl);
-    return layout;
-  },
-
-  "window_sessions": (config, winId) => {
-    const layout = el("div", { class: "form" });
-    const listEl = createItemList(config.id || winId, {
-      id: "session_list",
-      item_template: {
-        elements: [
-          { type: "text", bind: "title", class: "li-title" },
-          { type: "text", bind: "created_at", class: "li-right" }
-        ]
-      }
-    });
-    layout.appendChild(listEl);
-    return layout;
-  },
-
-  "window_chat_ui": (config, winId) => {
-    const wrap = el("div", { class: "chat-window" });
-    const log = el("div", { class: "chat-log", id: "chat_log" });
-    const input = Field.create({ type: "text_field", id: "chat_input", placeholder: "Type a message..." });
-    const send = el("button", { class: "btn", type: "button" }, ["Send"]);
-    const bar = el("div", { class: "chat-input" }, [input, send]);
-    wrap.append(log, bar);
-    wrap.dataset.winId = config.id || winId;
-    return wrap;
-  },
-
-  "window_search": (config, winId) => {
-    const wrap = el("div", { class: "form" });
-    const q = Field.create({ type: "text_field", id: "search_q", placeholder: "Enter search text..." });
-    const k = Field.create({ type: "number_field", id: "search_k", value: 5, min: 1, max: 50 });
-    const go = el("button", { class: "btn", type: "button" }, ["Search"]);
-    const bar = el("div", { class: "search-bar" }, [q, k, go]);
-    const results = el("div", { class: "results", id: "search_results" });
-    wrap.append(bar, results);
-    wrap.dataset.winId = config.id || winId;
-    return wrap;
-  },
-
-  "window_segments": (config, winId) => {
-    const layout = el("div", { class: "form" });
-    const listEl = createItemList(config.id || winId, {
-      id: "segment_list",
-      item_template: {
-        elements: [
-          { type: "text", bind: "source", class: "li-title" },
-          { type: "text", bind: "priority", class: "li-meta" },
-          { type: "text", bind: "preview", class: "li-subtle" },
-          { type: "button", label: "Open", action: "open" },
-          { type: "button", label: "Remove", action: "remove", variant: "danger" }
-        ]
-      }
-    });
-    layout.appendChild(listEl);
-    return layout;
-  },
-
-  "window_persona": (config, winId) => {
-  const wrap = el("div", { class: "form" });
-
-  const textarea = Field.create({
-    type: "text_area",
-    id: "persona_text",
-    value: config.value || "",
-    rows: 10
-  });
-  const row = el("div", { class: "row" }, [
-    el("label", { for: "persona_text" }, ["Persona"]),
-    textarea
-  ]);
-
-  // simple action row; Save handled by app layer
-  const actions = el("div", { class: "row" }, [
-    el("button", { type: "button", class: "btn js-persona-save" }, ["Save"])
-  ]);
-
-  wrap.append(row, actions);
-  return wrap;
-},
-
-  "window_segment_view": (config, winId) => {
-    const seg = config.segment || {};
-    const wrap = el("div", { class: "form segment-view" });
-    const metaTop = el("div", { class: "row" }, [
-      el("label", {}, ["Source"]),
-      el("span", { class: "li-subtle" }, [
-        `${seg.source || ""}${seg.page != null ? `, p.${seg.page}` : ""}`
-      ])
-    ]);
-    const metaDates = el("div", { class: "row" }, [
-      el("label", {}, ["Dates"]),
-      el("span", { class: "li-subtle" }, [
-        `${seg.created_at || ""}${seg.updated_at ? ` • ${seg.updated_at}` : ""}`
-      ])
-    ]);
-    const tags = el("div", { class: "row" }, [
-      el("label", {}, ["Tags"]),
-      el("span", { class: "li-subtle" }, [(seg.tags || []).join(", ")])
-    ]);
-    const body = el("div", { class: "segment-text" });
-    body.innerHTML = md(seg.text || "");
-    wrap.append(metaTop, metaDates, tags, body);
-    return wrap;
-  },
-
-  "window_prompt_editor": (config, winId) => {
-    const wrap = el("div", { class: "form" });
-    const selectRow = el("div", { class: "row" }, [
-      el("label", { for: "tmpl_select" }, ["Template"]),
-      el("select", { id: "tmpl_select", class: "input" })
-    ]);
-    const textRow = el("div", { class: "row" }, [
-      el("label", { for: "tmpl_text" }, ["JSON"]),
-      el("textarea", { id: "tmpl_text", class: "textarea", style: { fontFamily: "monospace", minHeight: "200px" } })
-    ]);
-    const actions = el("div", { class: "row" }, [
-      el("button", { type: "button", class: "btn", id: "tmpl_save" }, ["Save"])
-    ]);
-    wrap.append(selectRow, textRow, actions);
-    return wrap;
-  },
-
-
+  window_generic: renderGeneric,
+  window_documents: renderDocuments,
+  window_sessions: renderSessions,
+  window_chat_ui: renderChatUI,
+  window_search: renderSearch,
+  window_segments: renderSegments,
+  window_persona: renderPersona,
+  window_segment_view: renderSegmentView,
+  window_prompt_editor: renderPromptEditor,
 };
 
 export function createMiniWindowFromConfig(config) {
