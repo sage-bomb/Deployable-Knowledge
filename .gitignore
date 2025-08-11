@@ -39,6 +39,7 @@ parsed_texts/
 
 # --- Query result data ---
 *.json
+!prompts/*.json
 
 # --- Model cache or sentence-transformers ---
 cache/

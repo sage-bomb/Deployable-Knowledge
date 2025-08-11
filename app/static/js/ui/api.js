@@ -75,6 +75,26 @@ export async function searchDocuments(q, top_k=5) {
   return asJsonSafe(res);
 }
 
+export async function getSettings(userId) {
+  const res = await ok(await fetch(`/api/settings/${encodeURIComponent(userId)}`, { headers: JSON_HEADERS, credentials: "same-origin" }));
+  return asJsonSafe(res);
+}
+
+export async function patchSettings(userId, payload) {
+  const res = await ok(await fetch(`/api/settings/${encodeURIComponent(userId)}`, {
+    method: "PATCH",
+    headers: { ...JSON_HEADERS, "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify(payload)
+  }));
+  return asJsonSafe(res);
+}
+
+export async function listPromptTemplates() {
+  const res = await ok(await fetch(`/api/prompt-templates`, { headers: JSON_HEADERS, credentials: "same-origin" }));
+  return asJsonSafe(res);
+}
+
 // Non-streaming fallback (if you have a non-streaming route)
 export async function chat({ message, session_id, persona="", inactive=[] }) {
   const fd = new FormData();

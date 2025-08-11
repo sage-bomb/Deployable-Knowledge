@@ -3,6 +3,7 @@ import * as api from "../api.js";
 import { Store } from "../store.js";
 import { md, escapeHtml } from "../render.js";
 import { qs } from "../../dom.js";
+import { runSearch } from "./search.js";
 
 export function initChatController() {
   const chatWin = qs("#win_chat");
@@ -32,16 +33,7 @@ export function initChatController() {
     if (!text) return;
     input.value = "";
     pushUser(text);
-    try {
-      const search = await api.searchDocuments(text);
-      const results = search.results || [];
-      if (results.length) {
-        const ctx = document.createElement("div");
-        ctx.className = "msg context";
-        ctx.innerHTML = `<em>Context:</em> ` + results.map(r => `${escapeHtml(r.source)}: ${escapeHtml(r.text)}`).join("<br>");
-        log.appendChild(ctx); log.scrollTop = log.scrollHeight;
-      }
-    } catch {}
+    runSearch(text);
     const bubble = pushAssistantBubble();
 
     try {
