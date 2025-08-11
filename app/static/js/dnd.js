@@ -29,7 +29,18 @@ export function handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDrop
     draggingWin.style.pointerEvents = "";
 
     if (targetCol) {
-      targetCol.appendChild(draggingWin);
+      // Determine insertion point within the column based on pointer Y
+      const siblings = [...targetCol.querySelectorAll('.miniwin')].filter(w => w !== draggingWin);
+      let inserted = false;
+      for (const sib of siblings) {
+        const rect = sib.getBoundingClientRect();
+        if (e.clientY < rect.top + rect.height / 2) {
+          targetCol.insertBefore(draggingWin, sib);
+          inserted = true;
+          break;
+        }
+      }
+      if (!inserted) targetCol.appendChild(draggingWin);
       draggingWin.focus({ preventScroll: true });
     }
   } else {
@@ -105,6 +116,14 @@ export function initWindowDnD() {
     if (!win) return;
     const collapsed = win.classList.toggle("collapsed");
     btn.setAttribute("aria-pressed", String(collapsed));
+    if (collapsed) {
+      // Remember current height so it can be restored when expanded
+      win.dataset.prevHeight = win.style.height;
+      win.style.height = '';
+    } else if (win.dataset.prevHeight) {
+      win.style.height = win.dataset.prevHeight;
+      delete win.dataset.prevHeight;
+    }
   });
 
   document.addEventListener("click", (e) => {
