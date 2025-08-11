@@ -72,7 +72,8 @@ export async function chat({ message, session_id, persona="", inactive=[] }) {
 }
 
 // Streaming chat using x-www-form-urlencoded to match legacy UI
-export async function chatStream({ message, session_id, persona="", inactive=[] }) {
+// Accepts an optional `signal` for cancellation via AbortController
+export async function chatStream({ message, session_id, persona="", inactive=[], signal }) {
   const params = new URLSearchParams();
   params.set("message", message);
   params.set("persona", persona);
@@ -84,7 +85,8 @@ export async function chatStream({ message, session_id, persona="", inactive=[] 
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "Accept": "*/*" },
     body: params.toString(),
-    credentials: "same-origin"
+    credentials: "same-origin",
+    signal
   });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   if (!res.body) throw new Error("No response body");

@@ -9,6 +9,16 @@ export function initChatController() {
   const log = chatWin.querySelector("#chat_log");
   const input = chatWin.querySelector("#chat_input");
   const sendBtn = chatWin.querySelector(".chat-input .btn");
+  const closeBtn = chatWin.querySelector(".js-close");
+
+  let controller = null;
+
+  const cancel = () => {
+    if (controller) {
+      controller.abort();
+      controller = null;
+    }
+  };
 
   const pushUser = (text) => {
     const div = document.createElement("div");
@@ -27,18 +37,21 @@ export function initChatController() {
   };
 
   const send = async () => {
+    cancel();
     const text = input.value.trim();
     if (!text) return;
     input.value = "";
     pushUser(text);
     const bubble = pushAssistantBubble();
+    controller = new AbortController();
 
     try {
       const { reader, decoder } = await api.chatStream({
         message: text,
         session_id: Store.sessionId,
         inactive: Store.inactiveList(),
-        persona: Store.persona
+        persona: Store.persona,
+        signal: controller.signal
       });
       let buf = "";
       while (true) {
@@ -49,6 +62,10 @@ export function initChatController() {
         log.scrollTop = log.scrollHeight;
       }
     } catch (e) {
+      if (e.name === "AbortError") {
+        bubble.innerHTML = "<em>Cancelled</em>";
+        return;
+      }
       try {
         const res = await api.chat({
           message: text,
@@ -60,9 +77,13 @@ export function initChatController() {
       } catch (e2) {
         bubble.innerHTML = `<em>Error:</em> ${e2.message}`;
       }
+    } finally {
+      controller = null;
     }
   };
 
   sendBtn.addEventListener("click", send);
   input.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+  closeBtn?.addEventListener("click", cancel);
+  window.addEventListener("beforeunload", cancel);
 }
