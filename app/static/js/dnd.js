@@ -16,7 +16,7 @@ export function calcDragPosition(winStart, pointerStart, e) {
 
 export function handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDropColumnAt, dropMarker) {
   if (!isModalDrag) {
-    const targetCol = getDropColumnAt(e.clientX, e.clientY);
+    const targetCol = dropMarker.parentNode || getDropColumnAt(e.clientX, e.clientY);
     cols.forEach(c => c.classList.remove("drop-candidate"));
     columnsEl.classList.remove("dragging");
 
@@ -28,12 +28,11 @@ export function handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDrop
     draggingWin.style.width = "";
     draggingWin.style.pointerEvents = "";
 
-    if (dropMarker.parentNode) dropMarker.parentNode.removeChild(dropMarker);
-
     if (targetCol) {
       targetCol.insertBefore(draggingWin, dropMarker);
       draggingWin.focus({ preventScroll: true });
     }
+    if (dropMarker.parentNode) dropMarker.parentNode.removeChild(dropMarker);
   } else {
     draggingWin.classList.remove("dragging");
     draggingWin.style.removeProperty("--drag-w");

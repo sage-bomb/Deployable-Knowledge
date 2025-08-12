@@ -39,15 +39,17 @@ function spawnWindow(cfg, init) {
       indicator.className = "down-indicator";
       indicator.textContent = "⌄";
       colEl.appendChild(indicator);
-      const onScroll = () => {
-        if (colEl.scrollTop + colEl.clientHeight >= node.offsetTop) {
-          indicator.classList.add("hide");
-          setTimeout(() => indicator.remove(), 300);
-          colEl.removeEventListener("scroll", onScroll);
-        }
-      };
-      colEl.addEventListener("scroll", onScroll);
+    } else {
+      indicator.className = "down-indicator";
     }
+    const onScroll = () => {
+      if (colEl.scrollTop + colEl.clientHeight >= node.offsetTop) {
+        indicator.classList.add("hide");
+        setTimeout(() => indicator.remove(), 300);
+        colEl.removeEventListener("scroll", onScroll);
+      }
+    };
+    colEl.addEventListener("scroll", onScroll);
   }
   if (init) init(cfg.id);
   return node;
