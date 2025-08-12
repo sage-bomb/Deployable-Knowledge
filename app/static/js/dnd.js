@@ -27,9 +27,6 @@ export function handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDrop
     draggingWin.style.position = "";
     draggingWin.style.width = "";
     draggingWin.style.pointerEvents = "";
-
-    if (dropMarker.parentNode) dropMarker.parentNode.removeChild(dropMarker);
-
     if (targetCol) {
       targetCol.insertBefore(draggingWin, dropMarker);
       draggingWin.focus({ preventScroll: true });
