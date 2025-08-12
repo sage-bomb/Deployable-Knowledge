@@ -4,12 +4,18 @@ import { getComponent, bus } from "../../components.js";
 import { openSegmentView } from "./segment_view.js";
 
 export async function initSegmentsController(winId="win_segments") {
+  let currentSource = null;
   const refresh = async () => {
-    const segs = await api.listSegments();
+    const segs = await api.listSegments(currentSource);
     const comp = getComponent(winId, "segment_list");
     if (comp) comp.render(segs);
   };
   await refresh();
+
+  bus.addEventListener("docs:select", async (ev) => {
+    currentSource = ev.detail?.id || null;
+    await refresh();
+  });
 
   bus.addEventListener("ui:list-action", async (ev) => {
     const { winId: srcWin, elementId, action, item } = ev.detail || {};

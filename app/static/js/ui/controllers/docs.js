@@ -3,6 +3,7 @@ import { dkClient as api } from "../sdk/sdk.js";
 import { getComponent, bus } from "../../components.js";
 import { Store } from "../store.js";
 import { qs } from "../../dom.js";
+import { el } from "../../ui.js";
 
 export async function initDocsController(winId="win_docs") {
   const refresh = async () => {
@@ -19,13 +20,37 @@ export async function initDocsController(winId="win_docs") {
     if (action === "remove")        { try { await api.removeDocument(item.id); } finally { await refresh(); } }
   });
 
+  bus.addEventListener("ui:list-select", (ev) => {
+    const { winId: srcWin, elementId, item } = ev.detail || {};
+    if (srcWin !== winId || elementId !== "doc_list") return;
+    bus.dispatchEvent(new CustomEvent("docs:select", { detail: { id: item.id } }));
+  });
+
   const win = qs(`#${winId}`);
-  const input = win?.querySelector(`#${winId}-upload`);
-  const btn   = win?.querySelector(`#${winId}-upload-btn`);
+  const input  = win?.querySelector(`#${winId}-upload`);
+  const choose = win?.querySelector(`#${winId}-choose-btn`);
+  const list   = win?.querySelector(`#${winId}-upload-list`);
+  const btn    = win?.querySelector(`#${winId}-upload-btn`);
+
+  choose?.addEventListener("click", () => input?.click());
+
+  input?.addEventListener("change", () => {
+    if (!list) return;
+    list.innerHTML = "";
+    for (const f of input.files) {
+      list.appendChild(el("li", {}, [f.name]));
+    }
+  });
+
   btn?.addEventListener("click", async () => {
     if (!input?.files?.length) return;
     btn.disabled = true; btn.textContent = "Uploading…";
-    try { await api.uploadDocuments(input.files); input.value = ""; await refresh(); }
+    try {
+      await api.uploadDocuments(input.files);
+      input.value = "";
+      if (list) list.innerHTML = "";
+      await refresh();
+    }
     catch (e) { alert("Upload failed: " + e.message); }
     finally { btn.disabled = false; btn.textContent = "Upload"; }
   });
