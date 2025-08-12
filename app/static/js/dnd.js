@@ -28,10 +28,14 @@ export function handleDrop(draggingWin, isModalDrag, columnsEl, cols, e, getDrop
     draggingWin.style.width = "";
     draggingWin.style.pointerEvents = "";
     if (targetCol) {
-      targetCol.insertBefore(draggingWin, dropMarker);
+      if (dropMarker.parentNode === targetCol) {
+        targetCol.insertBefore(draggingWin, dropMarker);
+      } else {
+        targetCol.appendChild(draggingWin);
+      }
+      if (dropMarker.parentNode) dropMarker.parentNode.removeChild(dropMarker);
       draggingWin.focus({ preventScroll: true });
     }
-    if (dropMarker.parentNode) dropMarker.parentNode.removeChild(dropMarker);
   } else {
     draggingWin.classList.remove("dragging");
     draggingWin.style.removeProperty("--drag-w");
