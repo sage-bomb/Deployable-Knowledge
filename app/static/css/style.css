@@ -16,11 +16,23 @@ html, body {
   padding: 8px 12px;
   background: linear-gradient(180deg, hsl(var(--h) var(--sat) calc(var(--l-panel) + 2%)), hsl(var(--h) var(--sat) var(--l-panel)));
   border-bottom: 1px solid var(--border);
-  display: grid; grid-template-columns: auto auto 1fr auto;
-  align-items: center; gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
 }
-.brand { font-size: 14px; color: var(--muted); letter-spacing: .3px; }
-.fill { justify-self: end; }
+.app-header .left,
+.app-header .right { display: flex; align-items: center; gap: 10px; }
+.app-header .right { margin-left: auto; }
+.brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  color: var(--muted);
+  letter-spacing: .3px;
+}
+.runes { font-size: 14px; color: var(--muted); letter-spacing: .3px; }
 
 .menu { position: relative; }
 .menu-trigger {
@@ -108,7 +120,8 @@ html, body {
 }
 .miniwin .titlebar {
   display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px;
-  padding: var(--titlebar-padding-y) 12px;
+  height: var(--titlebar-height);
+  padding: 0 12px;
   background: linear-gradient(180deg, hsl(var(--h) var(--sat) calc(var(--l-elev) + 2%)), hsl(var(--h) var(--sat) calc(var(--l-panel) + 1%)));
   border-bottom: 1px solid var(--border);
   user-select: none; cursor: grab;
@@ -239,8 +252,12 @@ html, body {
   min-height: 0;
 }
 .chat-window .chat-log {
-  display: grid; gap: 8px; padding: 8px;
-  border: 1px solid var(--border); border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   background: hsl(var(--h) var(--sat) calc(var(--l-bg) + 2%));
   overflow: auto;
   flex: 1 1 auto;
@@ -266,6 +283,24 @@ html, body {
   outline-offset: -6px; background: color-mix(in oklab, var(--accent) 7%, transparent);
 }
 .miniwin.dragging { position: fixed; z-index: 9999; width: var(--drag-w); pointer-events: none; }
+
+.drop-marker {
+  height: 4px;
+  background: color-mix(in oklab, var(--accent) 60%, transparent);
+  border-radius: 2px;
+  margin: 4px 0;
+}
+
+.down-indicator {
+  position: sticky;
+  bottom: 4px;
+  text-align: center;
+  font-size: 20px;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity .3s ease;
+}
+.down-indicator.hide { opacity: 0; }
 
 /* ===== Modal ===== */
 .modal-wrap { position: fixed; inset: 0; display: grid; place-items: center; z-index: 1000; }

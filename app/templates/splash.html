@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <title>Deployable Knowledge — Sign In</title>
+  <link rel="stylesheet" href="/static/css/theme.css" />
   <link rel="stylesheet" href="/static/css/style.css" />
   <link rel="icon" href="/static/favicon.ico" />
 </head>
 <body>
   <div class="app">
     <div class="app-header">
+      <div class="left"></div>
       <div class="brand"><strong>Deployable Knowledge</strong></div>
-      <div class="fill"></div>
+      <div class="right"><div class="runes">ᚼᚢᚴᛁᚾ:ᚬᚴ:ᛘᚢᚾᛁᚾ</div></div>
     </div>
     <div class="splash-body">
       <div class="miniwin splash-card">
@@ -39,5 +41,9 @@
       </div>
     </div>
   </div>
+  <script type="module">
+    import { applyThemeSettings } from "/static/js/theme.js";
+    applyThemeSettings();
+  </script>
 </body>
 </html>
