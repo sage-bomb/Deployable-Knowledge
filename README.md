@@ -1,5 +1,7 @@
 # Deployable-Knowledge
 
+**Version 0.9.0**
+
 Offline‑first retrieval‑augmented generation (RAG) stack for disconnected or bandwidth‑constrained environments.
 
 ## Overview
