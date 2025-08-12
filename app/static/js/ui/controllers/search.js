@@ -55,6 +55,37 @@ export async function runSearch(query, winId = "win_search") {
   }
 }
 
+export function showContext(sources = [], query, winId = "win_search") {
+  const win = document.getElementById(winId);
+  if (!win) return;
+  const q = win.querySelector("#search_q");
+  const results = win.querySelector("#search_results");
+  if (query !== undefined && q) q.value = query;
+  results.innerHTML = "";
+  if (!sources || !sources.length) {
+    results.innerHTML = `<div class="li-subtle">No context</div>`;
+    return;
+  }
+  for (const r of sources) {
+    const card = document.createElement("div");
+    card.className = "result-card";
+    const text = escapeHtml(r?.text ?? "");
+    const source = escapeHtml(r?.source ?? "");
+    const score =
+      typeof r?.score === "number"
+        ? r.score.toFixed(3)
+        : escapeHtml(String(r?.score ?? ""));
+    const page = r?.page ?? "?";
+    card.innerHTML = `
+        <div>${text}</div>
+        <div class="result-meta">
+          <span>Source: ${source}</span>
+          <span>Score: ${score} • Page: ${page}</span>
+        </div>`;
+    results.appendChild(card);
+  }
+}
+
 export function initSearchController(winId = "win_search") {
   const win = document.getElementById(winId);
   if (!win) return;

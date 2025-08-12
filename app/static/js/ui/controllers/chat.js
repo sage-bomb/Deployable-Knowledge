@@ -3,6 +3,7 @@ import { dkClient as api } from "../sdk/sdk.js";
 import { Store } from "../store.js";
 import { md, escapeHtml } from "../render.js";
 import { qs } from "../../dom.js";
+import { showContext } from "./search.js";
 
 export function initChatController() {
   const chatWin = qs("#win_chat");
@@ -54,6 +55,9 @@ export function initChatController() {
             bubble.innerHTML = md(buf);
             log.scrollTop = log.scrollHeight;
           },
+          onDone(data) {
+            if (data?.sources) showContext(data.sources, text);
+          },
         }
       );
     } catch (e) {
@@ -66,6 +70,7 @@ export function initChatController() {
           persona: Store.persona,
         });
         bubble.innerHTML = md(res.response ?? "(no response)");
+        if (res.context) showContext(res.context, text);
       } catch (e2) {
         bubble.innerHTML = `<em>Error:</em> ${escapeHtml(e2.message)}`;
       }
