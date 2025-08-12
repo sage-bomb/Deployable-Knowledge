@@ -51,6 +51,8 @@ export function createItemList(winId, cfg) {
     });
 
     row.addEventListener("click", () => {
+      container.querySelectorAll(".list-item.selected").forEach(el => el.classList.remove("selected"));
+      row.classList.add("selected");
       bus.dispatchEvent(new CustomEvent("ui:list-select", {
         detail: { winId, elementId: cfg.id, item, index: idx }
       }));

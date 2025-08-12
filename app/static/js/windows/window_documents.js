@@ -6,10 +6,12 @@ export function render(config, winId) {
 
   const id = config.id || winId;
   const upWrap = el("div", { class: "row" });
-  const upInput = el("input", { type: "file", multiple: true, id: `${id}-upload`, style: { maxWidth: "100%" } });
+  const upInput = el("input", { type: "file", multiple: true, id: `${id}-upload`, style: { display: "none" } });
+  const chooseBtn = el("button", { class: "btn", type: "button", id: `${id}-choose-btn` }, ["Choose Files"]);
   const upBtn = el("button", { class: "btn", type: "button", id: `${id}-upload-btn` }, ["Upload"]);
-  upWrap.append(el("label", {}, ["Upload Documents"]), upInput, upBtn);
-  layout.appendChild(upWrap);
+  upWrap.append(el("label", {}, ["Upload Documents"]), chooseBtn, upBtn, upInput);
+  const fileList = el("ul", { class: "upload-list", id: `${id}-upload-list` });
+  layout.append(upWrap, fileList);
 
   const listEl = createItemList(id, {
     id: "doc_list",

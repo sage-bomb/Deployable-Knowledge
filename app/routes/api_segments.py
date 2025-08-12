@@ -1,13 +1,23 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from core.rag.retriever import db
 
 router = APIRouter()
 
 @router.get("/segments")
-async def list_segments():
-    """Return brief information about all stored text segments."""
-    data = db.collection.get(include=["documents", "metadatas"])
+async def list_segments(source: str | None = Query(default=None)):
+    """Return brief information about stored text segments.
+
+    Parameters
+    ----------
+    source:
+        Optional document identifier. When provided, only segments originating
+        from this ``source`` will be returned.
+    """
+    if source:
+        data = db.collection.get(where={"source": source}, include=["documents", "metadatas"])
+    else:
+        data = db.collection.get(include=["documents", "metadatas"])
     segments = []
     docs = data.get("documents", [])
     metas = data.get("metadatas", [])

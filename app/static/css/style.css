@@ -236,6 +236,14 @@ html, body {
 .result-meta span:last-child { justify-self: end; }
 .li-actions { display: flex; gap: 8px; }
 
+.upload-list {
+  list-style: none;
+  padding-left: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.upload-list li { margin-top: 2px; }
+
 /* Selected row */
 .list-item.selected {
   border-color: var(--accent);

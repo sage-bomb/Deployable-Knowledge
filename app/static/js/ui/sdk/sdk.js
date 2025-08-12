@@ -120,8 +120,9 @@ export class DKClient {
     return asJsonSafe(res);
   }
 
-  async listSegments() {
-    const res = await ok(await fetch("/segments", { headers: JSON_HEADERS, credentials: "same-origin" }));
+  async listSegments(source) {
+    const url = source ? `/segments?source=${encodeURIComponent(source)}` : "/segments";
+    const res = await ok(await fetch(url, { headers: JSON_HEADERS, credentials: "same-origin" }));
     return asJsonSafe(res);
   }
 
