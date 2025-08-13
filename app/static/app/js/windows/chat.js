@@ -78,10 +78,14 @@ export function createChatWindow() {
           if (event === "delta") {
             let parsed;
             try { parsed = JSON.parse(data); } catch {}
-            if (parsed && typeof parsed === "object") {
-              data = parsed.delta ?? parsed.response ?? Object.values(parsed)[0];
+            if (parsed !== undefined) {
+              if (typeof parsed === "object" && parsed) {
+                data = parsed.delta ?? parsed.response ?? Object.values(parsed)[0] ?? "";
+              } else {
+                data = parsed + "";
+              }
             }
-            if (data === ".") continue;
+            if (data === "." || data === "[DONE]") continue;
             acc += data;
             bubble.innerHTML = md(acc);
           }

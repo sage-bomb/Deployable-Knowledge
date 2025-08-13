@@ -21,10 +21,36 @@ async function ensureChatSession() {
   }
 }
 
-function setupMenus() {
+function setupMenus(chatUI) {
+  document.querySelectorAll('.menu').forEach(menu => {
+    const trigger = menu.querySelector('.menu-trigger');
+    const drop = menu.querySelector('.menu-dropdown');
+    if (!trigger || !drop) return;
+    const close = () => {
+      trigger.setAttribute('aria-expanded', 'false');
+      drop.setAttribute('aria-hidden', 'true');
+    };
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      const open = trigger.getAttribute('aria-expanded') === 'true';
+      document.querySelectorAll('.menu .menu-dropdown[aria-hidden="false"]').forEach(d => {
+        d.setAttribute('aria-hidden', 'true');
+        d.previousElementSibling?.setAttribute('aria-expanded', 'false');
+      });
+      if (!open) {
+        trigger.setAttribute('aria-expanded', 'true');
+        drop.setAttribute('aria-hidden', 'false');
+      } else {
+        close();
+      }
+    });
+    document.addEventListener('click', e => { if (!menu.contains(e.target)) close(); });
+  });
+
   document.querySelector('#user-menu-dropdown [data-action="logout"]')?.addEventListener('click', () => {
     window.location.href = '/logout';
   });
+
   document.querySelectorAll('#tools-menu-dropdown .menu-item').forEach(btn => {
     btn.addEventListener('click', () => {
       const act = btn.dataset.action;
@@ -33,6 +59,23 @@ function setupMenus() {
       if (act === 'tool-segments') document.getElementById('win_segments')?.scrollIntoView();
       if (act === 'tool-sessions') openSessionsWindow();
       if (act === 'tool-persona') openPersonaEditor();
+    });
+  });
+
+  document.querySelectorAll('#menu-dropdown .menu-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const act = btn.dataset.action;
+      if (act === 'new-chat') {
+        chatUI.log.innerHTML = '';
+        Store.sessionId = '';
+        ensureChatSession();
+      }
+      if (act === 'toggle-search') {
+        const w = document.getElementById('win_search');
+        if (w) w.style.display = w.style.display === 'none' ? '' : 'none';
+      }
+      if (act === 'prompt-templates') alert('Prompt templates not implemented');
+      if (act === 'settings') alert('Settings not implemented');
     });
   });
 }
@@ -68,7 +111,7 @@ const chatUI = createChatWindow();
 createSearchWindow();
 createDocsWindow();
 createSegmentsWindow();
-setupMenus();
+setupMenus(chatUI);
 registerBusHandlers();
 await refreshDocs();
 await refreshSegments();

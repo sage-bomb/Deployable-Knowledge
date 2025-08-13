@@ -1,7 +1,7 @@
 import { spawnWindow } from "../framework.js";
 import { listSegments, getSegment, removeSegment } from "../sdk.js";
 import { getComponent } from "/static/ui/js/components.js";
-import { md, htmlEscape } from "../util.js";
+import { md, htmlEscape, moveLabelTop } from "../util.js";
 
 let currentSource = null;
 
@@ -27,6 +27,7 @@ export function createSegmentsWindow() {
       {
         type: "item_list",
         id: "segment_list",
+        label: "Segments",
         item_template: {
           elements: [
             { type: "text", bind: "source",  class: "li-title" },
@@ -39,6 +40,8 @@ export function createSegmentsWindow() {
       }
     ]
   });
+  const win = document.getElementById("win_segments");
+  moveLabelTop(win?.querySelector("#segment_list")?.closest(".row"));
 }
 
 export async function handleSegmentAction(action, item) {
@@ -57,27 +60,23 @@ export async function openSegmentViewer(id) {
     unique: false,
     resizable: true,
     Elements: [
-      { type: "text", id: "seg_meta", value: "" },
-      { type: "text", id: "seg_text", value: "" }
+      { type: "text", id: "seg_content", value: "" }
     ]
   });
   const win = document.getElementById(winId);
-  const meta = win?.querySelector("#seg_meta")?.closest(".row")?.querySelector(".value") || win?.querySelector("#seg_meta");
-  const bodyRow = win?.querySelector("#seg_text")?.closest(".row");
-  if (meta) {
-    meta.innerHTML = `
+  const row = win?.querySelector("#seg_content")?.closest(".row");
+  if (row) {
+    const viewer = document.createElement("div");
+    viewer.className = "segment-view";
+    viewer.innerHTML = `
       <div class="kv">
         <div><strong>ID:</strong> ${htmlEscape(seg.id||"")}</div>
         <div><strong>Source:</strong> ${htmlEscape(seg.source||"")}</div>
         <div><strong>Index:</strong> ${htmlEscape(String(seg.segment_index ?? ""))}</div>
         <div><strong>Priority:</strong> ${htmlEscape(seg.priority||"")}</div>
         <div><strong>Chars:</strong> ${htmlEscape(String(seg.start_char ?? ""))}–${htmlEscape(String(seg.end_char ?? ""))}</div>
-      </div>`;
-  }
-  if (bodyRow) {
-    const viewer = document.createElement("div");
-    viewer.className = "segment-view prose";
-    viewer.innerHTML = md(seg.text || seg.preview || "(empty)");
-    bodyRow.replaceWith(viewer);
+      </div>
+      <div class="prose">${md(seg.text || seg.preview || "(empty)")}</div>`;
+    row.replaceWith(viewer);
   }
 }

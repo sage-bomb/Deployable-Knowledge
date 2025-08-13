@@ -2,6 +2,7 @@ import { spawnWindow } from "../framework.js";
 import { listDocuments, uploadDocuments, removeDocument } from "../sdk.js";
 import { getComponent } from "/static/ui/js/components.js";
 import { Store } from "../store.js";
+import { moveLabelTop } from "../util.js";
 
 export async function refreshDocs() {
   const data = await listDocuments();
@@ -15,13 +16,6 @@ async function handleUpload(files) {
   await uploadDocuments(files);
   document.getElementById("docs_upload")?.clear?.();
   await refreshDocs();
-}
-
-function moveLabelTop(row) {
-  const label = row?.querySelector(".label");
-  if (label) {
-    row.insertBefore(label, row.firstChild);
-  }
 }
 
 export function createDocsWindow() {
