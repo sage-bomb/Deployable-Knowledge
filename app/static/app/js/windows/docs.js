@@ -2,7 +2,6 @@ import { spawnWindow } from "../framework.js";
 import { listDocuments, uploadDocuments, removeDocument } from "../sdk.js";
 import { getComponent } from "/static/ui/js/components.js";
 import { Store } from "../store.js";
-import { moveLabelTop } from "../util.js";
 
 export async function refreshDocs() {
   const data = await listDocuments();
@@ -31,6 +30,7 @@ export function createDocsWindow() {
         type: "file_upload",
         id: "docs_upload",
         label: "Upload",
+        label_position: "top",
         multiple: true,
         selectLabel: "Choose Files",
         buttonLabel: "Upload",
@@ -40,6 +40,7 @@ export function createDocsWindow() {
         type: "item_list",
         id: "doc_list",
         label: "Documents",
+        label_position: "top",
         item_template: {
           elements: [
             { type: "text", bind: "title", class: "li-title" },
@@ -51,9 +52,6 @@ export function createDocsWindow() {
       }
     ]
   });
-  const win = document.getElementById("win_docs");
-  moveLabelTop(win?.querySelector("#docs_upload")?.closest(".row"));
-  moveLabelTop(win?.querySelector("#doc_list")?.closest(".row"));
 }
 
 export async function handleDocAction(action, item) {

@@ -59,6 +59,7 @@ function setupMenus(chatUI) {
       if (act === 'tool-segments') document.getElementById('win_segments')?.scrollIntoView();
       if (act === 'tool-sessions') openSessionsWindow();
       if (act === 'tool-persona') openPersonaEditor();
+      if (act === 'tool-refresh') { refreshDocs(); refreshSegments(); }
     });
   });
 

@@ -1,7 +1,7 @@
 import { spawnWindow } from "../framework.js";
 import { listSegments, getSegment, removeSegment } from "../sdk.js";
 import { getComponent } from "/static/ui/js/components.js";
-import { md, htmlEscape, moveLabelTop } from "../util.js";
+import { md, htmlEscape } from "../util.js";
 
 let currentSource = null;
 
@@ -28,6 +28,7 @@ export function createSegmentsWindow() {
         type: "item_list",
         id: "segment_list",
         label: "Segments",
+        label_position: "top",
         item_template: {
           elements: [
             { type: "text", bind: "source",  class: "li-title" },
@@ -40,8 +41,6 @@ export function createSegmentsWindow() {
       }
     ]
   });
-  const win = document.getElementById("win_segments");
-  moveLabelTop(win?.querySelector("#segment_list")?.closest(".row"));
 }
 
 export async function handleSegmentAction(action, item) {
