@@ -1,0 +1,3 @@
+[submodule "submodules/deployable-ui"]
+	path = submodules/deployable-ui
+	url = https://github.com/deployable-tech/deployable-ui

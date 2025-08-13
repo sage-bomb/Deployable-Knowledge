@@ -1,21 +1,116 @@
-MIT License
+License (GPLv3 with Additional Terms under Section 7)
 
-Copyright (c) 2025 sage-bomb
+This software is licensed under the GNU General Public License v3.0 (GPLv3), with Additional Terms permitted under Section 7 of the GPLv3.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Executive Summary for Program Managers
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Permitted in all environments — including classified or restricted systems.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Core changes must be contributed back — modifications to the framework, rendering engine, generic UI controls, APIs, or similar components must be released under the same license.
+
+Customer-specific UIs are exempt — unless they include generic, reusable components or functionality.
+
+No artificial licensing restrictions — you may not sell the software as a licensed product, limit users, or charge per seat. You may bill for services such as customization, integration, and support.
+
+Plugin ecosystem allowed — you can create and sell plugins that interact only through public APIs. If they alter the core, they must be open-sourced under the same license.
+
+Classified environment rules — you may redact specific classified identifiers, but must still share the functional compliance logic and non-classified modifications.
+
+By using, modifying, or distributing this Software, you agree to comply with both the GPLv3 and the Additional Terms described below.Use in Classified or Restricted (with dispute resolution guidance: in case of disagreement over what constitutes 'Protected Elements', the determination should be made by the relevant competent classification authority or an agreed independent arbiter familiar with applicable classification standards) Environments (Addendum)
+
+Permission. This Software may be used, modified, and deployed within classified or restricted environments without limitation.
+
+Definitions.
+
+“Classified or Restricted” includes information or environments protected under U.S. law or policy (e.g., Confidential/Secret/Top Secret, SCI/SAP, CAPCO caveats, CUI, ITAR/EAR) and foreign equivalents.
+
+“Standards-Related Modifications” means any change made to implement or conform to classification/marking rules, metadata/tagging schemas, discovery/dissemination rules, cross-domain transfer constraints, risk-management controls, cryptography requirements, or supply-chain requirements applicable to such environments.
+
+“Protected Elements” means specific control words, code words, program names, identifiers, routing indicators, or other strings whose disclosure is prohibited by a current classification guide or competent authority.
+
+Contribution requirement. When the modified Software is distributed (source or object), Licensee must make available under this License all Standards-Related Modifications, even if developed or used in a classified context. This includes, without limitation, code, schemas, validators, interfaces, configuration templates, and tests implementing:
+
+classification banners and portion marking conformant with CAPCO/ICD-206 or equivalent;
+
+machine-readable markings (e.g., ISM/XML, TDF or equivalent data-binding);
+
+tear-line/sanitization and foreign-release workflows (e.g., ORCON/REL TO style enforcement);
+
+discovery/dissemination metadata and access-control hooks;
+
+cross-domain export/import filters and guard-friendly outputs;
+
+RMF/assurance-related controls implemented in software (e.g., audit, crypto interface selection, session/IA, continuous monitoring hooks);
+
+cryptographic and key-management interfaces needed to use approved algorithms/profiles; and
+
+software-level supply-chain/SBOM hooks and verification interfaces.
+
+(Examples are non-exhaustive and for clarity only.)
+
+Narrow redaction rule. Licensees may replace or omit from public release the Protected Elements themselves. Redactions must be narrowly tailored and limited to those specific strings or artifacts that are properly classified. Where such elements would otherwise appear in code or configuration, Licensee must substitute generic placeholders, parameterize them, or provide mocks/stubs so that the functional behavior of the Standards-Related Modifications remains available and reusable.
+
+No pretext. A claim of classification may not be used to withhold unclassified functional code, generic capability implementations, or standards compliance (including marking logic, metadata schemas, validation rules, policy-evaluation code, access-control integrations, export filters, or other broadly reusable mechanisms).
+
+Compliance-artifact carve-out. This Addendum does not require publication of environment-specific or security-sensitive deployment artifacts such as: classification guides, ATO/RMF packages and evidence, vulnerability scans, network diagrams, keys/credentials, device identities, or site-specific hardening checklists—provided that the software changes enabling compliance are still released.
+
+Attestation. Upon reasonable request, a Licensee relying on redactions must provide a written attestation identifying the authority for classification (e.g., guide title/ID/date or foreign equivalent) sufficient to show that only Protected Elements were withheld. Attestations must not disclose classified content.
+
+Distribution scope. For purposes of this Addendum, “distributed” includes making the modified Software available outside the Licensee’s legal entity (including to government agencies, contractors, or partners) or providing network access to a modified hosted service that executes the Software’s modified functionality for third parties.
+
+Declassification. If redacted elements are later declassified or otherwise determined releasable, the Licensee should publish an updated version removing those redactions at the earliest practical opportunity.
+
+Clause 2: Core Framework Modifications ("Generic" in this context means components, features, or code patterns that are broadly reusable across multiple contexts or implementations, such as generalized UI controls, modular data handlers, or framework-level behaviors, as opposed to bespoke elements designed only for a single customer workflow or environment) (including Generic UI Components)
+
+Core Framework Modifications
+
+Any changes, enhancements, bug fixes, or alterations to the core framework of the Software must be released under this License when the modified Software is distributed.
+
+For purposes of this clause, the “core framework” includes, but is not limited to:
+
+The rendering engine and associated processing pipelines
+
+Core libraries and shared modules shipped with the Software
+
+Data processing and transformation logic
+
+Public APIs and any internal functions required for their operation
+
+Build systems and packaging scripts necessary to compile or deploy the Software
+
+Generic, reusable user interface components or controls that could be applied to multiple windows, dialogs, or contexts within the Software
+
+This requirement applies regardless of whether the modifications are made for classified, commercial, or private deployments, subject only to the allowances in the “Use in Classified or Restricted Environments” clause of this License.
+
+UI-Specific Exception: User interface layouts, dialogs, or windows that are solely designed for a specific, non-generic workflow or customer implementation, and that do not introduce reusable controls or behaviors, are not considered core framework modifications for the purposes of this clause and are exempt from this requirement.
+
+Clause 3: No Artificial Licensing Restrictions (Violation of this clause constitutes grounds for immediate termination of the license as permitted under GPLv3, requiring the infringing party to cease all distribution and use until full compliance is restored) or Product Resale
+
+No Artificial Licensing Restrictions or Product Resale
+
+Licensees may not impose per-user, per-seat, per-installation, or similar licensing restrictions on the Software or any modified version thereof.
+
+The Software, whether in its original form or as a modified version, may not be sold as a proprietary licensed product, nor may any rights in the Software be offered for purchase separate from services provided.
+
+Licensees may charge fees for:
+
+Custom development, adaptation, or integration of the Software for specific customers or use cases
+
+Consulting, training, or technical support services related to the Software
+
+Deployment, configuration, or ongoing maintenance services
+
+All such services must be provided without imposing limitations on the number of users, installations, or instances of the Software, except where such limitations are technically inherent to the specific deployment environment.
+
+Any attempt to repackage, rebrand, or otherwise offer the Software as a metered, licensed product in violation of this clause constitutes a material breach of this License.
+
+Clause 4: Paid Plugin and Extension Allowance (For clarity: linking at runtime via dynamic or shared libraries to the Software's public APIs does not, by itself, constitute incorporating source code; however, any such plugin that includes or modifies portions of the Software's source code beyond API interactions will be treated as incorporating source code and thus as a derivative work)
+
+Paid Plugin and Extension Allowance
+
+Licensees may develop, distribute, and sell separate software packages, modules, or plugins that interact with the Software solely through its documented public APIs. Such works may be licensed under any terms chosen by their author, including proprietary licenses, provided that they do not incorporate any portion of the Software’s source code or modify the Software’s core framework.
+
+For the purposes of this clause, “core framework” has the meaning set forth in the “Core Framework Modifications” clause of this License. Any plugin, module, or extension that includes code from the Software beyond API calls, or that alters the core framework, constitutes a derivative work and must be licensed under the same terms as the Software.
+
+No plugin, module, or extension may be used to impose artificial licensing restrictions, seat limits, or access controls on the Software in violation of the “No Artificial Licensing Restrictions or Product Resale” clause of this License.
+

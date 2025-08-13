@@ -1,5 +1,7 @@
+# main.py
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from config import BASE_DIR, UPLOAD_DIR
 
 from app.routes.ui_routes import router as ui_router
@@ -11,12 +13,24 @@ from app.routes.api_sessions import router as sessions_router
 from app.routes.api_segments import router as segments_router
 from app.auth.session import setup_auth, load_settings_from_config
 
+
+
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-app.mount("/documents", StaticFiles(directory=UPLOAD_DIR), name="documents")
+
+APP_STATIC = (BASE_DIR / "app" / "static").resolve()
+UI_STATIC  = (BASE_DIR / "submodules" / "deployable-ui" / "src" / "ui").resolve()
+
+print(f"[static] APP_STATIC={APP_STATIC} exists={APP_STATIC.exists()}")
+print(f"[static] UI_STATIC ={UI_STATIC}  exists={UI_STATIC.exists()}")
+
+app.mount("/static/ui", StaticFiles(directory=str(UI_STATIC),  check_dir=False), name="static-ui")
+app.mount("/static",    StaticFiles(directory=str(APP_STATIC), check_dir=False), name="static-app")
+app.mount("/documents", StaticFiles(directory=str(UPLOAD_DIR), check_dir=False), name="documents")
+
+
 manager, settings = setup_auth(app, load_settings_from_config())
 
-# Register routes
+# --- routers ---
 app.include_router(ui_router)
 app.include_router(chat_router)
 app.include_router(search_router)
@@ -24,4 +38,3 @@ app.include_router(ingest_router)
 app.include_router(sessions_router)
 app.include_router(segments_router)
 app.include_router(settings_router)
-
