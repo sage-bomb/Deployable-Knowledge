@@ -256,7 +256,12 @@ function createChatWindow() {
             if (line.startsWith("event:")) event = line.slice(6).trim();
             else if (line.startsWith("data:")) data += line.slice(5).trim();
           }
-          if (event === "delta") bubble.innerHTML = md((bubble._acc ||= "") + data);
+          if (event === "delta") {
+            try { data = JSON.parse(data); } catch {}
+            if (data === ".") continue; // ignore keep-alives
+            bubble._acc = (bubble._acc || "") + data;
+            bubble.innerHTML = md(bubble._acc);
+          }
         }
         log.scrollTop = log.scrollHeight;
       }
