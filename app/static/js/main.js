@@ -39,13 +39,14 @@ function spawnWindow(cfg, init) {
       indicator.className = "down-indicator";
       indicator.textContent = "⌄";
       colEl.appendChild(indicator);
-    if (!indicator) {
-      indicator = document.createElement("div");
-      indicator.className = "down-indicator";
-      indicator.textContent = "⌄";
-      colEl.appendChild(indicator);
-    } else {
-      indicator.className = "down-indicator";  // Ensure consistent class handling
+if (!indicator) {
+  indicator = document.createElement("div");
+  indicator.className = "down-indicator";
+  indicator.textContent = "⌄";
+  colEl.appendChild(indicator);
+} else {
+  indicator.className = "down-indicator";  // Ensure consistent class handling
+}
     }
 
     const onScroll = () => {
