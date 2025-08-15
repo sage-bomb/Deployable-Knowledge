@@ -146,8 +146,16 @@ def stream_llm(prompt: str, user_id: Optional[str] = None) -> Iterable[str]:
 
     s = _resolve_settings(user_id)
     provider = getattr(s, "llm_provider", "ollama")
-    model = getattr(s, "llm_model", "") or None
-    llm = make_llm(provider, model)
+    kwargs = {}
+    if provider == "ollama":
+        model = getattr(getattr(s, "ollama", None), "model", None) or None
+        kwargs["base_url"] = getattr(getattr(s, "ollama", None), "base_url", None)
+    elif provider == "openai":
+        model = getattr(getattr(s, "openai", None), "model", None) or None
+        kwargs["api_key"] = getattr(getattr(s, "openai", None), "api_key", None)
+    else:
+        model = None
+    llm = make_llm(provider, model, **kwargs)
     return llm.stream_text(prompt)
 
 def ask_llm(prompt: str, user_id: Optional[str] = None) -> str:
@@ -155,8 +163,16 @@ def ask_llm(prompt: str, user_id: Optional[str] = None) -> str:
 
     s = _resolve_settings(user_id)
     provider = getattr(s, "llm_provider", "ollama")
-    model = getattr(s, "llm_model", "") or None
-    llm = make_llm(provider, model)
+    kwargs = {}
+    if provider == "ollama":
+        model = getattr(getattr(s, "ollama", None), "model", None) or None
+        kwargs["base_url"] = getattr(getattr(s, "ollama", None), "base_url", None)
+    elif provider == "openai":
+        model = getattr(getattr(s, "openai", None), "model", None) or None
+        kwargs["api_key"] = getattr(getattr(s, "openai", None), "api_key", None)
+    else:
+        model = None
+    llm = make_llm(provider, model, **kwargs)
     return llm.generate_text(prompt)
 
 def update_summary(old_summary: str, last_user: str, last_assistant: str, user_id: Optional[str]=None) -> str:

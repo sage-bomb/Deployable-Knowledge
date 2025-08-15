@@ -1,18 +1,31 @@
 from __future__ import annotations
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Literal
-import json
+import json, os
 from pydantic import BaseModel, Field, ConfigDict
 
 from .prompts import loader as prompt_loader
+from config import OLLAMA_BASE_URL, OLLAMA_MODEL
 
 USERS_DIR = Path("users")
 USERS_DIR.mkdir(parents=True, exist_ok=True)
 
+
+class OllamaSettings(BaseModel):
+    base_url: str = OLLAMA_BASE_URL
+    model: str = OLLAMA_MODEL
+
+
+class OpenAISettings(BaseModel):
+    model: str = "gpt-4o-mini"
+    api_key: str = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
+
+
 class UserSettings(BaseModel):
     user_id: str
     llm_provider: Literal["ollama", "openai"] = "ollama"
-    llm_model: str = ""
+    ollama: OllamaSettings = Field(default_factory=OllamaSettings)
+    openai: OpenAISettings = Field(default_factory=OpenAISettings)
     prompt_template_id: Optional[str] = None
     temperature: float = 0.2
     top_p: float = 0.95
@@ -44,7 +57,13 @@ def update_settings(user_id: str, patch: Dict[str, Any]) -> UserSettings:
     """Apply ``patch`` to a user's settings and persist the result."""
 
     s = load_settings(user_id)
-    s = s.model_copy(update=patch)
+    data = s.model_dump()
+    for k, v in patch.items():
+        if isinstance(v, dict) and isinstance(data.get(k), dict):
+            data[k] = {**data[k], **v}
+        else:
+            data[k] = v
+    s = UserSettings(**data)
     save_settings(s)
     return s
 
