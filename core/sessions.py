@@ -1,10 +1,11 @@
 """Chat session models and persistence."""
 from __future__ import annotations
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import List, Optional, Dict
 import uuid
-import json
-from pathlib import Path
+
+from core.db import SessionLocal, DBChatSession, DBChatExchange, chat_ops, User
 
 # --- Chat history models ---
 
@@ -52,6 +53,7 @@ class ChatSession:
     title: str = ""
     inactive_sources: List[str] = field(default_factory=list)
     persona: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     @classmethod
     def new(cls, session_id: Optional[str] = None, user_id: str = "default") -> "ChatSession":
@@ -81,6 +83,7 @@ class ChatSession:
             "history": [h.to_dict() for h in self.history],
             "inactive_sources": self.inactive_sources,
             "persona": self.persona,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
     @classmethod
@@ -94,76 +97,114 @@ class ChatSession:
             title=data.get("title", ""),
             inactive_sources=data.get("inactive_sources", []),
             persona=data.get("persona"),
+            created_at=datetime.fromisoformat(data["created_at"]) if data.get("created_at") else None,
         )
         session.history = [ChatExchange.from_dict(e) for e in data.get("history", [])]
         return session
 
-# --- Session store ---
-
-SESSION_DIR = Path("sessions")
-SESSION_DIR.mkdir(exist_ok=True)
-
 class SessionStore:
-    """Simple file-based persistence for :class:`ChatSession` objects."""
-
-    def __init__(self, storage_path: Path = SESSION_DIR):
-        self.storage_path = storage_path
-
-    def _session_path(self, session_id: str) -> Path:
-        """Return the filesystem path for ``session_id``."""
-
-        return self.storage_path / f"{session_id}.json"
+    """Database-backed persistence for :class:`ChatSession` objects."""
 
     def save(self, session: ChatSession) -> None:
-        """Persist ``session`` to disk."""
-
-        with open(self._session_path(session.session_id), "w", encoding="utf-8") as f:
-            json.dump(session.to_dict(), f, indent=2)
+        """Persist ``session`` to the SQL database."""
+        with SessionLocal() as db:
+            db_sess = (
+                db.query(DBChatSession).filter(DBChatSession.id == session.session_id).first()
+            )
+            if not db_sess:
+                user = db.query(User).filter(User.id == session.user_id).first()
+                if not user:
+                    user = User(id=session.user_id, email=f"{session.user_id}@local", hashed_password="!")
+                    db.add(user)
+                    db.commit()
+                db_sess = DBChatSession(
+                    id=session.session_id,
+                    user_id=session.user_id,
+                    summary=session.summary,
+                    title=session.title,
+                    persona=session.persona,
+                )
+                db.add(db_sess)
+                db.commit()
+            else:
+                db_sess.summary = session.summary
+                db_sess.title = session.title
+                db_sess.persona = session.persona
+                db.commit()
+            session.created_at = db_sess.created_at
+            existing = (
+                db.query(DBChatExchange)
+                .filter(DBChatExchange.session_id == session.session_id)
+                .count()
+            )
+            for ex in session.history[existing:]:
+                chat_ops.add_chat_exchange(
+                    db,
+                    session_id=session.session_id,
+                    user_message=ex.user,
+                    rag_prompt=ex.rag_prompt,
+                    assistant_message=ex.assistant,
+                    html_response=ex.html_response,
+                    context_used=ex.context_used,
+                )
 
     def load(self, session_id: str) -> Optional[ChatSession]:
-        """Load a session from disk or return ``None`` if missing."""
-
-        path = self._session_path(session_id)
-        if not path.exists():
-            return None
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return ChatSession.from_dict(data)
-        except json.JSONDecodeError:
-            path.unlink()
-            return None
+        """Load a session from the SQL database or return ``None`` if missing."""
+        with SessionLocal() as db:
+            db_sess = (
+                db.query(DBChatSession).filter(DBChatSession.id == session_id).first()
+            )
+            if not db_sess:
+                return None
+            session = ChatSession(
+                session_id=db_sess.id,
+                user_id=db_sess.user_id,
+                summary=db_sess.summary,
+                title=db_sess.title,
+                inactive_sources=[],
+                persona=db_sess.persona,
+                created_at=db_sess.created_at,
+            )
+            exchanges = chat_ops.list_chat_exchanges(db, session_id)
+            for e in exchanges:
+                session.history.append(
+                    ChatExchange(
+                        user=e.user_message,
+                        context_used=e.context_used,
+                        rag_prompt=e.rag_prompt,
+                        assistant=e.assistant_message,
+                        html_response=e.html_response,
+                    )
+                )
+            return session
 
     def list_sessions(self) -> List[Dict]:
         """Return metadata for all stored sessions."""
-
-        entries = []
-        for f in self.storage_path.glob("*.json"):
-            entries.append(
-                {
-                    "id": f.stem,
-                    "path": str(f),
-                    "modified": f.stat().st_mtime,
-                }
-            )
-        return entries
+        with SessionLocal() as db:
+            sessions = db.query(DBChatSession).all()
+            return [
+                {"id": s.id, "created": s.created_at.timestamp()}
+                for s in sessions
+            ]
 
     def delete(self, session_id: str) -> None:
-        """Remove the on-disk file for ``session_id`` if it exists."""
-
-        p = self._session_path(session_id)
-        if p.exists():
-            p.unlink()
+        """Remove ``session_id`` from the database."""
+        with SessionLocal() as db:
+            chat_ops.delete_chat_session(db, session_id)
 
     def exists(self, session_id: str) -> bool:
-        """Return ``True`` if a session file exists."""
-
-        return self._session_path(session_id).exists()
+        """Return ``True`` if a session exists in the database."""
+        with SessionLocal() as db:
+            return (
+                db.query(DBChatSession).filter(DBChatSession.id == session_id).first()
+                is not None
+            )
 
     def prune_empty(self) -> None:
-        """Delete any session files that contain no history."""
-
-        for entry in list(self.list_sessions()):
-            session = self.load(entry["id"])
-            if session and not session.history:
-                self.delete(entry["id"])
+        """Delete any chat sessions that contain no exchanges."""
+        with SessionLocal() as db:
+            sessions = db.query(DBChatSession).all()
+            for s in sessions:
+                if not s.exchanges:
+                    db.delete(s)
+            db.commit()

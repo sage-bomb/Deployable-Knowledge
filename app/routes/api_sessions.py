@@ -22,7 +22,7 @@ async def list_sessions():
             {
                 "session_id": entry["id"],
                 "title": session.title if session else "",
-                "created_at": datetime.fromtimestamp(entry["modified"]).isoformat(),
+                "created_at": datetime.fromtimestamp(entry["created"]).isoformat(),
             }
         )
     return JSONResponse(content=summaries)
@@ -42,12 +42,7 @@ async def get_session_data(session_id: str):
         raise HTTPException(status_code=404, detail="Session not found")
 
     history_pairs = [[ex.user, ex.assistant] for ex in session.history]
-    path = store._session_path(session_id)  # access for timestamp metadata
-    created_at = (
-        datetime.fromtimestamp(path.stat().st_mtime).isoformat()
-        if path.exists()
-        else None
-    )
+    created_at = session.created_at.isoformat() if session.created_at else None
 
     return JSONResponse(
         content={
