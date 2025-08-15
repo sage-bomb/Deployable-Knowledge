@@ -9,6 +9,21 @@ from .prompts import loader as prompt_loader
 USERS_DIR = Path("users")
 USERS_DIR.mkdir(parents=True, exist_ok=True)
 
+
+class OllamaSettings(BaseModel):
+    """Configuration for an Ollama model endpoint."""
+
+    host: str = "http://localhost:11434"
+    model: str = ""
+
+
+class OpenAISettings(BaseModel):
+    """Configuration for an OpenAI ChatGPT model."""
+
+    model: str = ""
+    api_key: str = ""
+
+
 class UserSettings(BaseModel):
     user_id: str
     llm_provider: Literal["ollama", "openai"] = "ollama"
@@ -17,6 +32,8 @@ class UserSettings(BaseModel):
     temperature: float = 0.2
     top_p: float = 0.95
     max_tokens: int = 512
+    ollama: OllamaSettings = Field(default_factory=OllamaSettings)
+    openai: OpenAISettings = Field(default_factory=OpenAISettings)
 
 def _user_path(user_id: str) -> Path:
     """Location of the settings file for ``user_id``."""
