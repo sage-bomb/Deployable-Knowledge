@@ -24,7 +24,10 @@ UI_STATIC  = (BASE_DIR / "submodules" / "deployable-ui" / "src" / "ui").resolve(
 print(f"[static] APP_STATIC={APP_STATIC} exists={APP_STATIC.exists()}")
 print(f"[static] UI_STATIC ={UI_STATIC}  exists={UI_STATIC.exists()}")
 
-app.mount("/static/ui",  StaticFiles(directory=str(UI_STATIC), check_dir=True), name="ui_static")
+# Allow mounting even if the UI static directory is missing in development or
+# test environments. `check_dir=False` prevents Starlette from raising an
+# exception when the directory does not exist.
+app.mount("/static/ui",  StaticFiles(directory=str(UI_STATIC), check_dir=False), name="ui_static")
 app.mount("/static",    StaticFiles(directory=str(APP_STATIC), check_dir=False), name="static-app")
 
 app.mount("/documents", StaticFiles(directory=str(UPLOAD_DIR), check_dir=False), name="documents")
