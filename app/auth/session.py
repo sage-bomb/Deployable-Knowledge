@@ -7,6 +7,7 @@ from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import PlainTextResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel, Field
+from core.db import SessionLocal, User, WebSession
 
 UTC = timezone.utc
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS", "TRACE"}
@@ -119,6 +120,68 @@ class FileSessionStore(SessionStore):
         p = self._path(sid)
         try: os.remove(p)
         except FileNotFoundError: pass
+
+class DBSessionStore(SessionStore):
+    """Database-backed session storage using the deployable-db submodule."""
+
+    def __init__(self):
+        self.session_factory = SessionLocal
+
+    def _ensure_utc(self, dt: datetime) -> datetime:
+        """Attach UTC tzinfo to naive datetimes returned from the DB."""
+        return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
+
+    def get(self, sid: str) -> Optional["Session"]:
+        with self.session_factory() as db:
+            ws = db.query(WebSession).filter(WebSession.session_id == sid).first()
+            if not ws:
+                return None
+            return Session(
+                session_id=ws.session_id,
+                user_id=ws.user_id,
+                issued_at=self._ensure_utc(ws.issued_at),
+                expires_at=self._ensure_utc(ws.expires_at),
+                last_seen=self._ensure_utc(ws.last_seen),
+                ua_hash=ws.ua_hash,
+                ip_net=ws.ip_net,
+                attrs=ws.attrs or {},
+            )
+
+    def put(self, sess: "Session") -> None:
+        with self.session_factory() as db:
+            user = db.query(User).filter(User.id == sess.user_id).first()
+            if not user:
+                user = User(id=sess.user_id, email=f"{sess.user_id}@local", hashed_password="!")
+                db.add(user)
+            ws = db.query(WebSession).filter(WebSession.session_id == sess.session_id).first()
+            if ws:
+                ws.user_id = sess.user_id
+                ws.issued_at = sess.issued_at.replace(tzinfo=None)
+                ws.expires_at = sess.expires_at.replace(tzinfo=None)
+                ws.last_seen = sess.last_seen.replace(tzinfo=None)
+                ws.ua_hash = sess.ua_hash
+                ws.ip_net = sess.ip_net
+                ws.attrs = sess.attrs
+            else:
+                ws = WebSession(
+                    session_id=sess.session_id,
+                    user_id=sess.user_id,
+                    issued_at=sess.issued_at.replace(tzinfo=None),
+                    expires_at=sess.expires_at.replace(tzinfo=None),
+                    last_seen=sess.last_seen.replace(tzinfo=None),
+                    ua_hash=sess.ua_hash,
+                    ip_net=sess.ip_net,
+                    attrs=sess.attrs,
+                )
+                db.add(ws)
+            db.commit()
+
+    def delete(self, sid: str) -> None:
+        with self.session_factory() as db:
+            ws = db.query(WebSession).filter(WebSession.session_id == sid).first()
+            if ws:
+                db.delete(ws)
+                db.commit()
 
 class SessionManager:
     def __init__(self, store: SessionStore, settings: SessionSettings):
@@ -241,7 +304,8 @@ def build_session_router() -> APIRouter:
 
 def setup_auth(app, settings: Optional[SessionSettings] = None):
     settings = settings or load_settings_from_config()
-    store = FileSessionStore(settings.session_dir)
+    # Persist sessions in the SQL database instead of the filesystem
+    store = DBSessionStore()
     manager = SessionManager(store, settings)
     app.add_middleware(SessionValidationMiddleware, manager=manager, settings=settings)
     app.include_router(build_session_router())

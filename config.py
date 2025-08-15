@@ -1,10 +1,13 @@
 from pathlib import Path
 import os
 
+from core.db import DB_DIR, DOCUMENTS_DIR
+
 # === Base Paths ===
 BASE_DIR = Path(__file__).resolve().parent
-UPLOAD_DIR = BASE_DIR / "documents"
-PDF_DIR = BASE_DIR / "pdfs"
+# Store all persistent data inside the local_db directory
+UPLOAD_DIR = DOCUMENTS_DIR
+PDF_DIR = DB_DIR / "pdfs"
 MODEL_DIR = BASE_DIR / "tmp_model"
 
 # === ChromaDB ===
