@@ -9,7 +9,13 @@ from api.utils import validate_session_id
 
 router = APIRouter()
 
-templates = Jinja2Templates(directory="submodules/deployable-knowledge-web/src/knowledge_web/templates")
+# Search our local templates directory first so we can override submodule files
+templates = Jinja2Templates(
+    directory=[
+        "app/templates",
+        "submodules/deployable-knowledge-web/src/knowledge_web/templates",
+    ]
+)
 
 SESSION_COOKIE_NAME = "chat_session_id"
 store = SessionStore()

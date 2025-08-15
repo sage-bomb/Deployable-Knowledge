@@ -127,6 +127,10 @@ class DBSessionStore(SessionStore):
     def __init__(self):
         self.session_factory = SessionLocal
 
+    def _ensure_utc(self, dt: datetime) -> datetime:
+        """Attach UTC tzinfo to naive datetimes returned from the DB."""
+        return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
+
     def get(self, sid: str) -> Optional["Session"]:
         with self.session_factory() as db:
             ws = db.query(WebSession).filter(WebSession.session_id == sid).first()
@@ -135,9 +139,9 @@ class DBSessionStore(SessionStore):
             return Session(
                 session_id=ws.session_id,
                 user_id=ws.user_id,
-                issued_at=ws.issued_at,
-                expires_at=ws.expires_at,
-                last_seen=ws.last_seen,
+                issued_at=self._ensure_utc(ws.issued_at),
+                expires_at=self._ensure_utc(ws.expires_at),
+                last_seen=self._ensure_utc(ws.last_seen),
                 ua_hash=ws.ua_hash,
                 ip_net=ws.ip_net,
                 attrs=ws.attrs or {},
@@ -152,9 +156,9 @@ class DBSessionStore(SessionStore):
             ws = db.query(WebSession).filter(WebSession.session_id == sess.session_id).first()
             if ws:
                 ws.user_id = sess.user_id
-                ws.issued_at = sess.issued_at
-                ws.expires_at = sess.expires_at
-                ws.last_seen = sess.last_seen
+                ws.issued_at = sess.issued_at.replace(tzinfo=None)
+                ws.expires_at = sess.expires_at.replace(tzinfo=None)
+                ws.last_seen = sess.last_seen.replace(tzinfo=None)
                 ws.ua_hash = sess.ua_hash
                 ws.ip_net = sess.ip_net
                 ws.attrs = sess.attrs
@@ -162,9 +166,9 @@ class DBSessionStore(SessionStore):
                 ws = WebSession(
                     session_id=sess.session_id,
                     user_id=sess.user_id,
-                    issued_at=sess.issued_at,
-                    expires_at=sess.expires_at,
-                    last_seen=sess.last_seen,
+                    issued_at=sess.issued_at.replace(tzinfo=None),
+                    expires_at=sess.expires_at.replace(tzinfo=None),
+                    last_seen=sess.last_seen.replace(tzinfo=None),
                     ua_hash=sess.ua_hash,
                     ip_net=sess.ip_net,
                     attrs=sess.attrs,
