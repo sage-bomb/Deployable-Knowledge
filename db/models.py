@@ -35,6 +35,7 @@ class User(Base):
     email: str = Column(String, unique=True, nullable=False)
     hashed_password: str = Column(String, nullable=False)
     created_at: datetime = Column(DateTime, default=datetime.utcnow)
+    llm_config = Column(JSON, default=dict)
 
     sessions: List["WebSession"] = relationship("WebSession", back_populates="user")
     chat_sessions: List["ChatSession"] = relationship(

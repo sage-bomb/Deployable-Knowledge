@@ -8,7 +8,7 @@ metadata.
 
 ## Tables
 
-- **users** – basic user records with email and hashed password.
+- **users** – basic user records with email, hashed password and per-user LLM configuration.
 - **web_sessions** – login sessions issued by the HTTPS interface.
 - **chat_sessions** – individual chat conversations.
 - **chat_exchanges** – messages within a chat session.
