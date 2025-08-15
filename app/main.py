@@ -15,16 +15,18 @@ from app.auth.session import setup_auth, load_settings_from_config
 
 
 
+
 app = FastAPI()
 
-APP_STATIC = (BASE_DIR / "app" / "static").resolve()
+APP_STATIC = (BASE_DIR / "submodules" / "deployable-knowledge-web" / "src" / "knowledge_web" / "static").resolve()
 UI_STATIC  = (BASE_DIR / "submodules" / "deployable-ui" / "src" / "ui").resolve()
 
 print(f"[static] APP_STATIC={APP_STATIC} exists={APP_STATIC.exists()}")
 print(f"[static] UI_STATIC ={UI_STATIC}  exists={UI_STATIC.exists()}")
 
-app.mount("/static/ui", StaticFiles(directory=str(UI_STATIC),  check_dir=False), name="static-ui")
+app.mount("/static/ui",  StaticFiles(directory=str(UI_STATIC), check_dir=True), name="ui_static")
 app.mount("/static",    StaticFiles(directory=str(APP_STATIC), check_dir=False), name="static-app")
+
 app.mount("/documents", StaticFiles(directory=str(UPLOAD_DIR), check_dir=False), name="documents")
 
 
