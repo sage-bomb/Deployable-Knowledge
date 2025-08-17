@@ -13,7 +13,7 @@ router = APIRouter()
 templates = Jinja2Templates(
     directory=[
         "app/templates",
-        "submodules/deployable-knowledge-web/src/knowledge_web/templates",
+        "submodules/deployable-knowledge-web/src/templates",
     ]
 )
 
