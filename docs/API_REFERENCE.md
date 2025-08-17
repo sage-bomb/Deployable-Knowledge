@@ -15,6 +15,8 @@
 | `/segments` | GET | List stored text segments |
 | `/segments/{id}` | GET/DELETE | Retrieve or delete a segment |
 | `/settings/{user}` | GET/PATCH | Retrieve or partially update user settings |
+| `/api/users` | GET | List users |
+| `/api/users/{id}` | GET | Retrieve a user record |
 | `/prompt-templates` | GET/PUT | List or create prompt templates |
 
 All endpoints return JSON except `/chat-stream`, which emits `meta`, `delta` and `done` events.
