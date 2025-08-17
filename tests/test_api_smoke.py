@@ -9,6 +9,7 @@ from core.models import ChatResponse, Source
 from core.prompts import renderer
 from core.rag import retriever
 from app.auth.session import SessionValidationMiddleware
+from app.core.llm import provider
 
 
 async def _bypass(self, request, call_next):
@@ -26,9 +27,14 @@ def test_chat_endpoint(monkeypatch):
     monkeypatch.setattr(pipeline, "chat_once", fake_chat_once)
     monkeypatch.setattr(renderer, "generate_title", lambda s: "title")
     monkeypatch.setattr(renderer, "update_summary", lambda old, u, a: "summary")
+    sid = str(provider.list_services()[0].id)
     res = client.post(
         "/chat",
-        data={"message": "hi", "session_id": "12345678-1234-1234-1234-123456789012"},
+        data={
+            "message": "hi",
+            "session_id": "12345678-1234-1234-1234-123456789012",
+            "service_id": sid,
+        },
         cookies={"session": "test"},
     )
     assert res.status_code == 200
