@@ -6,7 +6,9 @@ from core import pipeline
 
 
 def test_chat_once_returns_sources(monkeypatch):
-    monkeypatch.setattr(pipeline.renderer, "ask_llm", lambda prompt, user_id=None: "answer")
+    monkeypatch.setattr(
+        pipeline.renderer, "ask_llm", lambda prompt, user_id=None, service_id=None: "answer"
+    )
     monkeypatch.setattr(
         pipeline.retriever,
         "search",

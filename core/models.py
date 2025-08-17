@@ -25,6 +25,7 @@ class ChatRequest(BaseModel):
     """Parameters controlling a single chat turn."""
 
     user_id: Optional[str] = None
+    service_id: Optional[str] = None
     message: str
     template_id: str = "rag_chat"
     top_k: int = 8

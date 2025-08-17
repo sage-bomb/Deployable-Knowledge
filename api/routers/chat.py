@@ -18,6 +18,7 @@ store = SessionStore()
 async def chat(
     message: str = Form(...),
     session_id: str = Form(...),
+    service_id: Optional[str] = Form(None),
     persona: str = Form(""),
     inactive: Optional[str] = Form(None),
     template_id: str = Form("rag_chat"),
@@ -33,6 +34,8 @@ async def chat(
     session_id:
         Identifier for the chat session.  A new session is created if the
         provided ID does not exist.
+    service_id:
+        Identifier of the LLM service to use for this request.
     persona:
         Optional persona string to bias responses.
     inactive:
@@ -57,6 +60,7 @@ async def chat(
         session.inactive_sources = json.loads(inactive)
     req = ChatRequest(
         user_id=session.user_id,
+        service_id=service_id,
         message=message,
         persona=persona or session.persona,
         template_id=template_id,
@@ -130,6 +134,7 @@ async def chat(
 async def chat_stream(
     message: str = Form(...),
     session_id: str = Form(...),
+    service_id: Optional[str] = Form(None),
     persona: str = Form(""),
     inactive: Optional[str] = Form(None),
     template_id: str = Form("rag_chat"),
@@ -140,6 +145,7 @@ async def chat_stream(
     return await chat(
         message=message,
         session_id=session_id,
+        service_id=service_id,
         persona=persona,
         inactive=inactive,
         template_id=template_id,

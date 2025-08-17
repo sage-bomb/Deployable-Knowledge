@@ -2,10 +2,13 @@ from __future__ import annotations
 from typing import List, Dict, Optional, Iterable
 from dataclasses import dataclass
 import json, re
+from uuid import UUID
+
 from config import PROMPTS_DIR
 from core.sessions import ChatExchange
 from core.settings import get_prompt_template, load_settings
 from core.llm import make_llm
+from app.core.llm import provider as llm_provider
 
 @dataclass
 class Template:
@@ -141,22 +144,45 @@ def _resolve_settings(user_id: Optional[str]):
             pass
     return s
 
-def stream_llm(prompt: str, user_id: Optional[str] = None) -> Iterable[str]:
+
+def _resolve_llm(service_id: Optional[str], user_id: Optional[str]):
+    """Return an LLM instance based on service or user settings."""
+
+    if service_id:
+        try:
+            sid = UUID(str(service_id))
+            srv = next((s for s in llm_provider.list_services() if s.id == sid), None)
+            if srv:
+                model_name = None
+                try:
+                    mlist = llm_provider.list_models(sid)
+                    if mlist:
+                        model_name = mlist[0].name
+                except Exception:
+                    pass
+                return make_llm(srv.provider, model_name)
+        except Exception:
+            pass
+    s = _resolve_settings(user_id)
+    provider = getattr(s, "llm_provider", "ollama")
+    model = getattr(s, "llm_model", "") or None
+    return make_llm(provider, model)
+
+def stream_llm(
+    prompt: str, user_id: Optional[str] = None, service_id: Optional[str] = None
+) -> Iterable[str]:
     """Stream tokens from the configured LLM provider."""
 
-    s = _resolve_settings(user_id)
-    provider = getattr(s, "llm_provider", "ollama")
-    model = getattr(s, "llm_model", "") or None
-    llm = make_llm(provider, model)
+    llm = _resolve_llm(service_id, user_id)
     return llm.stream_text(prompt)
 
-def ask_llm(prompt: str, user_id: Optional[str] = None) -> str:
+
+def ask_llm(
+    prompt: str, user_id: Optional[str] = None, service_id: Optional[str] = None
+) -> str:
     """Return a complete text response from the LLM."""
 
-    s = _resolve_settings(user_id)
-    provider = getattr(s, "llm_provider", "ollama")
-    model = getattr(s, "llm_model", "") or None
-    llm = make_llm(provider, model)
+    llm = _resolve_llm(service_id, user_id)
     return llm.generate_text(prompt)
 
 def update_summary(old_summary: str, last_user: str, last_assistant: str, user_id: Optional[str]=None) -> str:
