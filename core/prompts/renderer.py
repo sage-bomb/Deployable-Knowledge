@@ -151,30 +151,23 @@ def _resolve_llm(
     """Return an LLM instance based on service, model, or user settings."""
 
     if service_id:
-        try:
-            sid = UUID(str(service_id))
-            srv = next((s for s in llm_provider.list_services() if s.id == sid), None)
-            if srv:
-                model_name = None
-                if model_id:
-                    try:
-                        mid = UUID(str(model_id))
-                        mlist = llm_provider.list_models(sid)
-                        model = next((m for m in mlist if m.id == mid), None)
-                        if model:
-                            model_name = model.name
-                    except Exception:
-                        pass
-                if model_name is None:
-                    try:
-                        mlist = llm_provider.list_models(sid)
-                        if mlist:
-                            model_name = mlist[0].name
-                    except Exception:
-                        pass
-                return make_llm(srv.provider, model_name)
-        except Exception:
-            pass
+        sid = UUID(str(service_id))
+        srv = next((s for s in llm_provider.list_services() if s.id == sid), None)
+        if srv is None:
+            raise ValueError("service not found")
+        mlist = llm_provider.list_models(sid)
+        model_name = None
+        if model_id:
+            mid = UUID(str(model_id))
+            model = next((m for m in mlist if m.id == mid), None)
+            if model is None:
+                raise ValueError("model not found")
+            model_name = model.model_name
+        else:
+            if not mlist:
+                raise ValueError("no models available for service")
+            model_name = mlist[0].model_name
+        return make_llm(srv.provider, model_name)
     s = _resolve_settings(user_id)
     provider = getattr(s, "llm_provider", "ollama")
     model = getattr(s, "llm_model", "") or None
