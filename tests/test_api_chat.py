@@ -38,3 +38,34 @@ def test_sse_stream(monkeypatch):
     assert "event: meta" in body
     assert "event: delta" in body
     assert "event: done" in body
+
+
+def test_model_id_forwarded(monkeypatch):
+    captured = {}
+
+    def fake_stream(req):
+        captured["model_id"] = req.model_id
+        yield ChatChunk(type="meta", text="{}")
+        yield ChatChunk(type="done", sources=[], usage={})
+
+    monkeypatch.setattr(pipeline, "chat_stream", fake_stream)
+    monkeypatch.setattr(renderer, "generate_title", lambda s: "title")
+    monkeypatch.setattr(renderer, "update_summary", lambda old, u, a: "summary")
+
+    sid = provider.list_services()[0].id
+    mid = str(provider.list_models(sid)[0].id)
+    with client.stream(
+        "POST",
+        "/chat?stream=true",
+        data={
+            "message": "hi",
+            "session_id": "12345678-1234-1234-1234-123456789012",
+            "service_id": str(sid),
+            "model_id": mid,
+        },
+        cookies={"session": "test"},
+    ) as res:
+        assert res.status_code == 200
+        list(res.iter_lines())
+
+    assert captured["model_id"] == mid
