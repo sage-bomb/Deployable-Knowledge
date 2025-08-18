@@ -57,7 +57,11 @@ def get_models(service_id: UUID = Query(...)):
 
 @router.post("/models", response_model=LLMModel, status_code=201)
 def post_model(payload: ModelCreate):
-    """Create a new model entry."""
+    """Create a new model entry.
+
+    ``model_name`` specifies the provider's model identifier while
+    ``name`` is used as a human-friendly label.
+    """
     try:
         return provider.create_model(payload)
     except ValueError as e:

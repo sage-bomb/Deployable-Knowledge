@@ -1,4 +1,6 @@
 import sys, pathlib, shutil
+from fastapi import FastAPI
+
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
 # Ensure fresh registry for tests
@@ -7,17 +9,12 @@ if reg_dir.exists():
     shutil.rmtree(reg_dir)
 
 from fastapi.testclient import TestClient
-import app.main as main
-from app.auth.session import SessionValidationMiddleware
+from app.routes.api_llm import router as llm_router
 
+app = FastAPI()
+app.include_router(llm_router)
 
-async def _bypass(self, request, call_next):
-    return await call_next(request)
-
-
-SessionValidationMiddleware.dispatch = _bypass
-
-client = TestClient(main.app)
+client = TestClient(app)
 
 
 def test_llm_registry_crud():
@@ -33,10 +30,15 @@ def test_llm_registry_crud():
     sid = res.json()["id"]
 
     # Create model
-    model_payload = {"service_id": sid, "name": "test-model"}
+    model_payload = {
+        "service_id": sid,
+        "name": "test-model",
+        "model_name": "test-model",
+    }
     res = client.post("/api/llm/models", json=model_payload)
     assert res.status_code == 201
     mid = res.json()["id"]
+    assert res.json()["model_name"] == "test-model"
 
     # Selection
     sel_payload = {"service_id": sid, "model_id": mid}

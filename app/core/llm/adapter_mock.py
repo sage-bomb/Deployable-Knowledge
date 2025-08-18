@@ -49,6 +49,8 @@ def _load():
         for item in raw:
             if item.get("created_at"):
                 item["created_at"] = datetime.fromisoformat(item["created_at"])
+            if "model_name" not in item or item.get("model_name") is None:
+                item["model_name"] = item.get("name", "")
             models.append(LLMModel(**item))
     if SELECTION_FILE.exists():
         raw = json.loads(SELECTION_FILE.read_text())
@@ -102,6 +104,7 @@ def _seed():
             id=uuid4(),
             service_id=openai_service.id,
             name="gpt-4o",
+            model_name="gpt-4o",
             created_at=datetime.utcnow(),
         )
     )
@@ -110,6 +113,7 @@ def _seed():
             id=uuid4(),
             service_id=ollama_service.id,
             name="llama3:8b",
+            model_name="llama3:8b",
             created_at=datetime.utcnow(),
         )
     )
@@ -176,12 +180,15 @@ def create_model(data: ModelCreate) -> LLMModel:
     if not any(s.id == data.service_id for s in services):
         raise KeyError("service not found")
     for m in models:
-        if m.service_id == data.service_id and m.name == data.name:
+        if m.service_id == data.service_id and (
+            m.name == data.name or m.model_name == data.model_name
+        ):
             raise ValueError("model name must be unique within service")
     mdl = LLMModel(
         id=uuid4(),
         service_id=data.service_id,
         name=data.name,
+        model_name=data.model_name,
         modality=data.modality,
         context_window=data.context_window,
         supports_tools=data.supports_tools,
@@ -198,6 +205,11 @@ def update_model(mid: UUID, patch: ModelUpdate) -> LLMModel:
         if m.id == mid:
             if patch.name and any(
                 other.service_id == m.service_id and other.name == patch.name and other.id != mid
+                for other in models
+            ):
+                raise ValueError("model name must be unique within service")
+            if patch.model_name and any(
+                other.service_id == m.service_id and other.model_name == patch.model_name and other.id != mid
                 for other in models
             ):
                 raise ValueError("model name must be unique within service")
