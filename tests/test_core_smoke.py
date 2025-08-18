@@ -6,7 +6,7 @@ from core import pipeline
 
 
 def test_chat_once(monkeypatch):
-    def fake_ask(prompt, user_id=None, service_id=None):
+    def fake_ask(prompt, user_id=None, service_id=None, model_id=None):
         return "ok"
     monkeypatch.setattr(pipeline.renderer, "ask_llm", fake_ask)
     monkeypatch.setattr(
@@ -18,7 +18,7 @@ def test_chat_once(monkeypatch):
 
 
 def test_chat_stream(monkeypatch):
-    def fake_stream(prompt, user_id=None, service_id=None):
+    def fake_stream(prompt, user_id=None, service_id=None, model_id=None):
         yield "a"
         yield "b"
     monkeypatch.setattr(pipeline.renderer, "stream_llm", fake_stream)

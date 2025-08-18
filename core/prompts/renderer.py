@@ -145,8 +145,10 @@ def _resolve_settings(user_id: Optional[str]):
     return s
 
 
-def _resolve_llm(service_id: Optional[str], user_id: Optional[str]):
-    """Return an LLM instance based on service or user settings."""
+def _resolve_llm(
+    service_id: Optional[str], user_id: Optional[str], model_id: Optional[str] = None
+):
+    """Return an LLM instance based on service, model, or user settings."""
 
     if service_id:
         try:
@@ -154,12 +156,22 @@ def _resolve_llm(service_id: Optional[str], user_id: Optional[str]):
             srv = next((s for s in llm_provider.list_services() if s.id == sid), None)
             if srv:
                 model_name = None
-                try:
-                    mlist = llm_provider.list_models(sid)
-                    if mlist:
-                        model_name = mlist[0].name
-                except Exception:
-                    pass
+                if model_id:
+                    try:
+                        mid = UUID(str(model_id))
+                        mlist = llm_provider.list_models(sid)
+                        model = next((m for m in mlist if m.id == mid), None)
+                        if model:
+                            model_name = model.name
+                    except Exception:
+                        pass
+                if model_name is None:
+                    try:
+                        mlist = llm_provider.list_models(sid)
+                        if mlist:
+                            model_name = mlist[0].name
+                    except Exception:
+                        pass
                 return make_llm(srv.provider, model_name)
         except Exception:
             pass
@@ -169,20 +181,26 @@ def _resolve_llm(service_id: Optional[str], user_id: Optional[str]):
     return make_llm(provider, model)
 
 def stream_llm(
-    prompt: str, user_id: Optional[str] = None, service_id: Optional[str] = None
+    prompt: str,
+    user_id: Optional[str] = None,
+    service_id: Optional[str] = None,
+    model_id: Optional[str] = None,
 ) -> Iterable[str]:
     """Stream tokens from the configured LLM provider."""
 
-    llm = _resolve_llm(service_id, user_id)
+    llm = _resolve_llm(service_id, user_id, model_id)
     return llm.stream_text(prompt)
 
 
 def ask_llm(
-    prompt: str, user_id: Optional[str] = None, service_id: Optional[str] = None
+    prompt: str,
+    user_id: Optional[str] = None,
+    service_id: Optional[str] = None,
+    model_id: Optional[str] = None,
 ) -> str:
     """Return a complete text response from the LLM."""
 
-    llm = _resolve_llm(service_id, user_id)
+    llm = _resolve_llm(service_id, user_id, model_id)
     return llm.generate_text(prompt)
 
 def update_summary(old_summary: str, last_user: str, last_assistant: str, user_id: Optional[str]=None) -> str:

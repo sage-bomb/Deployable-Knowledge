@@ -40,7 +40,9 @@ def chat_once(req: ChatRequest) -> ChatResponse:
         persona=req.persona,
         template_id=req.template_id,
     )
-    text = renderer.ask_llm(prompt, user_id=req.user_id, service_id=req.service_id)
+    text = renderer.ask_llm(
+        prompt, user_id=req.user_id, service_id=req.service_id, model_id=req.model_id
+    )
     return ChatResponse(text=text, sources=_to_sources(context), usage={})
 
 
@@ -62,6 +64,8 @@ def chat_stream(req: ChatRequest) -> Iterator[ChatChunk]:
     )
     meta = json.dumps({"top_k": req.top_k, "template": req.template_id})
     yield ChatChunk(type="meta", text=meta)
-    for token in renderer.stream_llm(prompt, user_id=req.user_id, service_id=req.service_id):
+    for token in renderer.stream_llm(
+        prompt, user_id=req.user_id, service_id=req.service_id, model_id=req.model_id
+    ):
         yield ChatChunk(type="delta", text=token)
     yield ChatChunk(type="done", sources=_to_sources(context), usage={})
