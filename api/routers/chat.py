@@ -72,6 +72,8 @@ async def chat(
     )
     if not stream:
         resp = pipeline.chat_once(req)
+        if resp.error:
+            return JSONResponse({"error": resp.error}, status_code=400)
         html_response = markdown2.markdown(resp.text)
         session.add_exchange(
             user=message,
@@ -126,6 +128,9 @@ async def chat(
                         "usage": chunk.usage or {},
                     }
                     yield f"event: done\ndata: {json.dumps(payload)}\n\n"
+                elif chunk.type == "error":
+                    yield f"event: error\ndata: {json.dumps({'error': chunk.text or ''})}\n\n"
+                    return
         except Exception as e:
             yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
 

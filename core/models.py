@@ -50,3 +50,4 @@ class ChatResponse(BaseModel):
     text: str
     sources: List[Source] = Field(default_factory=list)
     usage: Dict[str, int] = Field(default_factory=dict)
+    error: Optional[str] = None
