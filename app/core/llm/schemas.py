@@ -40,6 +40,7 @@ class LLMModel(BaseModel):
     id: UUID
     service_id: UUID
     name: str
+    model_name: str
     modality: Optional[str] = None
     context_window: Optional[int] = None
     supports_tools: bool = False
@@ -50,6 +51,7 @@ class LLMModel(BaseModel):
 class ModelCreate(BaseModel):
     service_id: UUID
     name: constr(strip_whitespace=True, min_length=1)
+    model_name: constr(strip_whitespace=True, min_length=1)
     modality: Optional[str] = None
     context_window: Optional[conint(ge=1, le=1048576)] = None
     supports_tools: bool = False
@@ -58,6 +60,7 @@ class ModelCreate(BaseModel):
 
 class ModelUpdate(BaseModel):
     name: Optional[str] = None
+    model_name: Optional[str] = None
     modality: Optional[str] = None
     context_window: Optional[conint(ge=1, le=1048576)] = None
     supports_tools: Optional[bool] = None
@@ -65,6 +68,6 @@ class ModelUpdate(BaseModel):
 
 
 class LLMSelection(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
     service_id: Optional[UUID] = None
     model_id: Optional[UUID] = None

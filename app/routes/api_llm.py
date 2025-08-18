@@ -57,7 +57,11 @@ def get_models(service_id: UUID = Query(...)):
 
 @router.post("/models", response_model=LLMModel, status_code=201)
 def post_model(payload: ModelCreate):
-    """Create a new model entry."""
+    """Create a new model entry.
+
+    ``model_name`` specifies the provider's model identifier while
+    ``name`` is used as a human-friendly label.
+    """
     try:
         return provider.create_model(payload)
     except ValueError as e:
@@ -95,6 +99,6 @@ def get_selection(request: Request):
 def put_selection(payload: LLMSelection, request: Request):
     """Persist the user's preferred service/model."""
     user_id = getattr(request.state, "user_id", "local-user")
-    if not payload.user_id:
-        payload.user_id = user_id
+    # Always associate selection with the requesting user
+    payload.user_id = user_id
     return provider.set_selection(payload)
