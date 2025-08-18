@@ -65,6 +65,6 @@ class ModelUpdate(BaseModel):
 
 
 class LLMSelection(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
     service_id: Optional[UUID] = None
     model_id: Optional[UUID] = None

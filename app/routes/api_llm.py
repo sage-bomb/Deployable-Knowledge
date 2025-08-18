@@ -95,6 +95,6 @@ def get_selection(request: Request):
 def put_selection(payload: LLMSelection, request: Request):
     """Persist the user's preferred service/model."""
     user_id = getattr(request.state, "user_id", "local-user")
-    if not payload.user_id:
-        payload.user_id = user_id
+    # Always associate selection with the requesting user
+    payload.user_id = user_id
     return provider.set_selection(payload)

@@ -224,6 +224,8 @@ def get_selection(user_id: str) -> LLMSelection:
 
 
 def set_selection(sel: LLMSelection) -> LLMSelection:
+    if not sel.user_id:
+        raise ValueError("user_id required")
     selections[sel.user_id] = sel
     _save_selection()
     return sel

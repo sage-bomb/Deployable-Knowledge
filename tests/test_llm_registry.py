@@ -39,9 +39,10 @@ def test_llm_registry_crud():
     mid = res.json()["id"]
 
     # Selection
-    sel_payload = {"user_id": "", "service_id": sid, "model_id": mid}
+    sel_payload = {"service_id": sid, "model_id": mid}
     res = client.put("/api/llm/selection", json=sel_payload)
     assert res.status_code == 200
+    assert res.json()["user_id"] == "local-user"
     res = client.get("/api/llm/selection")
     assert res.json()["model_id"] == mid
 
