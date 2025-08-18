@@ -58,6 +58,7 @@ except FileNotFoundError:
         email = Column(String, unique=True, nullable=False)
         hashed_password = Column(String, nullable=False)
         created_at = Column(DateTime, default=datetime.utcnow)
+        llm_config = Column(JSON, default=dict)
 
     class WebSession(Base):
         __tablename__ = "web_sessions"
