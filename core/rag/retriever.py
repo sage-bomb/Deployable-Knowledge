@@ -241,7 +241,7 @@ def search(query: str, top_k: int = 5, exclude_sources: Optional[set] = None) ->
     results = get_db().collection.query(
         query_embeddings=[embedding],
         n_results=top_k,
-        include=["documents", "metadatas", "distances", "ids"],
+        include=["documents", "metadatas", "distances"],
     )
     documents = results.get("documents", [[]])[0]
     metadatas = results.get("metadatas", [[]])[0]
