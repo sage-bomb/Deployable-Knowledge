@@ -238,18 +238,28 @@ def search(query: str, top_k: int = 5, exclude_sources: Optional[set] = None) ->
     if top_k <= 0:
         return []
     embedding = get_db().embed([query])[0]
-    results = get_db().collection.query(query_embeddings=[embedding], n_results=top_k)
+    results = get_db().collection.query(
+        query_embeddings=[embedding],
+        n_results=top_k,
+        include=["documents", "metadatas", "distances"],
+    )
     documents = results.get("documents", [[]])[0]
     metadatas = results.get("metadatas", [[]])[0]
     scores = results.get("distances", [[]])[0]
+    ids = results.get("ids", [[]])[0]
     out = []
-    for doc, meta, score in zip(documents, metadatas, scores):
+    for doc, meta, score, _id in zip(documents, metadatas, scores, ids):
         if exclude_sources and meta.get("source", "unknown") in exclude_sources:
             continue
-        out.append({
-            "text": doc.strip().replace("\n", " "),
-            "source": meta.get("source", "unknown"),
-            "score": score,
-            "page": meta.get("page", None),
-        })
+        segment = {"id": _id, "text": doc, **meta}
+        out.append(
+            {
+                "text": doc.strip().replace("\n", " "),
+                "source": meta.get("source", "unknown"),
+                "document_id": meta.get("source", "unknown"),
+                "score": score,
+                "page": meta.get("page", None),
+                "segment": segment,
+            }
+        )
     return out
