@@ -20,8 +20,8 @@ from app.auth.session import setup_auth, load_settings_from_config
 
 app = FastAPI()
 
-APP_STATIC = (BASE_DIR / "submodules" / "deployable-knowledge-web" / "src" / "static").resolve()
-UI_STATIC  = (BASE_DIR / "submodules" / "deployable-ui" / "src" / "ui").resolve()
+APP_STATIC = (BASE_DIR / "submodules" / "new-web" / "static").resolve()
+UI_STATIC  = (BASE_DIR / "submodules" / "new-web" / "static" / "ui").resolve()
 
 print(f"[static] APP_STATIC={APP_STATIC} exists={APP_STATIC.exists()}")
 print(f"[static] UI_STATIC ={UI_STATIC}  exists={UI_STATIC.exists()}")

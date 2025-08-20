@@ -1,12 +1,6 @@
 {
   "id": "rag_chat",
   "name": "RAG Chat (concise, context-first)",
-  "system": "You are a concise, technical assistant. Use the provided context; cite filenames when helpful.",
   "user_format": "{user}",
-  "context_item_format": "- {chunk} (source: {source|unknown})",
-  "context_header": "Relevant context:",
-  "context_join": "\n",
-  "persona_format": "Persona: {persona}",
-  "history_separator": "\n",
-  "include_history": true
+  "system": ""
 }
