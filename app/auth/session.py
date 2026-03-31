@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any, Set
 from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import PlainTextResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 UTC = timezone.utc
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS", "TRACE"}
@@ -50,12 +50,11 @@ class SessionSettings(BaseModel):
 
     session_dir: str = "user_sessions"
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 def load_settings_from_config() -> "SessionSettings":
     try:
-        import app.auth.config
+        import app.auth.config as config
         return SessionSettings(
             idle_timeout_minutes=getattr(config, "SESSION_IDLE_TIMEOUT_MINUTES", 15),
             absolute_ttl_hours=getattr(config, "SESSION_ABSOLUTE_TTL_HOURS", 8),
